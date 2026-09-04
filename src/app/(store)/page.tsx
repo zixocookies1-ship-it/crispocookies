@@ -231,31 +231,26 @@ export default function StoreHomePage() {
       </section>
 
       {/* SECTION 3: SHOP BY COLLECTION */}
-      <section className="container-tight py-20" aria-label="Shop by collection">
+      <section className="container-tight py-6" aria-label="Shop by collection">
         <ScrollReveal>
-          <div className="mb-10">
-            <h2 className="section-heading mb-3">Explore Our Cookies</h2>
-            <p className="section-subheading">
-              Discover our handcrafted collections, each made with love and the finest ingredients.
-            </p>
+          <div className="mb-4">
+            <h2 className="section-heading text-2xl mb-1">Explore Our Cookies</h2>
           </div>
         </ScrollReveal>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {collections.map((col, i) => (
             <ScrollReveal key={col.title} delay={i * 100}>
               <Link
                 href={col.href}
-                className="group block rounded-3xl overflow-hidden relative cursor-pointer"
+                className="group flex items-center gap-4 bg-surface rounded-2xl shadow-warm overflow-hidden cursor-pointer hover:shadow-warm-lg transition-shadow"
                 aria-label={`Shop ${col.title}`}
               >
-                <div className={`aspect-[3/4] bg-gradient-to-br ${col.gradient} flex items-center justify-center transition-transform duration-500 group-hover:scale-105`}>
-                  <span className="text-8xl select-none">{col.emoji}</span>
+                <div className={`w-20 h-20 shrink-0 bg-gradient-to-br ${col.gradient} flex items-center justify-center`}>
+                  <span className="text-3xl select-none">{col.emoji}</span>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <h3 className="font-heading text-2xl text-white font-bold mb-1">{col.title}</h3>
-                  <p className="text-cream/80 text-sm mb-2">{col.description}</p>
-                  <span className="text-gold text-sm font-semibold">Shop Now →</span>
+                <div className="py-3 pr-4">
+                  <h3 className="font-heading text-base font-semibold text-navy mb-0.5">{col.title}</h3>
+                  <p className="text-muted text-xs">{col.description}</p>
                 </div>
               </Link>
             </ScrollReveal>
