@@ -12,7 +12,7 @@ import AnnouncementBar from "@/components/announcement-bar";
 const navLinks = [
   { label: "Home", href: "/" },
   { label: "Shop", href: "/shop" },
-  { label: "Collections", href: "/shop" },
+
   { label: "Our Story", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];
