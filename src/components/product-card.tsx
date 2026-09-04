@@ -47,7 +47,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <Link
       href={`/shop/${product.slug}`}
-      className="block bg-surface rounded-2xl shadow-warm overflow-hidden transition-all duration-300 hover:shadow-warm-lg hover:-translate-y-1 cursor-pointer group"
+      className="flex flex-col bg-surface rounded-2xl shadow-warm overflow-hidden transition-all duration-300 hover:shadow-warm-lg hover:-translate-y-1 cursor-pointer group h-full"
     >
       <div className="aspect-square relative overflow-hidden img-zoom bg-gradient-to-br from-cream via-gold/8 to-navy/5 flex items-center justify-center">
         <span className="text-[64px] select-none" role="img" aria-label="cookie">
@@ -85,7 +85,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
       </div>
 
-      <div className="p-5">
+      <div className="p-5 flex flex-col flex-1">
         {product.tags && product.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-2">
             {product.tags.map((tag) => (
@@ -109,7 +109,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </h3>
 
         {product.shortDescription && (
-          <p className="text-muted text-sm leading-relaxed line-clamp-2 mb-3">
+          <p className="text-muted text-sm leading-relaxed line-clamp-2 mb-3 flex-1">
             {product.shortDescription}
           </p>
         )}
@@ -148,7 +148,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         <button
           onClick={handleAddToCart}
-          className="w-full bg-gold hover:bg-gold-hover text-white font-semibold py-2.5 rounded-full text-sm transition-all duration-200 hover:shadow-gold"
+          className="w-full bg-gold hover:bg-gold-hover text-white font-semibold py-2.5 rounded-full text-sm transition-all duration-200 hover:shadow-gold mt-auto"
         >
           Add to Cart
         </button>

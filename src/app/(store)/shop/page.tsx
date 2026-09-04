@@ -362,7 +362,9 @@ function ShopContent() {
             {paginatedProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {paginatedProducts.map((product: any) => (
-                  <ProductCard key={product._id} product={product} />
+                  <div key={product._id} className="h-full">
+                    <ProductCard product={product} />
+                  </div>
                 ))}
               </div>
             ) : (

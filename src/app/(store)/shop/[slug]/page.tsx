@@ -309,7 +309,9 @@ export default function ProductDetailPage() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {relatedProducts.map((product) => (
-            <ProductCard key={product._id} product={product} />
+            <div key={product._id} className="h-full">
+              <ProductCard product={product} />
+            </div>
           ))}
         </div>
       </div>
