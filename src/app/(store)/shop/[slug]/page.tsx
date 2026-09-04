@@ -19,35 +19,35 @@ import { useWishlistStore } from "@/store/useWishlistStore";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const sampleProduct: any = {
   _id: "1",
-  name: "Classic Butter Cookie",
-  slug: "classic-butter",
-  shortDescription: "Rich, buttery perfection that melts in your mouth.",
+  name: "Double Chocolate Cookie",
+  slug: "double-chocolate-cookie",
+  shortDescription: "Rich, indulgent and deeply chocolatey — made with pure oats and loaded with chocolate goodness.",
   fullDescription:
-    "Our Classic Butter Cookie is crafted with the finest European-style butter, organic flour, and a touch of Madagascar vanilla. Each cookie is baked in small batches to ensure consistent quality and that signature melt-in-your-mouth texture that has made this our bestseller for over three years. Perfect with your morning chai or as an afternoon treat.",
+    "Rich, indulgent and deeply chocolatey, our Double Chocolate Cookie is made with pure oats powder and loaded with chocolate goodness. A premium cookie crafted for chocolate lovers who want indulgence with wholesome ingredients. Each box contains 6 handcrafted cookies weighing 300 grams total. 100% ZERO MAIDHA — made with pure oats, no artificial flavors, no preservatives.",
   ingredients: [
-    "European-style Butter",
-    "Organic Flour",
-    "Madagascar Vanilla",
-    "Cane Sugar",
-    "Sea Salt",
+    "Oats Powder",
+    "Cocoa",
+    "Chocolate Chips",
+    "Butter",
+    "Sugar",
+    "Vanilla",
+    "Baking Powder",
   ],
   images: [],
-  category: "Signature",
-  tags: ["bestseller"],
+  category: "Cookies",
+  tags: ["bestseller", "zero-maida"],
   variants: [
-    { weight: "200g", price: 349, stock: 45 },
-    { weight: "250g", price: 399, stock: 30 },
-    { weight: "500g", price: 699, stock: 15 },
+    { weight: "300g (6 cookies)", price: 219, stock: 50 },
   ],
   isActive: true,
   createdAt: "",
 };
 
 const relatedProducts: any[] = [
-  { _id: "5", name: "Salted Caramel Crunch", slug: "salted-caramel", shortDescription: "Sweet caramel meets the perfect pinch of sea salt.", fullDescription: "", ingredients: [], images: [], category: "Signature", tags: ["bestseller"], variants: [{ weight: "250g", price: 479, stock: 25 }], isActive: true, createdAt: "" },
-  { _id: "3", name: "Eggless Vanilla Biscuit", slug: "eggless-vanilla", shortDescription: "Delicate vanilla biscuits, completely egg-free.", fullDescription: "", ingredients: [], images: [], category: "Eggless", tags: ["eggless"], variants: [{ weight: "200g", price: 349, stock: 60 }], isActive: true, createdAt: "" },
-  { _id: "6", name: "Almond Biscotti", slug: "almond-biscotti", shortDescription: "Crunchy, nutty biscotti for dipping and savoring.", fullDescription: "", ingredients: [], images: [], category: "Nuts", tags: [], variants: [{ weight: "200g", price: 399, stock: 30 }], isActive: true, createdAt: "" },
-  { _id: "8", name: "Hazelnut Delight", slug: "hazelnut-delight", shortDescription: "Premium hazelnuts in every buttery bite.", fullDescription: "", ingredients: [], images: [], category: "Nuts", tags: [], variants: [{ weight: "250g", price: 499, stock: 20 }], isActive: true, createdAt: "" },
+  { _id: "2", name: "Rose Cookie", slug: "rose-cookie", shortDescription: "A delicate floral twist — made with homemade rose syrup and fresh rose petals.", fullDescription: "", ingredients: [], images: [], category: "Cookies", tags: ["zero-maida"], variants: [{ weight: "300g (6 cookies)", price: 219, stock: 40 }], isActive: true, createdAt: "" },
+  { _id: "3", name: "Pineapple Cookie", slug: "pineapple-cookie", shortDescription: "A tropical, refreshing cookie with homemade pineapple syrup and wholesome oats.", fullDescription: "", ingredients: [], images: [], category: "Cookies", tags: ["zero-maida"], variants: [{ weight: "300g (6 cookies)", price: 219, stock: 35 }], isActive: true, createdAt: "" },
+  { _id: "4", name: "Dry Seeds Cookie", slug: "dry-seeds-cookie", shortDescription: "Loaded with 4 super seeds — crunchy, nutritious and satisfying.", fullDescription: "", ingredients: [], images: [], category: "Cookies", tags: ["bestseller", "zero-maida", "high-protein"], variants: [{ weight: "300g (4 cookies)", price: 219, stock: 30 }], isActive: true, createdAt: "" },
+  { _id: "7", name: "Kaju Oats Brownie", slug: "kaju-oats-brownie", shortDescription: "Rich fudgy brownie combined with premium cashews and wholesome oats.", fullDescription: "", ingredients: [], images: [], category: "Brownies", tags: ["bestseller", "zero-maida"], variants: [{ weight: "300g (6 pieces)", price: 250, stock: 30 }], isActive: true, createdAt: "" },
 ];
 
 const rating = 4.8;

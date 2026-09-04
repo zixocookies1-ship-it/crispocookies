@@ -10,19 +10,19 @@ const values = [
     icon: Award,
     label: "Quality",
     description:
-      "We never compromise on ingredients. Every cookie is made with real butter, premium flour, and the finest chocolate — because you deserve the best.",
+      "We never compromise on ingredients. Every cookie is made with 100% pure oats powder, real butter, and premium chocolate — because you deserve the best.",
   },
   {
     icon: Leaf,
-    label: "Freshness",
+    label: "Zero Maida",
     description:
-      "Our cookies are baked fresh every single day. No sitting on shelves, no preservatives — just pure, wholesome freshness in every bite.",
+      "100% ZERO MAIDHA — our cookies are made entirely with oats powder, with no refined flour, no artificial flavors, and no preservatives.",
   },
   {
     icon: Heart,
-    label: "Love",
+    label: "Handcrafted",
     description:
-      "Every cookie is crafted with passion and care. From our family to yours, we pour love into every batch we bake.",
+      "Every cookie is handcrafted with passion and care in Nellore. From our family to yours, we pour love into every batch we bake.",
   },
 ];
 
@@ -39,13 +39,12 @@ export default function AboutPage() {
           </ScrollReveal>
           <ScrollReveal delay={100}>
             <h1 className="font-heading text-5xl text-white font-bold mb-4">
-              Baked with Love, Delivered Fresh
+              Baked to Impress. Baked With Purpose.
             </h1>
           </ScrollReveal>
           <ScrollReveal delay={200}>
             <p className="text-cream/60 text-lg max-w-xl mx-auto">
-              From a small family kitchen to your doorstep, every cookie tells a
-              story of passion and quality.
+              From Nellore with love — premium oat-based cookies and brownies, 100% ZERO MAIDHA.
             </p>
           </ScrollReveal>
         </div>
@@ -65,11 +64,10 @@ export default function AboutPage() {
                 How It All Started
               </h2>
               <p className="text-muted leading-relaxed">
-                What started in 2020 as weekend baking experiments in a tiny
-                Mumbai kitchen has now become a beloved cookie brand trusted by
-                thousands across India. Armed with grandmother&apos;s recipes and
-                a commitment to using only the finest ingredients, we set out to
-                create cookies that would make people smile with every bite.
+                What started as a passion project in Nellore has now become a beloved cookie brand. 
+                Armed with a commitment to using only 100% pure oats and zero maida, we set out to 
+                create cookies and brownies that would make people smile with every bite — without 
+                any compromises on health.
               </p>
             </div>
           </ScrollReveal>
@@ -86,10 +84,11 @@ export default function AboutPage() {
               </h2>
               <p className="text-muted leading-relaxed">
                 We believe that great cookies start with great ingredients.
-                That&apos;s why we source only the finest butter, premium
-                chocolate, and natural ingredients — never compromising on
-                quality. From our family to yours, every batch is baked with
-                the same love and care that started it all.
+                That&apos;s why we use 100% pure oats powder, real butter, and
+                premium chocolate — never compromising on quality. Every batch
+                is baked with 100% ZERO MAIDHA, no artificial flavors, and no
+                preservatives. From Nellore to your doorstep, every CRISPO 
+                creation is made to bring a little more joy to your day.
               </p>
             </div>
           </ScrollReveal>
@@ -136,16 +135,15 @@ export default function AboutPage() {
           <ScrollReveal delay={100}>
             <div className="max-w-2xl mx-auto bg-surface rounded-3xl shadow-warm-lg p-10 flex flex-col items-center text-center">
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-gold to-navy flex items-center justify-center text-4xl mb-4">
-                👩‍🍳
+                👨‍🍳
               </div>
               <h3 className="font-heading text-2xl font-bold text-navy">
-                Meera Kapoor
+                Rahul
               </h3>
               <p className="text-gold text-sm font-semibold">Founder & Head Baker</p>
               <p className="font-heading italic text-muted text-lg mt-4 max-w-md">
-                &ldquo;Every cookie we bake carries a piece of our
-                grandmother&apos;s legacy. That&apos;s the Crispo
-                promise.&rdquo;
+                &ldquo;Every cookie we bake is 100% ZERO MAIDHA — made with 
+                pure oats, no compromises. That&apos;s the Crispo promise.&rdquo;
               </p>
             </div>
           </ScrollReveal>

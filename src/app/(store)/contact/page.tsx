@@ -8,17 +8,17 @@ const contactCards = [
   {
     icon: MapPin,
     label: "Address",
-    value: "12 Baker Street, Bandra West, Mumbai 400001",
+    value: "Nellore, Andhra Pradesh, India",
   },
   {
     icon: Phone,
     label: "Phone",
-    value: "+91 98765 43210",
+    value: "+91 75698 31560",
   },
   {
     icon: Mail,
     label: "Email",
-    value: "hello@crispocookies.in",
+    value: "ccrispocookies@gmail.com",
   },
   {
     icon: Clock,

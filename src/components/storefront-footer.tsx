@@ -15,11 +15,11 @@ export default function StorefrontFooter() {
               CRISPO
             </Link>
             <p className="text-cream/60 text-sm mt-3">
-              Baked with Love, Delivered Fresh
+              Baked to Impress. Baked With Purpose.
             </p>
             <div className="flex items-center gap-4 mt-6">
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/rahul.bites"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gold hover:text-gold-light transition-colors"
@@ -28,16 +28,16 @@ export default function StorefrontFooter() {
                 <Globe size={20} />
               </a>
               <a
-                href="https://facebook.com"
+                href="https://www.youtube.com/@Rahul-Bites"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gold hover:text-gold-light transition-colors"
-                aria-label="Facebook"
+                aria-label="YouTube"
               >
                 <MessageCircle size={20} />
               </a>
               <a
-                href="https://wa.me/1234567890"
+                href="https://wa.me/917569831560"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gold hover:text-gold-light transition-colors"
@@ -56,18 +56,26 @@ export default function StorefrontFooter() {
             <ul className="space-y-3">
               <li>
                 <Link
-                  href="/shop"
+                  href="/shop?category=Cookies"
                   className="text-cream/60 hover:text-gold text-sm transition-colors"
                 >
-                  All Cookies
+                  Oat Cookies
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/shop?category=Gift+Boxes"
+                  href="/shop?category=Brownies"
                   className="text-cream/60 hover:text-gold text-sm transition-colors"
                 >
-                  Gift Boxes
+                  Oat Brownies
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/shop"
+                  className="text-cream/60 hover:text-gold text-sm transition-colors"
+                >
+                  All Products
                 </Link>
               </li>
               <li>
@@ -76,14 +84,6 @@ export default function StorefrontFooter() {
                   className="text-cream/60 hover:text-gold text-sm transition-colors"
                 >
                   Bestsellers
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/shop"
-                  className="text-cream/60 hover:text-gold text-sm transition-colors"
-                >
-                  New Arrivals
                 </Link>
               </li>
             </ul>
@@ -154,19 +154,16 @@ export default function StorefrontFooter() {
               </li>
               <li>
                 <a
-                  href="#"
+                  href="mailto:ccrispocookies@gmail.com"
                   className="text-cream/60 hover:text-gold text-sm transition-colors"
                 >
-                  Privacy Policy
+                  ccrispocookies@gmail.com
                 </a>
               </li>
               <li>
-                <a
-                  href="#"
-                  className="text-cream/60 hover:text-gold text-sm transition-colors"
-                >
-                  Terms of Service
-                </a>
+                <span className="text-cream/40 text-sm">
+                  FSSAI: 20126182000873
+                </span>
               </li>
             </ul>
           </div>
@@ -177,11 +174,11 @@ export default function StorefrontFooter() {
       <div className="border-t border-white/10">
         <div className="container-tight mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-cream/40 text-sm">
-            © 2024 Crispo Cookies. All rights reserved.
+            © 2024 Crispo Cookies. All rights reserved. Made in Nellore.
           </p>
           <div className="flex items-center gap-4">
             <a
-              href="https://instagram.com"
+              href="https://www.instagram.com/rahul.bites"
               target="_blank"
               rel="noopener noreferrer"
               className="text-gold/60 hover:text-gold transition-colors"
@@ -190,16 +187,16 @@ export default function StorefrontFooter() {
               <Globe size={18} />
             </a>
             <a
-              href="https://facebook.com"
+              href="https://www.youtube.com/@Rahul-Bites"
               target="_blank"
               rel="noopener noreferrer"
               className="text-gold/60 hover:text-gold transition-colors"
-              aria-label="Facebook"
+              aria-label="YouTube"
             >
               <MessageCircle size={18} />
             </a>
             <a
-              href="https://wa.me/1234567890"
+              href="https://wa.me/917569831560"
               target="_blank"
               rel="noopener noreferrer"
               className="text-gold/60 hover:text-gold transition-colors"

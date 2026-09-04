@@ -11,23 +11,111 @@ import {
 import ProductCard from "@/components/product-card";
 import { ProductCardSkeleton } from "@/components/skeleton";
 import { cn } from "@/lib/utils";
-import type { IProduct } from "@/models/Product";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const sampleProducts: any[] = [
-  { _id: "1", name: "Classic Butter Cookie", slug: "classic-butter", shortDescription: "Rich, buttery perfection that melts in your mouth.", fullDescription: "", ingredients: [], images: [], category: "Signature", tags: ["bestseller"], variants: [{ weight: "250g", price: 399, stock: 50 }], isActive: true, createdAt: "" },
-  { _id: "2", name: "Double Chocolate Chunk", slug: "double-chocolate", shortDescription: "For the serious chocolate lover — rich & indulgent.", fullDescription: "", ingredients: [], images: [], category: "Signature", tags: ["bestseller"], variants: [{ weight: "250g", price: 449, stock: 35 }], isActive: true, createdAt: "" },
-  { _id: "3", name: "Eggless Vanilla Biscuit", slug: "eggless-vanilla", shortDescription: "Delicate vanilla biscuits, completely egg-free.", fullDescription: "", ingredients: [], images: [], category: "Eggless", tags: ["eggless"], variants: [{ weight: "200g", price: 349, stock: 60 }], isActive: true, createdAt: "" },
-  { _id: "4", name: "Royal Ginger Snap", slug: "royal-ginger", shortDescription: "Bold ginger spice with a snappy golden crunch.", fullDescription: "", ingredients: [], images: [], category: "Spiced", tags: [], variants: [{ weight: "250g", price: 429, stock: 40 }], isActive: true, createdAt: "" },
-  { _id: "5", name: "Salted Caramel Crunch", slug: "salted-caramel", shortDescription: "Sweet caramel meets the perfect pinch of sea salt.", fullDescription: "", ingredients: [], images: [], category: "Signature", tags: ["bestseller"], variants: [{ weight: "250g", price: 479, stock: 25 }], isActive: true, createdAt: "" },
-  { _id: "6", name: "Almond Biscotti", slug: "almond-biscotti", shortDescription: "Crunchy, nutty biscotti for dipping and savoring.", fullDescription: "", ingredients: [], images: [], category: "Nuts", tags: [], variants: [{ weight: "200g", price: 399, stock: 30 }], isActive: true, createdAt: "" },
-  { _id: "7", name: "Eggless Choco Chip", slug: "eggless-choco-chip", shortDescription: "Crispy eggless cookies studded with chocolate chips.", fullDescription: "", ingredients: [], images: [], category: "Eggless", tags: ["eggless"], variants: [{ weight: "250g", price: 379, stock: 45 }], isActive: true, createdAt: "" },
-  { _id: "8", name: "Hazelnut Delight", slug: "hazelnut-delight", shortDescription: "Premium hazelnuts in every buttery bite.", fullDescription: "", ingredients: [], images: [], category: "Nuts", tags: [], variants: [{ weight: "250g", price: 499, stock: 20 }], isActive: true, createdAt: "" },
-  { _id: "9", name: "Lemon Zest Shortbread", slug: "lemon-zest", shortDescription: "Bright, tangy shortbread with real lemon zest.", fullDescription: "", ingredients: [], images: [], category: "Citrus", tags: [], variants: [{ weight: "200g", price: 369, stock: 35 }], isActive: true, createdAt: "" },
-] as unknown as IProduct[];
+  {
+    _id: "1",
+    name: "Double Chocolate Cookie",
+    slug: "double-chocolate-cookie",
+    shortDescription: "Rich, indulgent and deeply chocolatey — made with pure oats and loaded with chocolate goodness.",
+    fullDescription: "Rich, indulgent and deeply chocolatey, our Double Chocolate Cookie is made with pure oats powder and loaded with chocolate goodness. A premium cookie crafted for chocolate lovers who want indulgence with wholesome ingredients. Each box contains 6 handcrafted cookies weighing 300 grams total.",
+    ingredients: "Oats Powder, Cocoa, Chocolate Chips, Butter, Sugar, Vanilla, Baking Powder",
+    images: [],
+    category: "Cookies",
+    tags: ["bestseller", "zero-maida"],
+    variants: [{ weight: "300g (6 cookies)", price: 219, stock: 50 }],
+    isActive: true,
+    createdAt: "",
+  },
+  {
+    _id: "2",
+    name: "Rose Cookie",
+    slug: "rose-cookie",
+    shortDescription: "A delicate floral twist — made with homemade rose syrup and fresh rose petals.",
+    fullDescription: "A delicate floral twist on a wholesome cookie. Our Rose Cookie is made with homemade rose syrup prepared with fresh rose petals, creating a naturally aromatic and beautifully distinctive flavor. Each box contains 6 handcrafted cookies weighing 300 grams total.",
+    ingredients: "Oats Powder, Homemade Rose Syrup, Fresh Rose Petals, Butter, Sugar, Baking Powder",
+    images: [],
+    category: "Cookies",
+    tags: ["zero-maida"],
+    variants: [{ weight: "300g (6 cookies)", price: 219, stock: 40 }],
+    isActive: true,
+    createdAt: "",
+  },
+  {
+    _id: "3",
+    name: "Pineapple Cookie",
+    slug: "pineapple-cookie",
+    shortDescription: "A tropical, refreshing cookie with homemade pineapple syrup and wholesome oats.",
+    fullDescription: "A tropical, refreshing cookie crafted with homemade pineapple syrup and wholesome oats. Bright pineapple flavor meets a deliciously crisp cookie for a unique tropical experience. Each box contains 6 handcrafted cookies weighing 300 grams total.",
+    ingredients: "Oats Powder, Homemade Pineapple Syrup, Butter, Sugar, Baking Powder",
+    images: [],
+    category: "Cookies",
+    tags: ["zero-maida"],
+    variants: [{ weight: "300g (6 cookies)", price: 219, stock: 35 }],
+    isActive: true,
+    createdAt: "",
+  },
+  {
+    _id: "4",
+    name: "Dry Seeds Cookie",
+    slug: "dry-seeds-cookie",
+    shortDescription: "Loaded with 4 super seeds — crunchy, nutritious and satisfying.",
+    fullDescription: "A nutrient-rich cookie loaded with four powerful seeds for a satisfying combination of crunch, nutrition and taste. Packed with 10g protein per cookie. Each box contains 4 cookies weighing 300 grams total.",
+    ingredients: "Oats Powder, Pumpkin Seeds, Flax Seeds, Sunflower Seeds, Watermelon Seeds, Butter, Sugar",
+    images: [],
+    category: "Cookies",
+    tags: ["bestseller", "zero-maida", "high-protein"],
+    variants: [{ weight: "300g (4 cookies)", price: 219, stock: 30 }],
+    isActive: true,
+    createdAt: "",
+  },
+  {
+    _id: "5",
+    name: "All Mix Cookies",
+    slug: "all-mix-cookies",
+    shortDescription: "A discovery box with a mix of CRISPO cookie flavors — find your favourite bite.",
+    fullDescription: "A discovery box with a mix of CRISPO cookie flavors — the easiest way to find your favourite bite. Each box contains 4 assorted cookies weighing 200 grams total.",
+    ingredients: "Oats Powder, Butter, Sugar, Assorted Flavors",
+    images: [],
+    category: "Cookies",
+    tags: ["zero-maida", "variety"],
+    variants: [{ weight: "200g (4 cookies)", price: 179, stock: 45 }],
+    isActive: true,
+    createdAt: "",
+  },
+  {
+    _id: "6",
+    name: "Double Chocolate Oats Brownie",
+    slug: "double-chocolate-oats-brownie",
+    shortDescription: "Rich, fudgy chocolate brownie crafted with oats and deep chocolate flavor.",
+    fullDescription: "A rich, fudgy chocolate brownie crafted with oats and deep chocolate flavor. Crisp on the outside, fudgy inside and packed with irresistible chocolate goodness. Each box contains 6 brownie pieces weighing 300 grams total.",
+    ingredients: "Oats Powder, Cocoa, Chocolate, Butter, Sugar, Eggs, Vanilla, Baking Powder",
+    images: [],
+    category: "Brownies",
+    tags: ["zero-maida"],
+    variants: [{ weight: "300g (6 pieces)", price: 250, stock: 25 }],
+    isActive: true,
+    createdAt: "",
+  },
+  {
+    _id: "7",
+    name: "Kaju Oats Brownie",
+    slug: "kaju-oats-brownie",
+    shortDescription: "Rich fudgy brownie combined with premium cashews and wholesome oats.",
+    fullDescription: "A rich and fudgy chocolate brownie combined with the delicious crunch of premium cashews and the wholesome goodness of oats. Each box contains 6 brownie pieces weighing 300 grams total.",
+    ingredients: "Oats Powder, Cocoa, Premium Cashews, Butter, Sugar, Eggs, Vanilla, Baking Powder",
+    images: [],
+    category: "Brownies",
+    tags: ["bestseller", "zero-maida"],
+    variants: [{ weight: "300g (6 pieces)", price: 250, stock: 30 }],
+    isActive: true,
+    createdAt: "",
+  },
+];
 
-const categories = ["All", "Signature", "Eggless", "Spiced", "Nuts", "Citrus"];
-const dietaryFilters = ["Eggless", "Vegan", "Gluten-Free", "Sugar-Free"];
+const categories = ["All", "Cookies", "Brownies"];
+const dietaryFilters = ["Zero Maida", "High Protein", "Variety"];
 
 function ShopContent() {
   const searchParams = useSearchParams();
@@ -47,7 +135,7 @@ function ShopContent() {
     }
   }, [searchParams]);
 
-  const filteredProducts = sampleProducts.filter((product) => {
+  const filteredProducts = sampleProducts.filter((product: any) => {
     if (
       selectedCategories.length > 0 &&
       !selectedCategories.includes("All") &&
@@ -56,8 +144,8 @@ function ShopContent() {
       return false;
     if (selectedDietary.length > 0) {
       const hasMatch = selectedDietary.some(
-        (d) =>
-          product.tags?.some((t: string) => t.toLowerCase() === d.toLowerCase()) ||
+        (d: string) =>
+          product.tags?.some((t: string) => t.toLowerCase().includes(d.toLowerCase())) ||
           product.category.toLowerCase() === d.toLowerCase()
       );
       if (!hasMatch) return false;
@@ -68,7 +156,7 @@ function ShopContent() {
     return true;
   });
 
-  const sorted = [...filteredProducts].sort((a, b) => {
+  const sorted = [...filteredProducts].sort((a: any, b: any) => {
     const priceA = a.variants?.[0]?.price ?? 0;
     const priceB = b.variants?.[0]?.price ?? 0;
     switch (sortBy) {
@@ -208,7 +296,7 @@ function ShopContent() {
         <h1 className="font-heading text-4xl text-navy font-bold mb-2">
           Our Cookies
         </h1>
-        <p className="text-muted text-lg">Discover our handcrafted collection</p>
+        <p className="text-muted text-lg">Discover our handcrafted oat cookies & brownies</p>
       </div>
 
       <div className="container-tight pb-20">
@@ -273,7 +361,7 @@ function ShopContent() {
 
             {paginatedProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {paginatedProducts.map((product) => (
+                {paginatedProducts.map((product: any) => (
                   <ProductCard key={product._id} product={product} />
                 ))}
               </div>

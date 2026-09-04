@@ -9,69 +9,57 @@ import { formatPrice, truncate } from "@/lib/helpers";
 const sampleProducts: any[] = [
   {
     _id: "1",
-    name: "Classic Chocolate Chip",
-    slug: "classic-chocolate-chip",
-    shortDescription: "Rich buttery dough loaded with premium chocolate chips.",
-    fullDescription: "Our signature chocolate chip cookie made with real butter and premium Belgian chocolate chips.",
-    ingredients: "Wheat flour, Butter, Chocolate chips, Sugar, Eggs, Vanilla, Baking soda, Salt",
+    name: "Double Chocolate Cookie",
+    slug: "double-chocolate-cookie",
+    shortDescription: "Rich, indulgent and deeply chocolatey — made with pure oats and loaded with chocolate goodness.",
+    fullDescription: "Rich, indulgent and deeply chocolatey, our Double Chocolate Cookie is made with pure oats powder and loaded with chocolate goodness.",
+    ingredients: "Oats Powder, Cocoa, Chocolate Chips, Butter, Sugar, Vanilla",
     images: [],
-    category: "1",
-    tags: ["bestseller", "bestseller"],
-    variants: [
-      { weight: "250g", price: 299, stock: 20 },
-      { weight: "500g", price: 549, stock: 15 },
-    ],
-    isActive: true,
-    createdAt: new Date(),
-  },
-  {
-    _id: "2",
-    name: "Double Chocolate Fudge",
-    slug: "double-chocolate-fudge",
-    shortDescription: "Intensely chocolatey cookies with cocoa dough and chocolate chunks.",
-    fullDescription: "For serious chocolate lovers — a triple-layer chocolate experience.",
-    ingredients: "Wheat flour, Cocoa powder, Dark chocolate, Butter, Sugar, Eggs, Vanilla, Baking soda",
-    images: [],
-    category: "1",
-    tags: ["bestseller"],
-    variants: [
-      { weight: "250g", price: 349, stock: 22 },
-      { weight: "500g", price: 629, stock: 14 },
-    ],
-    isActive: true,
-    createdAt: new Date(),
-  },
-  {
-    _id: "3",
-    name: "Butter Crunch Cookies",
-    slug: "butter-crunch-cookies",
-    shortDescription: "Crispy, golden butter cookies that melt in your mouth.",
-    fullDescription: "Traditional butter cookies with a delightful crunch and rich flavor.",
-    ingredients: "Wheat flour, Butter, Sugar, Milk, Vanilla, Baking powder, Salt",
-    images: [],
-    category: "2",
-    tags: ["bestseller"],
-    variants: [
-      { weight: "200g", price: 249, stock: 25 },
-      { weight: "400g", price: 469, stock: 18 },
-    ],
+    category: "Cookies",
+    tags: ["bestseller", "zero-maida"],
+    variants: [{ weight: "300g (6 cookies)", price: 219, stock: 50 }],
     isActive: true,
     createdAt: new Date(),
   },
   {
     _id: "4",
-    name: "Oatmeal Raisin Delight",
-    slug: "oatmeal-raisin-delight",
-    shortDescription: "Wholesome oatmeal cookies with plump raisins and a hint of cinnamon.",
-    fullDescription: "A healthy and delicious option packed with rolled oats and natural raisins.",
-    ingredients: "Rolled oats, Wheat flour, Raisins, Butter, Brown sugar, Cinnamon, Eggs, Honey",
+    name: "Dry Seeds Cookie",
+    slug: "dry-seeds-cookie",
+    shortDescription: "Loaded with 4 super seeds — crunchy, nutritious and satisfying.",
+    fullDescription: "A nutrient-rich cookie loaded with four powerful seeds. Packed with 10g protein per cookie.",
+    ingredients: "Oats Powder, Pumpkin Seeds, Flax Seeds, Sunflower Seeds, Watermelon Seeds",
     images: [],
-    category: "3",
-    tags: [],
-    variants: [
-      { weight: "250g", price: 329, stock: 12 },
-      { weight: "500g", price: 599, stock: 10 },
-    ],
+    category: "Cookies",
+    tags: ["bestseller", "zero-maida", "high-protein"],
+    variants: [{ weight: "300g (4 cookies)", price: 219, stock: 30 }],
+    isActive: true,
+    createdAt: new Date(),
+  },
+  {
+    _id: "7",
+    name: "Kaju Oats Brownie",
+    slug: "kaju-oats-brownie",
+    shortDescription: "Rich fudgy brownie combined with premium cashews and wholesome oats.",
+    fullDescription: "A rich and fudgy chocolate brownie combined with premium cashews and wholesome oats.",
+    ingredients: "Oats Powder, Cocoa, Premium Cashews, Butter, Sugar, Eggs",
+    images: [],
+    category: "Brownies",
+    tags: ["bestseller", "zero-maida"],
+    variants: [{ weight: "300g (6 pieces)", price: 250, stock: 30 }],
+    isActive: true,
+    createdAt: new Date(),
+  },
+  {
+    _id: "2",
+    name: "Rose Cookie",
+    slug: "rose-cookie",
+    shortDescription: "A delicate floral twist — made with homemade rose syrup and fresh rose petals.",
+    fullDescription: "A delicate floral twist on a wholesome cookie made with homemade rose syrup and fresh rose petals.",
+    ingredients: "Oats Powder, Homemade Rose Syrup, Fresh Rose Petals, Butter, Sugar",
+    images: [],
+    category: "Cookies",
+    tags: ["zero-maida"],
+    variants: [{ weight: "300g (6 cookies)", price: 219, stock: 40 }],
     isActive: true,
     createdAt: new Date(),
   },
@@ -79,32 +67,18 @@ const sampleProducts: any[] = [
 
 const collections = [
   {
-    title: "Chocolate Collection",
+    title: "Oat Cookies",
+    emoji: "🍪",
+    gradient: "from-gold/20 to-cream",
+    description: "Premium oat-based cookies — 100% ZERO MAIDHA",
+    href: "/shop?category=Cookies",
+  },
+  {
+    title: "Brownies",
     emoji: "🍫",
-    description: "Rich, indulgent, chocolatey",
     gradient: "from-brown to-navy",
-    href: "/shop?category=Chocolate",
-  },
-  {
-    title: "Butter Collection",
-    emoji: "🧈",
-    description: "Classic, buttery, melt-in-mouth",
-    gradient: "from-gold/30 to-cream",
-    href: "/shop?category=Butter",
-  },
-  {
-    title: "Healthy & Oatmeal",
-    emoji: "🌾",
-    description: "Wholesome, guilt-free, delicious",
-    gradient: "from-green/20 to-cream",
-    href: "/shop?category=Oatmeal",
-  },
-  {
-    title: "Gift Boxes",
-    emoji: "🎁",
-    description: "Perfect for every occasion",
-    gradient: "from-gold to-navy",
-    href: "/shop?category=Gift+Boxes",
+    description: "Fudgy oats brownies with rich chocolate flavor",
+    href: "/shop?category=Brownies",
   },
 ];
 
@@ -192,26 +166,28 @@ export default function StoreHomePage() {
             <ScrollReveal direction="left">
               <div className="space-y-6">
                 <p className="text-gold text-xs font-semibold tracking-[0.2em] uppercase">
-                  Fresh • Handcrafted • Delicious
+                  100% ZERO MAIDHA • PREMIUM OATS • HANDCRAFTED
                 </p>
                 <h1 className="font-heading text-5xl lg:text-display text-navy font-bold leading-[1.05]">
-                  Cookies Worth Coming Back For.
+                  Baked to Impress.<br />Baked With Purpose.
                 </h1>
                 <p className="text-muted text-lg leading-relaxed max-w-md">
-                  Freshly baked cookies made with premium ingredients, generous chocolate and a whole lot of love.
+                  Premium oat-based cookies and brownies, handcrafted in Nellore. 100% pure oats, no maida, no preservatives.
                 </p>
                 <div className="flex flex-wrap items-center gap-4 pt-2">
                   <Link href="/shop" className="btn-gold">
                     Shop Cookies
                   </Link>
-                  <Link href="/shop" className="btn-navy-outline">
-                    Explore Collection
+                  <Link href="/about" className="btn-navy-outline">
+                    Our Story
                   </Link>
                 </div>
                 <div className="flex items-center gap-3 pt-2 text-sm text-muted">
-                  <span>10,000+ Happy Customers</span>
+                  <span>100% Pure Oats</span>
                   <span className="text-gold">•</span>
-                  <span>4.9/5 Rating</span>
+                  <span>Zero Maida</span>
+                  <span className="text-gold">•</span>
+                  <span>No Preservatives</span>
                 </div>
               </div>
             </ScrollReveal>
@@ -222,10 +198,10 @@ export default function StoreHomePage() {
                   <span className="text-[140px] animate-float select-none">🍪</span>
                 </div>
                 <div className="absolute top-8 right-8 bg-surface shadow-warm-lg rounded-2xl px-4 py-3">
-                  <span className="text-sm font-semibold text-navy">✨ Baked Fresh Daily</span>
+                  <span className="text-sm font-semibold text-navy">🌾 100% Pure Oats</span>
                 </div>
                 <div className="absolute bottom-12 left-4 bg-surface shadow-warm-lg rounded-2xl px-4 py-3">
-                  <span className="text-sm font-semibold text-navy">⭐ 4.9/5 Customer Rating</span>
+                  <span className="text-sm font-semibold text-navy">🚫 Zero Maida</span>
                 </div>
               </div>
             </ScrollReveal>
@@ -238,9 +214,9 @@ export default function StoreHomePage() {
         <div className="container-tight">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
-              { number: "10,000+", label: "Happy Customers" },
-              { number: "100%", label: "Freshly Baked" },
-              { number: "4.9/5", label: "Customer Rating" },
+              { number: "100%", label: "Zero Maida" },
+              { number: "100%", label: "Pure Oats" },
+              { number: "No", label: "Preservatives" },
               { number: "2–3 Days", label: "Fast Delivery" },
             ].map((stat, i) => (
               <ScrollReveal key={stat.label} delay={i * 80}>
