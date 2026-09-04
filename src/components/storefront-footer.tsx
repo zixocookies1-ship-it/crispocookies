@@ -174,7 +174,7 @@ export default function StorefrontFooter() {
       <div className="border-t border-white/10">
         <div className="container-tight mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-cream/40 text-sm">
-            © 2024 Crispo Cookies. All rights reserved. Made in Nellore.
+            © 2025 Crispo Cookies. All rights reserved. Made in Nellore.
           </p>
           <div className="flex items-center gap-4">
             <a

@@ -4,6 +4,7 @@ import { Types } from "mongoose";
 export interface IProductVariant {
   weight: string;
   price: number;
+  mrp?: number;
   stock: number;
 }
 

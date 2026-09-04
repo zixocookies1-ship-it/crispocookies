@@ -136,13 +136,15 @@ export default function ProductCard({ product }: ProductCardProps) {
         )}
 
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-1.5">
-            {product.variants && product.variants.length > 1 && (
-              <span className="text-muted text-xs">From</span>
-            )}
+          <div className="flex items-center gap-2">
             <span className="text-gold font-bold text-xl">
               {formatPrice(lowestPrice)}
             </span>
+            {product.variants?.[0]?.mrp && product.variants[0].mrp > lowestPrice && (
+              <span className="text-muted text-sm line-through">
+                {formatPrice(product.variants[0].mrp)}
+              </span>
+            )}
           </div>
         </div>
 

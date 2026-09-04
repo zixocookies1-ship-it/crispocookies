@@ -17,7 +17,7 @@ const sampleProducts: any[] = [
     images: [],
     category: "Cookies",
     tags: ["bestseller", "zero-maida"],
-    variants: [{ weight: "300g (6 cookies)", price: 219, stock: 50 }],
+    variants: [{ weight: "300g (6 cookies)", price: 219, mrp: 399, stock: 50 }],
     isActive: true,
     createdAt: new Date(),
   },
@@ -31,7 +31,7 @@ const sampleProducts: any[] = [
     images: [],
     category: "Cookies",
     tags: ["bestseller", "zero-maida", "high-protein"],
-    variants: [{ weight: "300g (4 cookies)", price: 219, stock: 30 }],
+    variants: [{ weight: "300g (4 cookies)", price: 219, mrp: 399, stock: 30 }],
     isActive: true,
     createdAt: new Date(),
   },
@@ -45,7 +45,7 @@ const sampleProducts: any[] = [
     images: [],
     category: "Brownies",
     tags: ["bestseller", "zero-maida"],
-    variants: [{ weight: "300g (6 pieces)", price: 250, stock: 30 }],
+    variants: [{ weight: "300g (6 pieces)", price: 250, mrp: 499, stock: 30 }],
     isActive: true,
     createdAt: new Date(),
   },
@@ -59,7 +59,7 @@ const sampleProducts: any[] = [
     images: [],
     category: "Cookies",
     tags: ["zero-maida"],
-    variants: [{ weight: "300g (6 cookies)", price: 219, stock: 40 }],
+    variants: [{ weight: "300g (6 cookies)", price: 219, mrp: 399, stock: 40 }],
     isActive: true,
     createdAt: new Date(),
   },
@@ -289,9 +289,16 @@ export default function StoreHomePage() {
                     </div>
                     <h3 className="font-heading font-semibold text-navy text-lg mb-1">{product.name}</h3>
                     <p className="text-muted text-sm mb-3 flex-1">{truncate(product.shortDescription, 60)}</p>
-                    <p className="text-gold font-bold text-lg mb-3">
-                      {formatPrice(product.variants[0].price)}
-                    </p>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-gold font-bold text-lg">
+                        {formatPrice(product.variants[0].price)}
+                      </span>
+                      {product.variants[0].mrp && product.variants[0].mrp > product.variants[0].price && (
+                        <span className="text-muted text-sm line-through">
+                          {formatPrice(product.variants[0].mrp)}
+                        </span>
+                      )}
+                    </div>
                     <button
                       onClick={() => handleAddToCart(product)}
                       className="btn-gold btn-sm w-full"
