@@ -10,12 +10,6 @@ import {
   Heart,
   Gem,
   ShieldCheck,
-  Send,
-  Phone,
-  User,
-  Mail,
-  MessageSquare,
-  ShoppingBag,
 } from "lucide-react";
 
 const formatPrice = (p: number) => `₹${p}`;
@@ -127,13 +121,6 @@ const whyFeatures = [
 export default function StoreHomePage() {
   const addItem = useCartStore((s) => s.addItem);
   const [activeCollection, setActiveCollection] = useState<"cookies" | "brownies">("cookies");
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    product: "",
-    message: "",
-  });
 
   const handleAddToCart = (product: Product) => {
     addItem({
@@ -142,12 +129,6 @@ export default function StoreHomePage() {
       variant: { weight: product.weight, price: product.price },
       image: product.emoji,
     });
-  };
-
-  const handleEnquirySubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const msg = `Hi Crispo Cookies!%0A%0AName: ${formData.name}%0APhone: ${formData.phone}%0AEmail: ${formData.email || "N/A"}%0AProduct: ${formData.product}%0AMessage: ${formData.message}`;
-    window.open(`https://wa.me/917569831560?text=${msg}`, "_blank");
   };
 
   return (
@@ -314,22 +295,56 @@ export default function StoreHomePage() {
         </div>
       </section>
 
-      {/* ─── SECTION 4: ABOUT / OUR STORY ─── */}
+      {/* ─── SECTION 4: FROM OUR OVEN ─── */}
+      <section className="py-16 lg:py-24" aria-label="From Our Oven">
+        <div className="container-tight">
+          <div className="text-center mb-10">
+            <p className="eyebrow mb-4">From Our Oven</p>
+            <h2 className="font-heading text-4xl lg:text-section text-royal font-bold">
+              Watch the goodness come to life.
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="rounded-3xl overflow-hidden shadow-lift relative aspect-video">
+              <video
+                className="w-full h-full object-cover"
+                autoPlay
+                muted
+                loop
+                playsInline
+              >
+                <source src="/hero-1.mp4" type="video/mp4" />
+              </video>
+              <div className="absolute inset-0 bg-gradient-to-t from-plum/40 to-transparent pointer-events-none" />
+            </div>
+            <div className="rounded-3xl overflow-hidden shadow-lift relative aspect-video">
+              <video
+                className="w-full h-full object-cover"
+                autoPlay
+                muted
+                loop
+                playsInline
+              >
+                <source src="/hero-2.mp4" type="video/mp4" />
+              </video>
+              <div className="absolute inset-0 bg-gradient-to-t from-plum/40 to-transparent pointer-events-none" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SECTION 5: ABOUT / OUR STORY ─── */}
       <section className="py-16 lg:py-24" aria-label="Our Story">
         <div className="container-tight">
           <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center">
-            {/* Left – video */}
+            {/* Left – image */}
             <div className="flex justify-center">
               <div className="w-full max-w-md aspect-square rounded-3xl overflow-hidden shadow-lift relative">
-                <video
+                <img
+                  src="/our story.jpg"
+                  alt="Crispo Cookies — baked with love"
                   className="w-full h-full object-cover"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                >
-                  <source src="/hero-2.mp4" type="video/mp4" />
-                </video>
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-plum/30 to-transparent pointer-events-none" />
               </div>
             </div>
@@ -371,7 +386,7 @@ export default function StoreHomePage() {
         </div>
       </section>
 
-      {/* ─── SECTION 5: WHY CRISPO ─── */}
+      {/* ─── SECTION 6: WHY CRISPO ─── */}
       <section
         className="py-16 lg:py-20 bg-cream-dark"
         aria-label="Why Crispo"
@@ -399,139 +414,6 @@ export default function StoreHomePage() {
               );
             })}
           </div>
-        </div>
-      </section>
-
-      {/* ─── SECTION 6: ENQUIRY FORM ─── */}
-      <section className="py-16 lg:py-24" aria-label="Enquiry Form">
-        <div className="container-tight max-w-2xl mx-auto">
-          <div className="text-center mb-10">
-            <p className="eyebrow mb-3">Get in Touch</p>
-            <h2 className="section-heading">Enquire Now</h2>
-          </div>
-          <form
-            onSubmit={handleEnquirySubmit}
-            className="surface-card rounded-2xl p-8 space-y-5"
-          >
-            <div>
-              <label className="block text-sm font-semibold text-royal mb-1.5">
-                Name
-              </label>
-              <div className="relative">
-                <User
-                  size={16}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"
-                />
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  placeholder="Your name"
-                  className="input-field pl-11"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-royal mb-1.5">
-                Phone
-              </label>
-              <div className="relative">
-                <Phone
-                  size={16}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"
-                />
-                <input
-                  type="tel"
-                  required
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                  placeholder="Your phone number"
-                  className="input-field pl-11"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-royal mb-1.5">
-                Email{" "}
-                <span className="text-muted font-normal">(optional)</span>
-              </label>
-              <div className="relative">
-                <Mail
-                  size={16}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"
-                />
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  placeholder="your@email.com"
-                  className="input-field pl-11"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-royal mb-1.5">
-                Product Interested In
-              </label>
-              <div className="relative">
-                <ShoppingBag
-                  size={16}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"
-                />
-                <select
-                  required
-                  value={formData.product}
-                  onChange={(e) =>
-                    setFormData({ ...formData, product: e.target.value })
-                  }
-                  className="input-field pl-11 appearance-none"
-                >
-                  <option value="">Select a product</option>
-                  {products.map((p) => (
-                    <option key={p.slug} value={p.name}>
-                      {p.name} — {formatPrice(p.price)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-royal mb-1.5">
-                Message
-              </label>
-              <div className="relative">
-                <MessageSquare
-                  size={16}
-                  className="absolute left-4 top-4 text-muted"
-                />
-                <textarea
-                  rows={4}
-                  value={formData.message}
-                  onChange={(e) =>
-                    setFormData({ ...formData, message: e.target.value })
-                  }
-                  placeholder="Tell us what you need..."
-                  className="input-field pl-11 resize-none"
-                />
-              </div>
-            </div>
-
-            <button type="submit" className="btn-gold w-full flex items-center justify-center gap-2">
-              <Send size={16} />
-              Send Enquiry
-            </button>
-          </form>
         </div>
       </section>
     </>
