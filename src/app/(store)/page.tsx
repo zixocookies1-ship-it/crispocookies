@@ -153,49 +153,34 @@ export default function StoreHomePage() {
       {/* ─── SECTION 1: HERO ─── */}
       <section
         className="relative min-h-screen flex items-center overflow-hidden"
-        style={{
-          background:
-            "linear-gradient(160deg, #FAF7F2 0%, #F4EFE8 40%, #FAF7F2 70%, #F4EFE8 100%)",
-        }}
         aria-label="Hero"
       >
-        {/* Decorative circles */}
-        <div className="absolute top-20 right-[10%] w-72 h-72 rounded-full bg-gold/5 blur-3xl" />
-        <div className="absolute bottom-20 left-[5%] w-96 h-96 rounded-full bg-plum/5 blur-3xl" />
-
-        {/* Floating cookie emojis */}
-        <span className="absolute top-[15%] left-[8%] text-5xl animate-float select-none opacity-60">
-          🍪
-        </span>
-        <span
-          className="absolute top-[25%] right-[12%] text-4xl select-none opacity-50"
-          style={{ animation: "crispoFloat 8s ease-in-out 1s infinite" }}
-        >
-          🍪
-        </span>
-        <span
-          className="absolute bottom-[20%] left-[18%] text-3xl select-none opacity-40"
-          style={{ animation: "crispoFloat 7s ease-in-out 2s infinite" }}
-        >
-          🍪
-        </span>
-        <span
-          className="absolute bottom-[30%] right-[22%] text-4xl select-none opacity-45"
-          style={{ animation: "crispoFloat 9s ease-in-out 0.5s infinite" }}
-        >
-          🍪
-        </span>
+        {/* Video background */}
+        <div className="absolute inset-0 z-0">
+          <video
+            className="w-full h-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+            poster="/logo.jpeg"
+          >
+            <source src="/hero-1.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-r from-espresso/70 via-plum/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-cream via-transparent to-plum/20" />
+        </div>
 
         <div className="container-wide relative z-10 py-20 lg:py-0">
           <div className="max-w-2xl mx-auto text-center lg:text-left lg:mx-0">
-            <p className="eyebrow mb-4">Baked to Perfection</p>
-            <h1 className="font-heading text-5xl sm:text-6xl lg:text-display text-royal font-bold leading-[1.05] mb-5">
+            <p className="eyebrow mb-4 text-gold-soft">Baked to Perfection</p>
+            <h1 className="font-heading text-5xl sm:text-6xl lg:text-display text-cream font-bold leading-[1.05] mb-5">
               Baked to Impress.
             </h1>
-            <p className="text-muted text-lg mb-3">
+            <p className="text-cream/85 text-lg mb-3">
               Made with love for every bite.
             </p>
-            <p className="text-plum font-medium text-base mb-8">
+            <p className="text-gold-soft font-medium text-base mb-8">
               A Little Crisp. A Lot of Love.
             </p>
             <div className="flex flex-wrap items-center gap-4 justify-center lg:justify-start">
@@ -206,7 +191,7 @@ export default function StoreHomePage() {
                 href="https://wa.me/917569831560"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-royal"
+                className="inline-flex items-center justify-center font-body font-semibold px-8 py-3.5 rounded-full border-2 border-cream/40 text-cream hover:bg-cream hover:text-plum transition-all duration-300 text-sm tracking-wider uppercase"
               >
                 Order on WhatsApp
               </a>
@@ -320,24 +305,19 @@ export default function StoreHomePage() {
       <section className="py-16 lg:py-24" aria-label="Our Story">
         <div className="container-tight">
           <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center">
-            {/* Left – decorative */}
+            {/* Left – video */}
             <div className="flex justify-center">
-              <div className="w-full max-w-md aspect-square rounded-3xl bg-gradient-to-br from-gold/15 via-cream to-plum/5 flex items-center justify-center relative">
-                <span className="text-[120px] select-none animate-float">
-                  🍪
-                </span>
-                <span
-                  className="absolute top-8 right-8 text-4xl opacity-50"
-                  style={{ animation: "crispoFloat 7s ease-in-out 1s infinite" }}
+              <div className="w-full max-w-md aspect-square rounded-3xl overflow-hidden shadow-lift relative">
+                <video
+                  className="w-full h-full object-cover"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
                 >
-                  🌾
-                </span>
-                <span
-                  className="absolute bottom-10 left-10 text-3xl opacity-40"
-                  style={{ animation: "crispoFloat 6s ease-in-out 2s infinite" }}
-                >
-                  🌿
-                </span>
+                  <source src="/hero-2.mp4" type="video/mp4" />
+                </video>
+                <div className="absolute inset-0 bg-gradient-to-t from-plum/30 to-transparent pointer-events-none" />
               </div>
             </div>
 

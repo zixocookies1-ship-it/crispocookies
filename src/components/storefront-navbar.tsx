@@ -39,7 +39,11 @@ export default function StorefrontNavbar() {
         {/* Desktop */}
         <div className="hidden md:flex items-center justify-between max-w-7xl mx-auto px-6 h-[72px]">
           <Link href="/" className="flex-shrink-0 flex items-center gap-2">
-            <span className="text-xl">🍪</span>
+            <img
+              src="/logo.jpeg"
+              alt="Crispo Cookies"
+              className="h-11 w-auto object-contain"
+            />
             <span className="font-heading text-xl font-bold text-plum tracking-[0.12em] uppercase">
               CRISPO
             </span>
@@ -120,7 +124,11 @@ export default function StorefrontNavbar() {
         {/* Mobile */}
         <div className="flex md:hidden items-center justify-between px-4 h-[64px]">
           <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-1.5">
-            <span className="text-lg">🍪</span>
+            <img
+              src="/logo.jpeg"
+              alt="Crispo Cookies"
+              className="h-9 w-auto object-contain"
+            />
             <span className="font-heading text-lg font-bold text-plum tracking-[0.12em] uppercase">
               CRISPO
             </span>
@@ -166,7 +174,11 @@ export default function StorefrontNavbar() {
                 onClick={() => setMobileOpen(false)}
                 className="flex items-center gap-1.5"
               >
-                <span className="text-lg">🍪</span>
+                <img
+                  src="/logo.jpeg"
+                  alt="Crispo Cookies"
+                  className="h-9 w-auto object-contain"
+                />
                 <span className="font-heading text-lg font-bold text-plum tracking-[0.12em] uppercase">
                   CRISPO
                 </span>

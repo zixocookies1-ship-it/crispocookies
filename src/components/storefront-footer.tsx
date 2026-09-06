@@ -22,11 +22,12 @@ export default function StorefrontFooter() {
       <div className="container-tight mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-20 pb-12">
         {/* Top Section: Logo + Tagline */}
         <div className="text-center mb-14">
-          <Link
-            href="/"
-            className="font-heading text-4xl font-bold text-[#F5F0E8] tracking-[0.2em] uppercase"
-          >
-            CRISPO
+          <Link href="/" className="inline-flex items-center justify-center">
+            <img
+              src="/logo.jpeg"
+              alt="Crispo Cookies"
+              className="h-16 w-auto object-contain mx-auto"
+            />
           </Link>
           <p className="text-[#F5F0E8]/70 text-sm mt-4 max-w-xl mx-auto leading-relaxed">
             Baked to impress, made to crave. Premium oat-based cookies and
