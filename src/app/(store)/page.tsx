@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useCartStore } from "@/store/useCartStore";
+import { cn } from "@/lib/utils";
 import {
   ShoppingCart,
   Wheat,
@@ -125,6 +126,7 @@ const whyFeatures = [
 
 export default function StoreHomePage() {
   const addItem = useCartStore((s) => s.addItem);
+  const [activeCollection, setActiveCollection] = useState<"cookies" | "brownies">("cookies");
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -232,103 +234,82 @@ export default function StoreHomePage() {
         </div>
       </section>
 
-      {/* ─── SECTION 3: COOKIE COLLECTION ─── */}
-      <section className="py-16 lg:py-20" aria-label="Cookie Collection">
+      {/* ─── SECTION 3: THE COLLECTION ─── */}
+      <section className="py-16 lg:py-24 bg-cream-dark" aria-label="The Collection">
         <div className="container-tight">
-          <h2 className="section-heading text-center mb-10">
-            Our Cookie Collection
-          </h2>
-          <div className="flex gap-5 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-4">
-            {cookieProducts.map((product) => {
-              const discount = calcDiscount(product.mrp, product.price);
-              return (
-                <div
-                  key={product.slug}
-                  className="min-w-[260px] max-w-[280px] snap-start shrink-0 surface-card rounded-2xl overflow-hidden flex flex-col"
-                >
-                  <div className="bg-gradient-to-br from-gold/10 via-cream to-beige h-48 flex items-center justify-center">
-                    <span className="text-7xl select-none">
-                      {product.emoji}
-                    </span>
-                  </div>
-                  <div className="p-5 flex flex-col flex-1">
-                    <h3 className="font-heading text-lg font-semibold text-royal mb-2">
-                      {product.name}
-                    </h3>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-gold font-bold text-lg">
-                        {formatPrice(product.price)}
-                      </span>
-                      <span className="text-muted text-sm line-through">
-                        {formatPrice(product.mrp)}
-                      </span>
-                    </div>
-                    <span className="text-green text-xs font-semibold mb-4">
-                      {discount}% OFF
-                    </span>
-                    <button
-                      onClick={() => handleAddToCart(product)}
-                      className="btn-gold btn-sm w-full mt-auto flex items-center justify-center gap-2"
-                    >
-                      <ShoppingCart size={14} />
-                      Add to Cart
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="text-center mb-10">
+            <p className="eyebrow mb-4">The Collection</p>
+            <h2 className="font-heading text-4xl lg:text-section text-royal font-bold mb-3">
+              Crispo Cookies
+            </h2>
+            <p className="text-muted text-lg">
+              Switch between cookies and brownies — every box is{" "}
+              <span className="text-royal font-semibold">100% ZERO MAIDHA</span>.
+            </p>
           </div>
-        </div>
-      </section>
 
-      {/* ─── SECTION 3: BROWNIE COLLECTION ─── */}
-      <section
-        className="py-16 lg:py-20 bg-cream-dark"
-        aria-label="Brownie Collection"
-      >
-        <div className="container-tight">
-          <h2 className="section-heading text-center mb-10">
-            Our Brownie Collection
-          </h2>
-          <div className="flex gap-5 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-4">
-            {brownieProducts.map((product) => {
-              const discount = calcDiscount(product.mrp, product.price);
-              return (
-                <div
-                  key={product.slug}
-                  className="min-w-[260px] max-w-[280px] snap-start shrink-0 surface-card rounded-2xl overflow-hidden flex flex-col"
+          {/* Tabs */}
+          <div className="flex justify-center mb-10">
+            <div className="inline-flex p-1.5 rounded-full bg-cream border border-lavender/40 shadow-soft">
+              {(["cookies", "brownies"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveCollection(tab)}
+                  className={cn(
+                    "px-8 py-2.5 rounded-full text-sm font-bold tracking-wider uppercase transition-all duration-300 cursor-pointer",
+                    activeCollection === tab
+                      ? "bg-royal text-cream shadow-lift"
+                      : "text-plum/60 hover:text-plum"
+                  )}
                 >
-                  <div className="bg-gradient-to-br from-chocolate/10 via-cream to-beige h-48 flex items-center justify-center">
-                    <span className="text-7xl select-none">
-                      {product.emoji}
-                    </span>
-                  </div>
-                  <div className="p-5 flex flex-col flex-1">
-                    <h3 className="font-heading text-lg font-semibold text-royal mb-2">
-                      {product.name}
-                    </h3>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-gold font-bold text-lg">
-                        {formatPrice(product.price)}
-                      </span>
-                      <span className="text-muted text-sm line-through">
-                        {formatPrice(product.mrp)}
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Products */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {(activeCollection === "cookies" ? cookieProducts : brownieProducts).map(
+              (product) => {
+                const discount = calcDiscount(product.mrp, product.price);
+                return (
+                  <div
+                    key={product.slug}
+                    className="surface-card rounded-2xl overflow-hidden flex flex-col hover:shadow-lift transition-shadow duration-300"
+                  >
+                    <div className="bg-gradient-to-br from-gold/10 via-cream to-beige h-48 flex items-center justify-center">
+                      <span className="text-7xl select-none">
+                        {product.emoji}
                       </span>
                     </div>
-                    <span className="text-green text-xs font-semibold mb-4">
-                      {discount}% OFF
-                    </span>
-                    <button
-                      onClick={() => handleAddToCart(product)}
-                      className="btn-gold btn-sm w-full mt-auto flex items-center justify-center gap-2"
-                    >
-                      <ShoppingCart size={14} />
-                      Add to Cart
-                    </button>
+                    <div className="p-5 flex flex-col flex-1">
+                      <h3 className="font-heading text-lg font-semibold text-royal mb-2">
+                        {product.name}
+                      </h3>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-gold font-bold text-lg">
+                          {formatPrice(product.price)}
+                        </span>
+                        <span className="text-muted text-sm line-through">
+                          {formatPrice(product.mrp)}
+                        </span>
+                      </div>
+                      <span className="text-green text-xs font-semibold mb-4">
+                        {discount}% OFF
+                      </span>
+                      <button
+                        onClick={() => handleAddToCart(product)}
+                        className="btn-gold btn-sm w-full mt-auto flex items-center justify-center gap-2"
+                      >
+                        <ShoppingCart size={14} />
+                        Add to Cart
+                      </button>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              }
+            )}
           </div>
         </div>
       </section>
