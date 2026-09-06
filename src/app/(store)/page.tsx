@@ -200,7 +200,39 @@ export default function StoreHomePage() {
         </div>
       </section>
 
-      {/* ─── SECTION 2: COOKIE COLLECTION ─── */}
+      {/* ─── SECTION 2: OUR STORY ─── */}
+      <section className="py-16 lg:py-24" aria-label="Our Story">
+        <div className="container-tight max-w-4xl mx-auto text-center">
+          <p className="eyebrow mb-4">Our Story</p>
+          <h2 className="font-heading text-4xl lg:text-section text-royal font-bold mb-6">
+            A Little Crisp. A Lot of Love.
+          </h2>
+          <p className="text-muted text-lg leading-relaxed max-w-3xl mx-auto mb-10">
+            At CRISPO COOKIES, every bite is made to bring together great taste,
+            quality ingredients and wholesome goodness. From indulgent chocolate
+            cookies to fruity and nutritious creations, our cookies are crafted
+            with care and baked to make every moment a little sweeter.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            {[
+              "100% ZERO MAIDHA",
+              "MADE WITH OATS",
+              "PREMIUM INGREDIENTS",
+              "HANDCRAFTED",
+              "MADE WITH LOVE",
+            ].map((badge) => (
+              <span
+                key={badge}
+                className="px-5 py-2.5 rounded-full border border-gold/30 bg-gold/10 text-plum text-xs font-bold tracking-widest uppercase"
+              >
+                {badge}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SECTION 3: COOKIE COLLECTION ─── */}
       <section className="py-16 lg:py-20" aria-label="Cookie Collection">
         <div className="container-tight">
           <h2 className="section-heading text-center mb-10">

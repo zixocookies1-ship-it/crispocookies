@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import StorefrontNavbar from "@/components/storefront-navbar";
 import StorefrontFooter from "@/components/storefront-footer";
 import FloatingWhatsApp from "@/components/floating-whatsapp";
+import AnnouncementBar from "@/components/announcement-bar";
 
 export const metadata: Metadata = {
   title: {
@@ -21,6 +22,7 @@ export const metadata: Metadata = {
 export default function StoreLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
+      <AnnouncementBar />
       <StorefrontNavbar />
       <main className="flex-1">{children}</main>
       <StorefrontFooter />
