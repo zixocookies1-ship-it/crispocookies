@@ -11,7 +11,7 @@ const config: Config = {
       colors: {
         cream:    { DEFAULT: "#FAF7F2", dark: "#F0EBE0" },
         beige:    { DEFAULT: "#F4EFE8" },
-        gold:     { DEFAULT: "#C4972A", light: "#D4A94A", hover: "#B08820", 50: "#FDF8ED" },
+        gold:     { DEFAULT: "#C4972A", light: "#D4A94A", soft: "#D4A94A", hover: "#B08820", 50: "#FDF8ED" },
         royal:    { DEFAULT: "#1B1B4B", light: "#2A2A6B" },
         plum:     { DEFAULT: "#3A2A5C", light: "#5A4A7C" },
         lavender: { DEFAULT: "#B8A9D4", light: "#D4C9E8" },

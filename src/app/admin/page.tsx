@@ -315,9 +315,9 @@ export default function DashboardPage() {
           </h2>
           <div className="space-y-2 mb-4">
             {stats.lowStockProducts.map((p) => (
-              <div key={p._id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                <span className="text-sm text-[#1B1B4B] font-medium">{p.name}</span>
-                <span className="text-sm text-[#D97706] font-medium">{p.stock} left</span>
+              <div key={p._id} className="flex items-center justify-between gap-3 py-2 border-b border-gray-50 last:border-0">
+                <span className="text-sm text-[#1B1B4B] font-medium truncate">{p.name}</span>
+                <span className="text-sm text-[#D97706] font-medium shrink-0">{p.stock} left</span>
               </div>
             ))}
           </div>

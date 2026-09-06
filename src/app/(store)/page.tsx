@@ -154,7 +154,7 @@ export default function StoreHomePage() {
     <>
       {/* ─── SECTION 1: HERO ─── */}
       <section
-        className="relative min-h-screen flex items-center overflow-hidden"
+        className="relative min-h-screen min-h-[100svh] flex items-center overflow-hidden"
         aria-label="Hero"
       >
         {/* Video background */}
@@ -490,7 +490,7 @@ export default function StoreHomePage() {
               href="https://www.instagram.com/rahul.bites"
               target="_blank"
               rel="noopener noreferrer"
-              className="surface-card rounded-[2rem] p-10 flex flex-col items-center text-center hover:shadow-lift hover:-translate-y-1 transition-all duration-300 group"
+              className="surface-card rounded-[2rem] p-8 sm:p-10 flex flex-col items-center text-center hover:shadow-lift hover:-translate-y-1 transition-all duration-300 group"
             >
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gold to-royal flex items-center justify-center mb-5">
                 <InstagramIcon className="w-8 h-8 text-cream" />
@@ -511,7 +511,7 @@ export default function StoreHomePage() {
               href="https://www.youtube.com/@Rahul-Bites"
               target="_blank"
               rel="noopener noreferrer"
-              className="surface-card rounded-[2rem] p-10 flex flex-col items-center text-center hover:shadow-lift hover:-translate-y-1 transition-all duration-300 group"
+              className="surface-card rounded-[2rem] p-8 sm:p-10 flex flex-col items-center text-center hover:shadow-lift hover:-translate-y-1 transition-all duration-300 group"
             >
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-plum to-royal flex items-center justify-center mb-5">
                 <YoutubeIcon className="w-8 h-8 text-cream" />

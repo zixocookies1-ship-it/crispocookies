@@ -49,10 +49,10 @@ export default function CartPage() {
           {items.map((item) => (
             <div
               key={`${item.productId}-${item.variant.weight}`}
-              className="bg-surface rounded-2xl shadow-warm p-5 flex gap-5"
+              className="bg-surface rounded-2xl shadow-soft p-4 sm:p-5 flex gap-4 sm:gap-5"
             >
-              <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-cream to-gold/10 flex items-center justify-center shrink-0">
-                <span className="text-3xl select-none">🍪</span>
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-gradient-to-br from-cream to-gold/10 flex items-center justify-center shrink-0">
+                <span className="text-2xl sm:text-3xl select-none">🍪</span>
               </div>
 
               <div className="flex-1 min-w-0">
@@ -61,13 +61,14 @@ export default function CartPage() {
                 </h3>
                 <p className="text-muted text-sm">{item.variant.weight}</p>
 
-                <div className="flex items-center justify-between mt-3">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between mt-3 gap-3 flex-wrap">
+                  <div className="flex items-center gap-3 shrink-0">
                     <button
                       onClick={() =>
                         updateQty(item.productId, item.variant.weight, item.qty - 1)
                       }
-                      className="w-8 h-8 rounded-full border border-royal/20 flex items-center justify-center hover:border-gold transition-colors text-sm"
+                      aria-label="Decrease quantity"
+                      className="w-10 h-10 rounded-full border border-royal/20 flex items-center justify-center hover:border-gold transition-colors text-sm"
                     >
                       <Minus size={14} />
                     </button>
@@ -78,7 +79,8 @@ export default function CartPage() {
                       onClick={() =>
                         updateQty(item.productId, item.variant.weight, item.qty + 1)
                       }
-                      className="w-8 h-8 rounded-full border border-royal/20 flex items-center justify-center hover:border-gold transition-colors text-sm"
+                      aria-label="Increase quantity"
+                      className="w-10 h-10 rounded-full border border-royal/20 flex items-center justify-center hover:border-gold transition-colors text-sm"
                     >
                       <Plus size={14} />
                     </button>
@@ -90,7 +92,8 @@ export default function CartPage() {
 
                   <button
                     onClick={() => removeItem(item.productId, item.variant.weight)}
-                    className="text-muted hover:text-red transition-colors"
+                    aria-label={`Remove ${item.name}`}
+                    className="text-muted hover:text-red transition-colors p-1"
                   >
                     <X size={18} />
                   </button>
@@ -109,7 +112,7 @@ export default function CartPage() {
 
         {/* Order Summary */}
         <div className="lg:col-span-2">
-          <div className="bg-surface rounded-2xl shadow-warm p-6 sticky top-24">
+          <div className="bg-surface rounded-2xl shadow-soft p-6 sticky top-24">
             <h2 className="font-heading text-lg font-semibold text-royal mb-6">
               Order Summary
             </h2>

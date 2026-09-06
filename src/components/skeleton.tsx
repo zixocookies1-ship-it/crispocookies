@@ -1,6 +1,6 @@
 export function ProductCardSkeleton() {
   return (
-    <div className="bg-surface rounded-2xl shadow-warm overflow-hidden animate-pulse">
+    <div className="bg-surface rounded-2xl shadow-soft overflow-hidden animate-pulse">
       <div className="aspect-square bg-gray-200" />
       <div className="p-4 space-y-3">
         <div className="flex gap-2">
@@ -46,7 +46,7 @@ export function TableSkeleton({
 
 export function StatsCardSkeleton() {
   return (
-    <div className="bg-surface rounded-2xl shadow-warm p-6 animate-pulse">
+    <div className="bg-surface rounded-2xl shadow-soft p-6 animate-pulse">
       <div className="flex items-center justify-between mb-4">
         <div className="h-4 w-24 bg-gray-200 rounded" />
         <div className="h-10 w-10 bg-gray-200 rounded-xl" />

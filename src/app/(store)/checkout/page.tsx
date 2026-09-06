@@ -152,7 +152,7 @@ export default function CheckoutPage() {
           <h2 className="font-heading text-xl font-semibold text-royal mb-6">
             Delivery Details
           </h2>
-          <div className="bg-surface rounded-2xl shadow-warm p-8">
+          <div className="bg-surface rounded-2xl shadow-soft p-6 sm:p-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-royal mb-1">Full Name</label>
@@ -162,6 +162,7 @@ export default function CheckoutPage() {
                   onChange={handleChange}
                   className="input-field"
                   placeholder="John Doe"
+                  autoComplete="name"
                   required
                 />
               </div>
@@ -169,11 +170,14 @@ export default function CheckoutPage() {
                 <label className="block text-sm font-medium text-royal mb-1">Phone</label>
                 <input
                   name="phone"
+                  type="tel"
+                  inputMode="numeric"
                   value={form.phone}
                   onChange={handleChange}
                   className="input-field"
                   placeholder="9876543210"
                   maxLength={10}
+                  autoComplete="tel-national"
                   required
                 />
               </div>
@@ -186,6 +190,7 @@ export default function CheckoutPage() {
                   onChange={handleChange}
                   className="input-field"
                   placeholder="you@example.com"
+                  autoComplete="email"
                   required
                 />
               </div>
@@ -197,6 +202,7 @@ export default function CheckoutPage() {
                   onChange={handleChange}
                   className="input-field"
                   placeholder="123 Main Street"
+                  autoComplete="address-line1"
                   required
                 />
               </div>
@@ -208,6 +214,7 @@ export default function CheckoutPage() {
                   onChange={handleChange}
                   className="input-field"
                   placeholder="Apartment, suite, etc."
+                  autoComplete="address-line2"
                 />
               </div>
               <div>
@@ -218,6 +225,7 @@ export default function CheckoutPage() {
                   onChange={handleChange}
                   className="input-field"
                   placeholder="Mumbai"
+                  autoComplete="address-level2"
                   required
                 />
               </div>
@@ -228,6 +236,7 @@ export default function CheckoutPage() {
                   value={form.state}
                   onChange={handleChange}
                   className="input-field"
+                  autoComplete="address-level1"
                   required
                 >
                   <option value="" disabled>Select your state</option>
@@ -272,6 +281,8 @@ export default function CheckoutPage() {
                   className="input-field"
                   placeholder="400001"
                   maxLength={6}
+                  inputMode="numeric"
+                  autoComplete="postal-code"
                   required
                 />
               </div>
@@ -281,7 +292,7 @@ export default function CheckoutPage() {
 
         {/* Right: Summary */}
         <div className="lg:col-span-2">
-          <div className="bg-surface rounded-2xl shadow-warm p-6 sticky top-24">
+          <div className="bg-surface rounded-2xl shadow-soft p-6 sticky top-24">
             <h2 className="font-heading text-lg font-semibold text-royal mb-6">
               Order Summary
             </h2>

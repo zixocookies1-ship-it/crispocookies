@@ -49,7 +49,7 @@ export default function ConfirmModal({
         if (e.target === overlayRef.current) onClose();
       }}
     >
-      <div className="bg-surface rounded-2xl shadow-warm-lg w-full max-w-md p-6 relative animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-surface rounded-2xl shadow-lift w-full max-w-md p-6 relative animate-in fade-in zoom-in-95 duration-200">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-muted hover:text-navy transition-colors"

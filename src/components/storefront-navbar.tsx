@@ -147,7 +147,7 @@ export default function StorefrontNavbar() {
           />
 
           {/* Slide-in panel */}
-          <div className="absolute inset-y-0 right-0 w-[300px] bg-cream shadow-2xl flex flex-col animate-slide-in-right">
+          <div className="absolute inset-y-0 right-0 w-[85%] max-w-[300px] bg-cream shadow-2xl flex flex-col animate-slide-in-right">
             <div className="flex items-center justify-between px-5 h-[64px] border-b border-lavender/30">
               <Link
                 href="/"

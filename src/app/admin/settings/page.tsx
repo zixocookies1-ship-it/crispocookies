@@ -107,12 +107,12 @@ export default function SettingsPage() {
       <h1 className="font-heading font-bold text-[#1B1B4B] text-2xl">Settings</h1>
 
       {/* Tabs */}
-      <div className="flex gap-0 border-b border-gray-200">
+      <div className="flex gap-0 border-b border-gray-200 overflow-x-auto no-scrollbar">
         {TABS.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            className={`px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px whitespace-nowrap ${
               activeTab === tab
                 ? "border-[#8B6410] text-[#8B6410]"
                 : "border-transparent text-[#5A5A7A] hover:text-[#1B1B4B]"

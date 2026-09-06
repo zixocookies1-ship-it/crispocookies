@@ -70,7 +70,7 @@ export default function BrownieCollectionPage() {
               <div key={brownie.slug} className="scene-3d">
                 <div className="surface-card rounded-3xl overflow-hidden flex flex-col h-full">
                   {/* Emoji Header */}
-                  <div className="bg-gradient-to-br from-brown/20 via-cream to-royal/5 aspect-[4/3] flex items-center justify-center relative">
+                  <div className="bg-gradient-to-br from-chocolate/20 via-cream to-royal/5 aspect-[4/3] flex items-center justify-center relative">
                     <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-chocolate/20 to-royal/5 flex items-center justify-center">
                       <span className="text-5xl select-none">{brownie.emoji}</span>
                     </div>

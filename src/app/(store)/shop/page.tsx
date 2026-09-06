@@ -179,7 +179,7 @@ export default function ShopPage() {
               <ChevronDown className="w-4 h-4" />
             </button>
             {sortOpen && (
-              <div className="absolute right-0 top-full mt-1 bg-surface rounded-xl shadow-warm z-20 w-48 overflow-hidden">
+              <div className="absolute right-0 top-full mt-1 bg-surface rounded-xl shadow-soft z-20 w-48 overflow-hidden">
                 {sortOptions.map((opt) => (
                   <button
                     key={opt}
@@ -214,7 +214,7 @@ export default function ShopPage() {
               return (
                 <div
                   key={product._id}
-                  className="bg-surface rounded-2xl shadow-warm overflow-hidden flex flex-col hover:shadow-warm-lg transition-shadow"
+                  className="bg-surface rounded-2xl shadow-soft overflow-hidden flex flex-col hover:shadow-lift transition-shadow"
                 >
                   {/* Emoji image */}
                   <div className="relative bg-beige rounded-2xl flex items-center justify-center h-48">

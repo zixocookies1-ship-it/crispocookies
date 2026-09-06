@@ -26,7 +26,7 @@ function OrderSuccessContent() {
           {orderId}
         </p>
 
-        <div className="bg-surface rounded-2xl shadow-warm p-6 mb-8 text-left">
+        <div className="bg-surface rounded-2xl shadow-soft p-6 mb-8 text-left">
           <div className="flex items-center gap-3 mb-4">
             <Package className="text-gold h-5 w-5" />
             <h3 className="font-heading font-semibold text-royal">

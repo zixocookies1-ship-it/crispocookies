@@ -189,7 +189,7 @@ export default function AboutPage() {
       {/* CTA */}
       <section className="pb-20">
         <div className="container-tight">
-          <div className="rounded-[2.5rem] p-14 text-center bg-gradient-to-br from-royal to-plum relative overflow-hidden shadow-lift">
+          <div className="rounded-[2.5rem] p-8 sm:p-14 text-center bg-gradient-to-br from-royal to-plum relative overflow-hidden shadow-lift">
             <div className="absolute top-10 right-[15%] w-56 h-56 rounded-full bg-gold/10 blur-3xl" />
             <div className="relative z-10">
               <h2 className="font-heading text-4xl lg:text-section text-cream font-bold mb-4">

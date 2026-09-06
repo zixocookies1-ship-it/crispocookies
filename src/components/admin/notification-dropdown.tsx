@@ -74,7 +74,7 @@ export default function NotificationDropdown({ onClose, onCountChange }: Props) 
   return (
     <div
       ref={ref}
-      className="absolute right-0 top-12 w-[380px] bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
+      className="absolute right-0 top-12 w-[85vw] max-w-[380px] bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
     >
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
         <h3 className="font-heading font-bold text-[#1B1B4B]">Notifications</h3>

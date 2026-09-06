@@ -177,7 +177,7 @@ export default function OrderDetailPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-[#5A5A7A]">Payment ID</span>
-              <span className="text-[#1B1B4B] font-mono text-xs">
+              <span className="text-[#1B1B4B] font-mono text-xs break-all min-w-0">
                 {order.razorpayPaymentId || "-"}
               </span>
             </div>

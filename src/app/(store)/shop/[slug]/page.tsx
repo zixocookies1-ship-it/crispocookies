@@ -184,7 +184,7 @@ export default function ProductDetailPage() {
   return (
     <div className="bg-cream-dark min-h-screen">
       <div className="container-tight py-4">
-        <nav className="flex items-center gap-2 text-sm text-muted">
+        <nav className="flex flex-wrap items-center gap-2 text-sm text-muted">
           <Link href="/" className="hover:text-gold transition-colors">Home</Link>
           <span>/</span>
           <Link href="/shop" className="hover:text-gold transition-colors">Shop</Link>
@@ -196,7 +196,7 @@ export default function ProductDetailPage() {
       <div className="container-tight py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div>
-            <div className="aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-cream via-gold/10 to-royal/5 flex items-center justify-center shadow-warm-lg">
+            <div className="aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-cream via-gold/10 to-royal/5 flex items-center justify-center shadow-lift">
               <span className="text-[120px] select-none" role="img" aria-label="product">🍪</span>
             </div>
           </div>
@@ -296,7 +296,7 @@ export default function ProductDetailPage() {
       {/* Benefits */}
       {product.benefits && (
         <div className="container-tight mt-8">
-          <div className="bg-surface rounded-2xl p-6 shadow-warm">
+          <div className="bg-surface rounded-2xl p-6 shadow-soft">
             <div className="flex items-center gap-2 mb-4">
               <Leaf className="w-5 h-5 text-green" />
               <h3 className="font-heading text-lg font-semibold text-royal">Key Benefits</h3>
@@ -332,7 +332,7 @@ export default function ProductDetailPage() {
           ))}
         </div>
 
-        <div className="bg-surface rounded-2xl p-8 shadow-warm mt-6">
+        <div className="bg-surface rounded-2xl p-6 sm:p-8 shadow-soft mt-6">
           {activeTab === "description" && (
             <p className="text-muted leading-relaxed">{product.fullDescription}</p>
           )}
