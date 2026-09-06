@@ -7,29 +7,20 @@ import { Search, Heart, ShoppingBag, Menu, X, ChevronRight } from "lucide-react"
 import { useCartStore } from "@/store/useCartStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
 import { cn } from "@/lib/utils";
-import AnnouncementBar from "@/components/announcement-bar";
 
 const navLinks = [
-  { label: "Home", href: "/" },
-  { label: "Shop", href: "/shop" },
-
-  { label: "Our Story", href: "/about" },
+  { label: "About", href: "/about" },
+  { label: "Cookies", href: "/cookies" },
+  { label: "Brownies", href: "/brownies" },
   { label: "Contact", href: "/contact" },
 ];
 
 export default function StorefrontNavbar() {
   const pathname = usePathname();
-  const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const cartCount = useCartStore((s) => s.getCount());
   const wishlistItems = useWishlistStore((s) => s.items);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   useEffect(() => {
     if (mobileOpen) {
@@ -44,18 +35,12 @@ export default function StorefrontNavbar() {
 
   return (
     <>
-      <AnnouncementBar />
-
-      <nav
-        className={cn(
-          "sticky top-0 z-50 transition-all duration-300",
-          scrolled ? "glass bg-navy/90 shadow-lg" : "bg-navy"
-        )}
-      >
+      <nav className="sticky inset-x-0 top-0 z-50 border-b border-lavender/40 bg-cream/85 backdrop-blur-md">
         {/* Desktop */}
-        <div className="hidden md:flex items-center justify-between max-w-7xl mx-auto px-6 h-[76px]">
-          <Link href="/" className="flex-shrink-0">
-            <span className="font-heading text-xl font-bold text-white tracking-[0.15em] uppercase">
+        <div className="hidden md:flex items-center justify-between max-w-7xl mx-auto px-6 h-[72px]">
+          <Link href="/" className="flex-shrink-0 flex items-center gap-2">
+            <span className="text-xl">🍪</span>
+            <span className="font-heading text-xl font-bold text-plum tracking-[0.12em] uppercase">
               CRISPO
             </span>
           </Link>
@@ -70,10 +55,10 @@ export default function StorefrontNavbar() {
                   key={`${link.href}-${link.label}`}
                   href={link.href}
                   className={cn(
-                    "text-[13px] font-medium tracking-wide uppercase transition-colors relative py-1",
+                    "font-body text-[13px] font-medium tracking-wide uppercase transition-colors relative py-1",
                     isActive
                       ? "text-gold"
-                      : "text-white/80 hover:text-gold"
+                      : "text-plum/70 hover:text-gold"
                   )}
                 >
                   {link.label}
@@ -88,14 +73,14 @@ export default function StorefrontNavbar() {
           <div className="flex items-center gap-1">
             <Link
               href="/shop"
-              className="text-white hover:text-gold transition-colors p-2.5"
+              className="text-plum/60 hover:text-gold transition-colors p-2.5"
             >
               <Search size={20} strokeWidth={1.5} />
             </Link>
 
             <Link
               href="/wishlist"
-              className="relative text-white hover:text-gold transition-colors p-2.5"
+              className="relative text-plum/60 hover:text-gold transition-colors p-2.5"
             >
               <Heart
                 size={20}
@@ -113,7 +98,7 @@ export default function StorefrontNavbar() {
 
             <Link
               href="/cart"
-              className="relative text-white hover:text-gold transition-colors p-2.5"
+              className="relative text-plum/60 hover:text-gold transition-colors p-2.5"
             >
               <ShoppingBag size={20} strokeWidth={1.5} />
               {cartCount > 0 && (
@@ -122,117 +107,160 @@ export default function StorefrontNavbar() {
                 </span>
               )}
             </Link>
+
+            <Link
+              href="/cookies"
+              className="btn-gold ml-2 px-5 py-2 text-xs font-bold tracking-wider uppercase rounded-full"
+            >
+              SHOP COOKIES
+            </Link>
           </div>
         </div>
 
         {/* Mobile */}
         <div className="flex md:hidden items-center justify-between px-4 h-[64px]">
-          <Link href="/" onClick={() => setMobileOpen(false)}>
-            <span className="font-heading text-lg font-bold text-white tracking-[0.15em] uppercase">
+          <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-1.5">
+            <span className="text-lg">🍪</span>
+            <span className="font-heading text-lg font-bold text-plum tracking-[0.12em] uppercase">
               CRISPO
             </span>
           </Link>
 
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="text-white hover:text-gold transition-colors p-2"
-            aria-label="Open menu"
-          >
-            <Menu size={24} strokeWidth={1.5} />
-          </button>
+          <div className="flex items-center gap-1">
+            <Link
+              href="/cart"
+              className="relative text-plum/60 hover:text-gold transition-colors p-2"
+            >
+              <ShoppingBag size={20} strokeWidth={1.5} />
+              {cartCount > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 bg-gold text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="text-plum/60 hover:text-gold transition-colors p-2"
+              aria-label="Open menu"
+            >
+              <Menu size={24} strokeWidth={1.5} />
+            </button>
+          </div>
         </div>
       </nav>
 
       {/* Mobile overlay */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-[60] bg-navy flex flex-col animate-slide-in-right">
-          <div className="flex items-center justify-between px-5 h-[64px] border-b border-white/10">
-            <Link
-              href="/"
-              onClick={() => setMobileOpen(false)}
-              className="flex-shrink-0"
-            >
-              <span className="font-heading text-lg font-bold text-white tracking-[0.15em] uppercase">
-                CRISPO
-              </span>
-            </Link>
-            <button
-              onClick={() => setMobileOpen(false)}
-              className="text-white hover:text-gold transition-colors p-2"
-              aria-label="Close menu"
-            >
-              <X size={24} strokeWidth={1.5} />
-            </button>
-          </div>
+        <div className="fixed inset-0 z-[60] md:hidden">
+          {/* Dark backdrop */}
+          <div
+            className="absolute inset-0 bg-plum/50 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
 
-          <div className="flex flex-col items-center justify-center flex-1 gap-6">
-            {navLinks.map((link, i) => {
-              const isActive =
-                pathname === link.href ||
-                (link.href !== "/" && pathname.startsWith(link.href + "/"));
-              return (
-                <Link
-                  key={`${link.href}-${link.label}`}
-                  href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 text-2xl font-heading font-semibold transition-colors",
-                    isActive ? "text-gold" : "text-white hover:text-gold"
-                  )}
-                  style={{ animationDelay: `${i * 60}ms` }}
-                >
-                  {link.label}
-                  <ChevronRight
-                    size={20}
-                    strokeWidth={1.5}
+          {/* Slide-in panel */}
+          <div className="absolute inset-y-0 right-0 w-[300px] bg-cream shadow-2xl flex flex-col animate-slide-in-right">
+            <div className="flex items-center justify-between px-5 h-[64px] border-b border-lavender/30">
+              <Link
+                href="/"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-1.5"
+              >
+                <span className="text-lg">🍪</span>
+                <span className="font-heading text-lg font-bold text-plum tracking-[0.12em] uppercase">
+                  CRISPO
+                </span>
+              </Link>
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="text-plum/60 hover:text-gold transition-colors p-2"
+                aria-label="Close menu"
+              >
+                <X size={24} strokeWidth={1.5} />
+              </button>
+            </div>
+
+            <div className="flex flex-col flex-1 px-6 py-6 gap-1">
+              {navLinks.map((link, i) => {
+                const isActive =
+                  pathname === link.href ||
+                  (link.href !== "/" && pathname.startsWith(link.href + "/"));
+                return (
+                  <Link
+                    key={`${link.href}-${link.label}`}
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
                     className={cn(
-                      "transition-colors",
-                      isActive ? "text-gold/60" : "text-white/30"
+                      "flex items-center justify-between font-body text-lg py-3 px-3 rounded-lg transition-colors",
+                      isActive
+                        ? "bg-gold/10 text-gold font-semibold"
+                        : "text-plum/80 hover:bg-lavender/20 hover:text-gold"
                     )}
-                  />
-                </Link>
-              );
-            })}
-          </div>
+                    style={{ animationDelay: `${i * 60}ms` }}
+                  >
+                    {link.label}
+                    <ChevronRight
+                      size={18}
+                      strokeWidth={1.5}
+                      className={cn(
+                        "transition-colors",
+                        isActive ? "text-gold/60" : "text-plum/30"
+                      )}
+                    />
+                  </Link>
+                );
+              })}
+            </div>
 
-          <div className="flex items-center justify-center gap-8 pb-10 border-t border-white/10 pt-8">
-            <Link
-              href="/shop"
-              onClick={() => setMobileOpen(false)}
-              className="text-white hover:text-gold transition-colors p-3"
-            >
-              <Search size={24} strokeWidth={1.5} />
-            </Link>
-            <Link
-              href="/wishlist"
-              onClick={() => setMobileOpen(false)}
-              className="relative text-white hover:text-gold transition-colors p-3"
-            >
-              <Heart
-                size={24}
-                strokeWidth={1.5}
-                className={cn(
-                  wishlistItems.length > 0 && "fill-gold text-gold"
+            <div className="px-6 pb-8">
+              <Link
+                href="/cookies"
+                onClick={() => setMobileOpen(false)}
+                className="btn-gold block w-full text-center px-5 py-3 text-sm font-bold tracking-wider uppercase rounded-full"
+              >
+                SHOP COOKIES
+              </Link>
+            </div>
+
+            <div className="flex items-center justify-center gap-6 pb-6 border-t border-lavender/20 pt-5">
+              <Link
+                href="/shop"
+                onClick={() => setMobileOpen(false)}
+                className="text-plum/50 hover:text-gold transition-colors p-2"
+              >
+                <Search size={22} strokeWidth={1.5} />
+              </Link>
+              <Link
+                href="/wishlist"
+                onClick={() => setMobileOpen(false)}
+                className="relative text-plum/50 hover:text-gold transition-colors p-2"
+              >
+                <Heart
+                  size={22}
+                  strokeWidth={1.5}
+                  className={cn(
+                    wishlistItems.length > 0 && "fill-gold text-gold"
+                  )}
+                />
+                {wishlistItems.length > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-gold text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                    {wishlistItems.length}
+                  </span>
                 )}
-              />
-              {wishlistItems.length > 0 && (
-                <span className="absolute top-2 right-2 w-4 h-4 bg-gold text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
-                  {wishlistItems.length}
-                </span>
-              )}
-            </Link>
-            <Link
-              href="/cart"
-              onClick={() => setMobileOpen(false)}
-              className="relative text-white hover:text-gold transition-colors p-3"
-            >
-              <ShoppingBag size={24} strokeWidth={1.5} />
-              {cartCount > 0 && (
-                <span className="absolute top-2 right-2 w-4 h-4 bg-gold text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
+              </Link>
+              <Link
+                href="/cart"
+                onClick={() => setMobileOpen(false)}
+                className="relative text-plum/50 hover:text-gold transition-colors p-2"
+              >
+                <ShoppingBag size={22} strokeWidth={1.5} />
+                {cartCount > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-gold text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+            </div>
           </div>
         </div>
       )}

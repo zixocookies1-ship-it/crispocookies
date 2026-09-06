@@ -21,7 +21,7 @@ export default function CartPage() {
       <div className="bg-cream-dark min-h-screen">
         <div className="container-tight py-20 text-center">
           <span className="text-6xl block mb-4">🛒</span>
-          <h1 className="font-heading text-2xl text-navy font-bold mb-2">
+          <h1 className="font-heading text-2xl text-royal font-bold mb-2">
             Your cart is empty
           </h1>
           <p className="text-muted mb-6">
@@ -38,7 +38,7 @@ export default function CartPage() {
   return (
     <div className="bg-cream-dark min-h-screen">
       <div className="container-tight py-8">
-        <h1 className="font-heading text-4xl text-navy font-bold">
+        <h1 className="font-heading text-4xl text-royal font-bold">
           Shopping Cart
         </h1>
       </div>
@@ -48,7 +48,7 @@ export default function CartPage() {
         <div className="lg:col-span-3 space-y-4">
           {items.map((item) => (
             <div
-              key={`${item.productId}-${item.variant}`}
+              key={`${item.productId}-${item.variant.weight}`}
               className="bg-surface rounded-2xl shadow-warm p-5 flex gap-5"
             >
               <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-cream to-gold/10 flex items-center justify-center shrink-0">
@@ -56,18 +56,18 @@ export default function CartPage() {
               </div>
 
               <div className="flex-1 min-w-0">
-                <h3 className="font-heading font-semibold text-navy hover:text-gold transition-colors truncate">
+                <h3 className="font-heading font-semibold text-royal hover:text-gold transition-colors truncate">
                   {item.name}
                 </h3>
-                <p className="text-muted text-sm">{item.variant}</p>
+                <p className="text-muted text-sm">{item.variant.weight}</p>
 
                 <div className="flex items-center justify-between mt-3">
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() =>
-                        updateQty(item.productId, item.variant, item.qty - 1)
+                        updateQty(item.productId, item.variant.weight, item.qty - 1)
                       }
-                      className="w-8 h-8 rounded-full border border-navy/20 flex items-center justify-center hover:border-gold transition-colors text-sm"
+                      className="w-8 h-8 rounded-full border border-royal/20 flex items-center justify-center hover:border-gold transition-colors text-sm"
                     >
                       <Minus size={14} />
                     </button>
@@ -76,20 +76,20 @@ export default function CartPage() {
                     </span>
                     <button
                       onClick={() =>
-                        updateQty(item.productId, item.variant, item.qty + 1)
+                        updateQty(item.productId, item.variant.weight, item.qty + 1)
                       }
-                      className="w-8 h-8 rounded-full border border-navy/20 flex items-center justify-center hover:border-gold transition-colors text-sm"
+                      className="w-8 h-8 rounded-full border border-royal/20 flex items-center justify-center hover:border-gold transition-colors text-sm"
                     >
                       <Plus size={14} />
                     </button>
                   </div>
 
                   <span className="font-semibold text-gold text-lg">
-                    {formatPrice(item.price * item.qty)}
+                    {formatPrice(item.variant.price * item.qty)}
                   </span>
 
                   <button
-                    onClick={() => removeItem(item.productId, item.variant)}
+                    onClick={() => removeItem(item.productId, item.variant.weight)}
                     className="text-muted hover:text-red transition-colors"
                   >
                     <X size={18} />
@@ -110,14 +110,14 @@ export default function CartPage() {
         {/* Order Summary */}
         <div className="lg:col-span-2">
           <div className="bg-surface rounded-2xl shadow-warm p-6 sticky top-24">
-            <h2 className="font-heading text-lg font-semibold text-navy mb-6">
+            <h2 className="font-heading text-lg font-semibold text-royal mb-6">
               Order Summary
             </h2>
 
             <div className="space-y-3 mb-4">
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Subtotal</span>
-                <span className="text-navy font-medium">
+                <span className="text-royal font-medium">
                   {formatPrice(subtotal)}
                 </span>
               </div>
@@ -127,7 +127,7 @@ export default function CartPage() {
                   className={
                     delivery === 0
                       ? "text-green font-medium"
-                      : "text-navy font-medium"
+                      : "text-royal font-medium"
                   }
                 >
                   {delivery === 0 ? "Free" : formatPrice(delivery)}
@@ -140,13 +140,13 @@ export default function CartPage() {
               )}
             </div>
 
-            <div className="border-t border-navy/10 my-4" />
+            <div className="border-t border-royal/10 my-4" />
 
             <div className="flex justify-between items-baseline">
-              <span className="font-heading text-lg font-bold text-navy">
+              <span className="font-heading text-lg font-bold text-royal">
                 Total
               </span>
-              <span className="font-heading text-xl font-bold text-navy">
+              <span className="font-heading text-xl font-bold text-royal">
                 {formatPrice(total)}
               </span>
             </div>

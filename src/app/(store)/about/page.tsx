@@ -30,7 +30,7 @@ export default function AboutPage() {
   return (
     <>
       {/* Hero */}
-      <section className="bg-navy py-20">
+      <section className="bg-royal py-20">
         <div className="container-tight text-center">
           <ScrollReveal>
             <p className="text-gold text-xs font-semibold tracking-[0.2em] uppercase mb-4">
@@ -54,13 +54,13 @@ export default function AboutPage() {
       <section className="container-tight py-20">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <ScrollReveal direction="left">
-            <div className="rounded-3xl aspect-[4/3] bg-gradient-to-br from-gold/15 to-navy/5 flex items-center justify-center">
+            <div className="rounded-3xl aspect-[4/3] bg-gradient-to-br from-gold/15 to-royal/5 flex items-center justify-center">
               <span className="text-[100px] select-none">👨‍🍳</span>
             </div>
           </ScrollReveal>
           <ScrollReveal direction="right">
             <div>
-              <h2 className="font-heading text-3xl text-navy font-bold mb-4">
+              <h2 className="font-heading text-3xl text-royal font-bold mb-4">
                 How It All Started
               </h2>
               <p className="text-muted leading-relaxed">
@@ -79,7 +79,7 @@ export default function AboutPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <ScrollReveal direction="left" className="order-2 md:order-1">
             <div>
-              <h2 className="font-heading text-3xl text-navy font-bold mb-4">
+              <h2 className="font-heading text-3xl text-royal font-bold mb-4">
                 Our Promise
               </h2>
               <p className="text-muted leading-relaxed">
@@ -112,7 +112,7 @@ export default function AboutPage() {
                 <div className="w-16 h-16 bg-gold/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <v.icon size={26} className="text-gold" />
                 </div>
-                <h3 className="font-heading text-xl font-semibold text-navy">
+                <h3 className="font-heading text-xl font-semibold text-royal">
                   {v.label}
                 </h3>
                 <p className="text-muted text-sm mt-2 leading-relaxed">
@@ -128,16 +128,16 @@ export default function AboutPage() {
       <section className="bg-cream-dark py-20">
         <div className="container-tight">
           <ScrollReveal>
-            <h2 className="font-heading text-3xl text-navy font-bold text-center mb-12">
+            <h2 className="font-heading text-3xl text-royal font-bold text-center mb-12">
               Meet Our Founder
             </h2>
           </ScrollReveal>
           <ScrollReveal delay={100}>
             <div className="max-w-2xl mx-auto bg-surface rounded-3xl shadow-warm-lg p-10 flex flex-col items-center text-center">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-gold to-navy flex items-center justify-center text-4xl mb-4">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-gold to-royal flex items-center justify-center text-4xl mb-4">
                 👨‍🍳
               </div>
-              <h3 className="font-heading text-2xl font-bold text-navy">
+              <h3 className="font-heading text-2xl font-bold text-royal">
                 Rahul
               </h3>
               <p className="text-gold text-sm font-semibold">Founder & Head Baker</p>

@@ -166,8 +166,7 @@ export default function ProductDetailPage() {
       addItem({
         productId: String(product._id),
         name: product.name,
-        variant: variant.weight,
-        price: variant.price,
+        variant: { weight: variant.weight, price: variant.price },
         image: product.images?.[0] || "",
       });
     }
@@ -196,14 +195,14 @@ export default function ProductDetailPage() {
           <span>/</span>
           <Link href="/shop" className="hover:text-gold transition-colors">Shop</Link>
           <span>/</span>
-          <span className="text-navy">{product.name}</span>
+          <span className="text-royal">{product.name}</span>
         </nav>
       </div>
 
       <div className="container-tight py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div>
-            <div className="aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-cream via-gold/10 to-navy/5 flex items-center justify-center shadow-warm-lg">
+            <div className="aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-cream via-gold/10 to-royal/5 flex items-center justify-center shadow-warm-lg">
               <span className="text-[120px] select-none" role="img" aria-label="product">🍪</span>
             </div>
           </div>
@@ -213,7 +212,7 @@ export default function ProductDetailPage() {
               {product.category}
             </span>
 
-            <h1 className="font-heading text-4xl font-bold text-navy mb-3">
+            <h1 className="font-heading text-4xl font-bold text-royal mb-3">
               {product.name}
             </h1>
 
@@ -239,7 +238,7 @@ export default function ProductDetailPage() {
             <p className="text-muted leading-relaxed mb-6">{product.shortDescription}</p>
 
             <div className="mb-6">
-              <p className="text-sm font-medium text-navy mb-3">Select Weight</p>
+              <p className="text-sm font-medium text-royal mb-3">Select Weight</p>
               <div className="flex flex-wrap gap-3">
                 {product.variants.map((v: any, i: number) => (
                   <button
@@ -249,7 +248,7 @@ export default function ProductDetailPage() {
                       "px-5 py-2 rounded-full text-sm font-medium border-2 transition-all",
                       selectedVariant === i
                         ? "bg-gold border-gold text-white"
-                        : "border-navy/20 text-navy hover:border-gold/50"
+                        : "border-royal/20 text-royal hover:border-gold/50"
                     )}
                   >
                     {v.weight}
@@ -259,14 +258,14 @@ export default function ProductDetailPage() {
             </div>
 
             <div className="mb-6">
-              <p className="text-sm font-medium text-navy mb-3">Quantity</p>
+              <p className="text-sm font-medium text-royal mb-3">Quantity</p>
               <div className="flex items-center gap-3">
-                <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="w-10 h-10 rounded-full border-2 border-navy/20 flex items-center justify-center hover:border-gold transition-colors">
-                  <Minus className="w-4 h-4 text-navy" />
+                <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="w-10 h-10 rounded-full border-2 border-royal/20 flex items-center justify-center hover:border-gold transition-colors">
+                  <Minus className="w-4 h-4 text-royal" />
                 </button>
-                <span className="w-10 text-center font-semibold text-lg text-navy">{quantity}</span>
-                <button onClick={() => setQuantity((q) => Math.min(variant.stock, q + 1))} className="w-10 h-10 rounded-full border-2 border-navy/20 flex items-center justify-center hover:border-gold transition-colors">
-                  <Plus className="w-4 h-4 text-navy" />
+                <span className="w-10 text-center font-semibold text-lg text-royal">{quantity}</span>
+                <button onClick={() => setQuantity((q) => Math.min(variant.stock, q + 1))} className="w-10 h-10 rounded-full border-2 border-royal/20 flex items-center justify-center hover:border-gold transition-colors">
+                  <Plus className="w-4 h-4 text-royal" />
                 </button>
               </div>
             </div>
@@ -280,22 +279,22 @@ export default function ProductDetailPage() {
 
             <div className="flex gap-3 mb-6">
               <button onClick={handleAddToCart} className="btn-gold flex-1">Add to Cart</button>
-              <button onClick={handleToggleWishlist} className="btn-navy-outline px-4">
-                <Heart className={cn("w-5 h-5", isWishlisted ? "fill-gold text-gold" : "text-navy")} />
+              <button onClick={handleToggleWishlist} className="btn-royal-outline px-4">
+                <Heart className={cn("w-5 h-5", isWishlisted ? "fill-gold text-gold" : "text-royal")} />
               </button>
             </div>
 
-            <div className="pt-6 border-t border-navy/10 space-y-3">
+            <div className="pt-6 border-t border-royal/10 space-y-3">
               <div className="flex items-center gap-3 text-muted text-sm">
-                <Truck className="w-4 h-4 text-navy" />
+                <Truck className="w-4 h-4 text-royal" />
                 <span>Free delivery above ₹499</span>
               </div>
               <div className="flex items-center gap-3 text-muted text-sm">
-                <Package className="w-4 h-4 text-navy" />
+                <Package className="w-4 h-4 text-royal" />
                 <span>Delivered in 2–3 days</span>
               </div>
               <div className="flex items-center gap-3 text-muted text-sm">
-                <Shield className="w-4 h-4 text-navy" />
+                <Shield className="w-4 h-4 text-royal" />
                 <span>100% ZERO MAIDHA — Pure Oats</span>
               </div>
             </div>
@@ -309,7 +308,7 @@ export default function ProductDetailPage() {
           <div className="bg-surface rounded-2xl p-6 shadow-warm">
             <div className="flex items-center gap-2 mb-4">
               <Leaf className="w-5 h-5 text-green" />
-              <h3 className="font-heading text-lg font-semibold text-navy">Key Benefits</h3>
+              <h3 className="font-heading text-lg font-semibold text-royal">Key Benefits</h3>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {product.benefits.map((b: string) => (
@@ -325,7 +324,7 @@ export default function ProductDetailPage() {
 
       {/* Tabs */}
       <div className="container-tight mt-12">
-        <div className="flex border-b border-navy/10 gap-8">
+        <div className="flex border-b border-royal/10 gap-8">
           {(["description", "ingredients", "nutrition"] as const).map((tab) => (
             <button
               key={tab}
@@ -333,8 +332,8 @@ export default function ProductDetailPage() {
               className={cn(
                 "pb-3 text-sm font-medium transition-all capitalize",
                 activeTab === tab
-                  ? "text-navy border-b-2 border-gold"
-                  : "text-muted hover:text-navy"
+                  ? "text-royal border-b-2 border-gold"
+                  : "text-muted hover:text-royal"
               )}
             >
               {tab}
@@ -349,7 +348,7 @@ export default function ProductDetailPage() {
           {activeTab === "ingredients" && (
             <div className="flex flex-wrap gap-2">
               {product.ingredients.map((ing: string) => (
-                <span key={ing} className="bg-cream px-4 py-2 rounded-full text-sm text-navy font-medium">{ing}</span>
+                <span key={ing} className="bg-cream px-4 py-2 rounded-full text-sm text-royal font-medium">{ing}</span>
               ))}
             </div>
           )}
@@ -374,12 +373,12 @@ export default function ProductDetailPage() {
 
       {/* Process Steps */}
       <div className="container-tight mt-16">
-        <h2 className="font-heading text-2xl text-navy font-bold mb-8 text-center">Our Process</h2>
+        <h2 className="font-heading text-2xl text-royal font-bold mb-8 text-center">Our Process</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {processSteps.map((step) => (
             <div key={step.num} className="text-center p-4">
               <span className="font-heading text-3xl text-gold/30 font-bold">{step.num}</span>
-              <h4 className="font-heading font-semibold text-navy text-sm mt-2 mb-1">{step.title}</h4>
+              <h4 className="font-heading font-semibold text-royal text-sm mt-2 mb-1">{step.title}</h4>
               <p className="text-muted text-xs leading-relaxed">{step.description}</p>
             </div>
           ))}
@@ -388,7 +387,7 @@ export default function ProductDetailPage() {
 
       {/* Related Products */}
       <div className="container-tight py-16">
-        <h2 className="font-heading text-2xl text-navy font-bold mb-8">You May Also Like</h2>
+        <h2 className="font-heading text-2xl text-royal font-bold mb-8">You May Also Like</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {relatedProducts.map((p) => (
             <div key={p._id} className="h-full">

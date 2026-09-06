@@ -1,542 +1,544 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import ScrollReveal from "@/components/scroll-reveal";
-import { AccordionItem } from "@/components/accordion";
-import { formatPrice, truncate } from "@/lib/helpers";
+import { useCartStore } from "@/store/useCartStore";
+import {
+  ShoppingCart,
+  Wheat,
+  Heart,
+  Gem,
+  ShieldCheck,
+  Send,
+  Phone,
+  User,
+  Mail,
+  MessageSquare,
+  ShoppingBag,
+} from "lucide-react";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sampleProducts: any[] = [
+const formatPrice = (p: number) => `₹${p}`;
+const calcDiscount = (mrp: number, price: number) =>
+  Math.round(((mrp - price) / mrp) * 100);
+
+interface Product {
+  slug: string;
+  name: string;
+  emoji: string;
+  price: number;
+  mrp: number;
+  weight: string;
+  category: "Cookie" | "Brownie";
+}
+
+const products: Product[] = [
   {
-    _id: "1",
-    name: "Double Chocolate Cookie",
     slug: "double-chocolate-cookie",
-    shortDescription: "Rich, indulgent and deeply chocolatey — made with pure oats and loaded with chocolate goodness.",
-    fullDescription: "Rich, indulgent and deeply chocolatey, our Double Chocolate Cookie is made with pure oats powder and loaded with chocolate goodness.",
-    ingredients: "Oats Powder, Cocoa, Chocolate Chips, Butter, Sugar, Vanilla",
-    images: [],
-    category: "Cookies",
-    tags: ["bestseller", "zero-maida"],
-    variants: [{ weight: "300g (6 cookies)", price: 219, mrp: 399, stock: 50 }],
-    isActive: true,
-    createdAt: new Date(),
-  },
-  {
-    _id: "4",
-    name: "Dry Seeds Cookie",
-    slug: "dry-seeds-cookie",
-    shortDescription: "Loaded with 4 super seeds — crunchy, nutritious and satisfying.",
-    fullDescription: "A nutrient-rich cookie loaded with four powerful seeds. Packed with 10g protein per cookie.",
-    ingredients: "Oats Powder, Pumpkin Seeds, Flax Seeds, Sunflower Seeds, Watermelon Seeds",
-    images: [],
-    category: "Cookies",
-    tags: ["bestseller", "zero-maida", "high-protein"],
-    variants: [{ weight: "300g (4 cookies)", price: 219, mrp: 399, stock: 30 }],
-    isActive: true,
-    createdAt: new Date(),
-  },
-  {
-    _id: "7",
-    name: "Kaju Oats Brownie",
-    slug: "kaju-oats-brownie",
-    shortDescription: "Rich fudgy brownie combined with premium cashews and wholesome oats.",
-    fullDescription: "A rich and fudgy chocolate brownie combined with premium cashews and wholesome oats.",
-    ingredients: "Oats Powder, Cocoa, Premium Cashews, Butter, Sugar, Eggs",
-    images: [],
-    category: "Brownies",
-    tags: ["bestseller", "zero-maida"],
-    variants: [{ weight: "300g (6 pieces)", price: 250, mrp: 499, stock: 30 }],
-    isActive: true,
-    createdAt: new Date(),
-  },
-  {
-    _id: "2",
-    name: "Rose Cookie",
-    slug: "rose-cookie",
-    shortDescription: "A delicate floral twist — made with homemade rose syrup and fresh rose petals.",
-    fullDescription: "A delicate floral twist on a wholesome cookie made with homemade rose syrup and fresh rose petals.",
-    ingredients: "Oats Powder, Homemade Rose Syrup, Fresh Rose Petals, Butter, Sugar",
-    images: [],
-    category: "Cookies",
-    tags: ["zero-maida"],
-    variants: [{ weight: "300g (6 cookies)", price: 219, mrp: 399, stock: 40 }],
-    isActive: true,
-    createdAt: new Date(),
-  },
-];
-
-const collections = [
-  {
-    title: "Oat Cookies",
+    name: "Double Chocolate Cookie",
     emoji: "🍪",
-    gradient: "from-gold/20 to-cream",
-    description: "Premium oat-based cookies — 100% ZERO MAIDHA",
-    href: "/shop?category=Cookies",
+    price: 179,
+    mrp: 299,
+    weight: "200g (4 cookies)",
+    category: "Cookie",
   },
   {
-    title: "Brownies",
+    slug: "rose-cookie",
+    name: "Rose Cookie",
+    emoji: "🌹",
+    price: 179,
+    mrp: 299,
+    weight: "200g (4 cookies)",
+    category: "Cookie",
+  },
+  {
+    slug: "pineapple-cookie",
+    name: "Pineapple Cookie",
+    emoji: "🍍",
+    price: 179,
+    mrp: 299,
+    weight: "200g (4 cookies)",
+    category: "Cookie",
+  },
+  {
+    slug: "dry-seed-cookies",
+    name: "Dry Seeds Cookie",
+    emoji: "🌱",
+    price: 219,
+    mrp: 399,
+    weight: "300g (4 cookies)",
+    category: "Cookie",
+  },
+  {
+    slug: "all-mix-cookies",
+    name: "All Mix Cookies",
+    emoji: "🥣",
+    price: 219,
+    mrp: 399,
+    weight: "300g (6 cookies)",
+    category: "Cookie",
+  },
+  {
+    slug: "double-chocolate-oats-brownie",
+    name: "Double Chocolate Oats Brownie",
     emoji: "🍫",
-    gradient: "from-brown to-navy",
-    description: "Fudgy oats brownies with rich chocolate flavor",
-    href: "/shop?category=Brownies",
+    price: 250,
+    mrp: 499,
+    weight: "300g (6 pieces)",
+    category: "Brownie",
+  },
+  {
+    slug: "kaju-oats-brownie",
+    name: "Kaju Oats Brownie",
+    emoji: "🥜",
+    price: 250,
+    mrp: 499,
+    weight: "300g (6 pieces)",
+    category: "Brownie",
   },
 ];
 
-const ingredients = [
-  { emoji: "🍫", title: "Premium Belgian Chocolate", description: "Rich, velvety chocolate sourced from Belgium" },
-  { emoji: "🧈", title: "Real Butter", description: "No margarine, no shortcuts — just pure butter" },
-  { emoji: "🌿", title: "Natural Ingredients", description: "No preservatives, no artificial flavours" },
-  { emoji: "🥛", title: "Freshly Sourced", description: "Locally sourced dairy and farm-fresh eggs" },
-];
+const cookieProducts = products.filter((p) => p.category === "Cookie");
+const brownieProducts = products.filter((p) => p.category === "Brownie");
 
-const moods = [
-  { title: "Chocolate Lover", emoji: "🍫", gradient: "from-brown to-navy-dark", href: "/shop?category=Chocolate" },
-  { title: "Tea Time", emoji: "☕", gradient: "from-gold/20 to-cream", href: "/shop?category=Butter" },
-  { title: "Gifting", emoji: "🎁", gradient: "from-gold to-navy", href: "/shop?category=Gift+Boxes" },
-  { title: "Feel-Good", emoji: "😊", gradient: "from-amber/20 to-cream", href: "/shop?category=Oatmeal" },
-];
-
-const steps = [
-  { number: "01", title: "Premium Ingredients", description: "Sourced from the finest suppliers" },
-  { number: "02", title: "Freshly Prepared", description: "Mixed and shaped by hand" },
-  { number: "03", title: "Baked Daily", description: "Fresh from the oven every morning" },
-  { number: "04", title: "Carefully Packed", description: "Eco-friendly, food-safe packaging" },
-  { number: "05", title: "Delivered To You", description: "Fast delivery, always fresh" },
-];
-
-const testimonials = [
+const whyFeatures = [
   {
-    name: "Priya M.",
-    location: "Mumbai",
-    quote: "The best cookies I've ever ordered. The chocolate chip is absolute perfection!",
+    icon: Wheat,
+    title: "100% Pure Oats",
+    desc: "Every product is made with 100% pure oats — zero maida, zero compromise.",
   },
   {
-    name: "Rahul S.",
-    location: "Delhi",
-    quote: "Ordered the gift box for my wife's birthday. She loved it!",
+    icon: Heart,
+    title: "Made With Love",
+    desc: "Handcrafted in small batches with genuine care in every bite.",
   },
   {
-    name: "Anita K.",
-    location: "Bangalore",
-    quote: "Gluten-free and still delicious? Crispo nailed it.",
-  },
-];
-
-const faqs = [
-  {
-    question: "How long do cookies stay fresh?",
-    answer: "Our cookies stay fresh for up to 15 days at room temperature in an airtight container. For longer storage, refrigerate for up to 30 days.",
+    icon: Gem,
+    title: "Premium Ingredients",
+    desc: "Only the finest ingredients sourced to guarantee exceptional taste.",
   },
   {
-    question: "How are cookies packaged?",
-    answer: "Each cookie is carefully packed in eco-friendly, food-safe packaging to ensure they arrive in perfect condition.",
-  },
-  {
-    question: "Do you offer COD?",
-    answer: "Currently, we accept online payments via Razorpay for a secure and seamless checkout experience.",
-  },
-  {
-    question: "How long does delivery take?",
-    answer: "Standard delivery takes 2–3 business days. We ship fresh cookies within 24 hours of your order.",
-  },
-  {
-    question: "Do you offer bulk orders?",
-    answer: "Yes! We offer special pricing for bulk orders. Contact us for corporate gifting and event orders.",
-  },
-  {
-    question: "Do you offer corporate gifting?",
-    answer: "Absolutely! We have curated gift boxes perfect for corporate events, festivals, and team celebrations.",
+    icon: ShieldCheck,
+    title: "Zero Preservatives",
+    desc: "No artificial preservatives, no shortcuts — just clean, honest baking.",
   },
 ];
 
 export default function StoreHomePage() {
+  const addItem = useCartStore((s) => s.addItem);
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    product: "",
+    message: "",
+  });
 
+  const handleAddToCart = (product: Product) => {
+    addItem({
+      productId: product.slug,
+      name: product.name,
+      variant: { weight: product.weight, price: product.price },
+      image: product.emoji,
+    });
+  };
 
-  const handleAddToCart = (product: (typeof sampleProducts)[number]) => {
-    // Cart integration would go here
-    console.log("Add to cart:", product.name);
+  const handleEnquirySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const msg = `Hi Crispo Cookies!%0A%0AName: ${formData.name}%0APhone: ${formData.phone}%0AEmail: ${formData.email || "N/A"}%0AProduct: ${formData.product}%0AMessage: ${formData.message}`;
+    window.open(`https://wa.me/917569831560?text=${msg}`, "_blank");
   };
 
   return (
     <>
-      {/* SECTION 1: HERO */}
-      <section className="bg-cream" aria-label="Hero">
-        <div className="container-wide py-16 lg:py-24">
-          <div className="grid grid-cols-1 lg:grid-cols-[55%_45%] gap-12 lg:gap-16 items-center">
-            <ScrollReveal direction="left">
-              <div className="space-y-6">
-                <p className="text-gold text-xs font-semibold tracking-[0.2em] uppercase">
-                  100% ZERO MAIDHA • PREMIUM OATS • HANDCRAFTED
-                </p>
-                <h1 className="font-heading text-5xl lg:text-display text-navy font-bold leading-[1.05]">
-                  Baked to Impress.<br />Baked With Purpose.
-                </h1>
-                <p className="text-muted text-lg leading-relaxed max-w-md">
-                  Premium oat-based cookies and brownies, handcrafted in Nellore. 100% pure oats, no maida, no preservatives.
-                </p>
-                <div className="flex flex-wrap items-center gap-4 pt-2">
-                  <Link href="/shop" className="btn-gold">
-                    Shop Cookies
-                  </Link>
-                  <Link href="/about" className="btn-navy-outline">
-                    Our Story
-                  </Link>
-                </div>
-                <div className="flex items-center gap-3 pt-2 text-sm text-muted">
-                  <span>100% Pure Oats</span>
-                  <span className="text-gold">•</span>
-                  <span>Zero Maida</span>
-                  <span className="text-gold">•</span>
-                  <span>No Preservatives</span>
-                </div>
-              </div>
-            </ScrollReveal>
+      {/* ─── SECTION 1: HERO ─── */}
+      <section
+        className="relative min-h-screen flex items-center overflow-hidden"
+        style={{
+          background:
+            "linear-gradient(160deg, #FAF7F2 0%, #F4EFE8 40%, #FAF7F2 70%, #F4EFE8 100%)",
+        }}
+        aria-label="Hero"
+      >
+        {/* Decorative circles */}
+        <div className="absolute top-20 right-[10%] w-72 h-72 rounded-full bg-gold/5 blur-3xl" />
+        <div className="absolute bottom-20 left-[5%] w-96 h-96 rounded-full bg-plum/5 blur-3xl" />
 
-            <ScrollReveal direction="right" delay={200}>
-              <div className="relative flex justify-center">
-                <div className="w-full max-w-md aspect-square rounded-3xl bg-gradient-to-br from-gold/15 via-cream to-navy/5 flex items-center justify-center">
-                  <span className="text-[140px] animate-float select-none">🍪</span>
-                </div>
-                <div className="absolute top-8 right-8 bg-surface shadow-warm-lg rounded-2xl px-4 py-3">
-                  <span className="text-sm font-semibold text-navy">🌾 100% Pure Oats</span>
-                </div>
-                <div className="absolute bottom-12 left-4 bg-surface shadow-warm-lg rounded-2xl px-4 py-3">
-                  <span className="text-sm font-semibold text-navy">🚫 Zero Maida</span>
-                </div>
-              </div>
-            </ScrollReveal>
-          </div>
-        </div>
-      </section>
+        {/* Floating cookie emojis */}
+        <span className="absolute top-[15%] left-[8%] text-5xl animate-float select-none opacity-60">
+          🍪
+        </span>
+        <span
+          className="absolute top-[25%] right-[12%] text-4xl select-none opacity-50"
+          style={{ animation: "crispoFloat 8s ease-in-out 1s infinite" }}
+        >
+          🍪
+        </span>
+        <span
+          className="absolute bottom-[20%] left-[18%] text-3xl select-none opacity-40"
+          style={{ animation: "crispoFloat 7s ease-in-out 2s infinite" }}
+        >
+          🍪
+        </span>
+        <span
+          className="absolute bottom-[30%] right-[22%] text-4xl select-none opacity-45"
+          style={{ animation: "crispoFloat 9s ease-in-out 0.5s infinite" }}
+        >
+          🍪
+        </span>
 
-      {/* SECTION 2: TRUST STATISTICS */}
-      <section className="bg-navy-dark py-8" aria-label="Trust statistics">
-        <div className="container-tight">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { number: "100%", label: "Zero Maida" },
-              { number: "100%", label: "Pure Oats" },
-              { number: "No", label: "Preservatives" },
-              { number: "2–3 Days", label: "Fast Delivery" },
-            ].map((stat, i) => (
-              <ScrollReveal key={stat.label} delay={i * 80}>
-                <div className="text-center">
-                  <p className="font-heading text-3xl text-gold font-bold">{stat.number}</p>
-                  <p className="text-cream/60 text-sm uppercase tracking-wider mt-1">{stat.label}</p>
-                </div>
-              </ScrollReveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 3: SHOP BY COLLECTION */}
-      <section className="container-tight py-6" aria-label="Shop by collection">
-        <ScrollReveal>
-          <div className="mb-4">
-            <h2 className="section-heading text-2xl mb-1">Explore Our Cookies</h2>
-          </div>
-        </ScrollReveal>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {collections.map((col, i) => (
-            <ScrollReveal key={col.title} delay={i * 100}>
-              <Link
-                href={col.href}
-                className="group flex items-center gap-4 bg-surface rounded-2xl shadow-warm overflow-hidden cursor-pointer hover:shadow-warm-lg transition-shadow"
-                aria-label={`Shop ${col.title}`}
-              >
-                <div className={`w-20 h-20 shrink-0 bg-gradient-to-br ${col.gradient} flex items-center justify-center`}>
-                  <span className="text-3xl select-none">{col.emoji}</span>
-                </div>
-                <div className="py-3 pr-4">
-                  <h3 className="font-heading text-base font-semibold text-navy mb-0.5">{col.title}</h3>
-                  <p className="text-muted text-xs">{col.description}</p>
-                </div>
+        <div className="container-wide relative z-10 py-20 lg:py-0">
+          <div className="max-w-2xl mx-auto text-center lg:text-left lg:mx-0">
+            <p className="eyebrow mb-4">Baked to Perfection</p>
+            <h1 className="font-heading text-5xl sm:text-6xl lg:text-display text-royal font-bold leading-[1.05] mb-5">
+              Baked to Impress.
+            </h1>
+            <p className="text-muted text-lg mb-3">
+              Made with love for every bite.
+            </p>
+            <p className="text-plum font-medium text-base mb-8">
+              A Little Crisp. A Lot of Love.
+            </p>
+            <div className="flex flex-wrap items-center gap-4 justify-center lg:justify-start">
+              <Link href="/cookies" className="btn-gold">
+                Explore Cookies
               </Link>
-            </ScrollReveal>
-          ))}
+              <a
+                href="https://wa.me/917569831560"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-royal"
+              >
+                Order on WhatsApp
+              </a>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* SECTION 4: BEST SELLERS */}
-      <section className="bg-cream-dark py-20" aria-label="Best sellers">
+      {/* ─── SECTION 2: COOKIE COLLECTION ─── */}
+      <section className="py-16 lg:py-20" aria-label="Cookie Collection">
         <div className="container-tight">
-          <ScrollReveal>
-            <div className="mb-10 text-center">
-              <h2 className="section-heading mb-3">Our Best Sellers</h2>
-              <p className="section-subheading mx-auto">The cookies everyone&apos;s talking about.</p>
-            </div>
-          </ScrollReveal>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {sampleProducts.map((product, i) => (
-              <ScrollReveal key={product._id} delay={i * 100}>
-                <div className="bg-surface rounded-2xl shadow-warm overflow-hidden flex flex-col">
-                  <div className="relative bg-gradient-to-br from-gold/10 via-cream to-navy/5 aspect-[4/3] flex items-center justify-center">
-                    <span className="text-7xl select-none">🍪</span>
-                    {product.tags.includes("bestseller") && (
-                      <span className="absolute top-3 left-3 bg-gold text-white text-xs font-semibold px-3 py-1 rounded-full">
-                        Bestseller
-                      </span>
-                    )}
+          <h2 className="section-heading text-center mb-10">
+            Our Cookie Collection
+          </h2>
+          <div className="flex gap-5 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-4">
+            {cookieProducts.map((product) => {
+              const discount = calcDiscount(product.mrp, product.price);
+              return (
+                <div
+                  key={product.slug}
+                  className="min-w-[260px] max-w-[280px] snap-start shrink-0 surface-card rounded-2xl overflow-hidden flex flex-col"
+                >
+                  <div className="bg-gradient-to-br from-gold/10 via-cream to-beige h-48 flex items-center justify-center">
+                    <span className="text-7xl select-none">
+                      {product.emoji}
+                    </span>
                   </div>
                   <div className="p-5 flex flex-col flex-1">
-                    <div className="flex gap-2 mb-2 flex-wrap">
-                      {product.tags.map((tag: string) => (
-                        <span key={tag} className="badge-gold text-[10px] capitalize">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                    <h3 className="font-heading font-semibold text-navy text-lg mb-1">{product.name}</h3>
-                    <p className="text-muted text-sm mb-3 flex-1">{truncate(product.shortDescription, 60)}</p>
-                    <div className="flex items-center gap-2 mb-3">
+                    <h3 className="font-heading text-lg font-semibold text-royal mb-2">
+                      {product.name}
+                    </h3>
+                    <div className="flex items-center gap-2 mb-1">
                       <span className="text-gold font-bold text-lg">
-                        {formatPrice(product.variants[0].price)}
+                        {formatPrice(product.price)}
                       </span>
-                      {product.variants[0].mrp && product.variants[0].mrp > product.variants[0].price && (
-                        <span className="text-muted text-sm line-through">
-                          {formatPrice(product.variants[0].mrp)}
-                        </span>
-                      )}
+                      <span className="text-muted text-sm line-through">
+                        {formatPrice(product.mrp)}
+                      </span>
                     </div>
+                    <span className="text-green text-xs font-semibold mb-4">
+                      {discount}% OFF
+                    </span>
                     <button
                       onClick={() => handleAddToCart(product)}
-                      className="btn-gold btn-sm w-full"
+                      className="btn-gold btn-sm w-full mt-auto flex items-center justify-center gap-2"
                     >
+                      <ShoppingCart size={14} />
                       Add to Cart
                     </button>
                   </div>
                 </div>
-              </ScrollReveal>
-            ))}
+              );
+            })}
           </div>
-          <ScrollReveal>
-            <div className="mt-10 text-center">
-              <Link href="/shop" className="btn-navy-outline">
-                View All Products
-              </Link>
-            </div>
-          </ScrollReveal>
         </div>
       </section>
 
-      {/* SECTION 5: INGREDIENT STORY */}
-      <section className="container-tight py-20" aria-label="Our ingredients">
-        <ScrollReveal>
-          <div className="mb-10">
-            <h2 className="section-heading mb-3">Made With Ingredients You Can Trust</h2>
-            <p className="section-subheading">
-              We source only the finest ingredients to ensure every bite is pure perfection.
-            </p>
-          </div>
-        </ScrollReveal>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {ingredients.map((item, i) => (
-            <ScrollReveal key={item.title} delay={i * 100}>
-              <div className="bg-surface rounded-2xl p-6 text-center shadow-warm">
-                <span className="text-5xl block mb-3">{item.emoji}</span>
-                <h3 className="font-heading font-semibold text-navy mb-1">{item.title}</h3>
-                <p className="text-muted text-sm">{item.description}</p>
-              </div>
-            </ScrollReveal>
-          ))}
-        </div>
-      </section>
-
-      {/* SECTION 6: COOKIE CLOSE-UP STORY */}
-      <section className="container-tight py-20" aria-label="The Crispo difference">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-          <ScrollReveal direction="left">
-            <div className="rounded-3xl overflow-hidden aspect-square bg-gradient-to-br from-gold/10 to-navy/5 flex items-center justify-center">
-              <span className="text-[120px] select-none">🍪</span>
-            </div>
-          </ScrollReveal>
-          <ScrollReveal direction="right">
-            <div>
-              <p className="text-gold text-xs font-semibold tracking-[0.2em] uppercase mb-4">
-                The Crispo Difference
-              </p>
-              <h2 className="font-heading text-4xl text-navy font-bold mb-4">
-                One Bite. You&apos;ll Know the Difference.
-              </h2>
-              <p className="text-muted text-lg leading-relaxed mb-6">
-                Crispy on the outside. Soft in the center. Loaded with premium chocolate.
-                Every cookie is a little moment of happiness.
-              </p>
-              <ul className="space-y-3 mb-8">
-                {["Premium Belgian Chocolate", "Real Butter, No Shortcuts", "Baked Fresh Every Morning"].map(
-                  (point) => (
-                    <li key={point} className="flex items-center gap-3 text-navy">
-                      <span className="text-gold text-lg">✓</span>
-                      <span className="font-medium">{point}</span>
-                    </li>
-                  )
-                )}
-              </ul>
-              <Link href="/shop" className="btn-gold">
-                Discover Our Cookies
-              </Link>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* SECTION 7: COOKIE MOODS */}
-      <section className="container-tight py-20" aria-label="Cookie moods">
-        <ScrollReveal>
-          <div className="mb-10 text-center">
-            <h2 className="section-heading mb-3">What&apos;s Your Cookie Mood?</h2>
-          </div>
-        </ScrollReveal>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {moods.map((mood, i) => (
-            <ScrollReveal key={mood.title} delay={i * 80}>
-              <Link
-                href={mood.href}
-                className="group block aspect-square rounded-2xl overflow-hidden relative cursor-pointer"
-                aria-label={`${mood.title} cookies`}
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${mood.gradient} transition-transform duration-500 group-hover:scale-110`} />
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-6xl mb-3 select-none">{mood.emoji}</span>
-                  <span className="font-heading text-lg font-semibold text-navy">{mood.title}</span>
-                </div>
-              </Link>
-            </ScrollReveal>
-          ))}
-        </div>
-      </section>
-
-      {/* SECTION 8: BAKING PROCESS */}
-      <section className="bg-navy-dark py-20" aria-label="Our baking process">
+      {/* ─── SECTION 3: BROWNIE COLLECTION ─── */}
+      <section
+        className="py-16 lg:py-20 bg-cream-dark"
+        aria-label="Brownie Collection"
+      >
         <div className="container-tight">
-          <ScrollReveal>
-            <div className="text-center mb-12">
-              <h2 className="font-heading text-section text-white mb-3">From Our Kitchen To Your Door</h2>
-              <p className="text-cream/60">Every step is crafted with care</p>
-            </div>
-          </ScrollReveal>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 md:gap-4">
-            {steps.map((step, i) => (
-              <ScrollReveal key={step.number} delay={i * 100}>
-                <div className="text-center">
-                  <p className="font-heading text-4xl text-gold/30 font-bold">{step.number}</p>
-                  <p className="text-white font-semibold text-sm mt-2">{step.title}</p>
-                  <p className="text-cream/50 text-xs mt-1">{step.description}</p>
+          <h2 className="section-heading text-center mb-10">
+            Our Brownie Collection
+          </h2>
+          <div className="flex gap-5 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-4">
+            {brownieProducts.map((product) => {
+              const discount = calcDiscount(product.mrp, product.price);
+              return (
+                <div
+                  key={product.slug}
+                  className="min-w-[260px] max-w-[280px] snap-start shrink-0 surface-card rounded-2xl overflow-hidden flex flex-col"
+                >
+                  <div className="bg-gradient-to-br from-chocolate/10 via-cream to-beige h-48 flex items-center justify-center">
+                    <span className="text-7xl select-none">
+                      {product.emoji}
+                    </span>
+                  </div>
+                  <div className="p-5 flex flex-col flex-1">
+                    <h3 className="font-heading text-lg font-semibold text-royal mb-2">
+                      {product.name}
+                    </h3>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-gold font-bold text-lg">
+                        {formatPrice(product.price)}
+                      </span>
+                      <span className="text-muted text-sm line-through">
+                        {formatPrice(product.mrp)}
+                      </span>
+                    </div>
+                    <span className="text-green text-xs font-semibold mb-4">
+                      {discount}% OFF
+                    </span>
+                    <button
+                      onClick={() => handleAddToCart(product)}
+                      className="btn-gold btn-sm w-full mt-auto flex items-center justify-center gap-2"
+                    >
+                      <ShoppingCart size={14} />
+                      Add to Cart
+                    </button>
+                  </div>
                 </div>
-              </ScrollReveal>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* SECTION 9: GIFT BOX SECTION */}
-      <section className="container-tight py-20" aria-label="Gift boxes">
-        <div className="grid grid-cols-1 md:grid-cols-[55%_45%] gap-12 items-center">
-          <ScrollReveal direction="left">
-            <div className="bg-gradient-to-br from-gold to-navy rounded-3xl p-10 flex flex-col justify-center">
-              <h2 className="font-heading text-4xl text-white font-bold mb-3">
-                Make Someone&apos;s Day Sweeter.
-              </h2>
-              <p className="text-cream/80 mb-6">
-                Beautifully packaged gift boxes filled with handcrafted cookies. The perfect surprise for every occasion.
-              </p>
-              <div className="flex flex-wrap items-center gap-4">
-                <Link
-                  href="/shop?category=Gift+Boxes"
-                  className="border-2 border-white text-white hover:bg-white hover:text-navy font-semibold px-8 py-3.5 rounded-full transition-all duration-300 text-sm tracking-wide uppercase"
+      {/* ─── SECTION 4: ABOUT / OUR STORY ─── */}
+      <section className="py-16 lg:py-24" aria-label="Our Story">
+        <div className="container-tight">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center">
+            {/* Left – decorative */}
+            <div className="flex justify-center">
+              <div className="w-full max-w-md aspect-square rounded-3xl bg-gradient-to-br from-gold/15 via-cream to-plum/5 flex items-center justify-center relative">
+                <span className="text-[120px] select-none animate-float">
+                  🍪
+                </span>
+                <span
+                  className="absolute top-8 right-8 text-4xl opacity-50"
+                  style={{ animation: "crispoFloat 7s ease-in-out 1s infinite" }}
                 >
-                  Shop Gift Boxes
-                </Link>
-                <span className="text-cream/80 hover:text-white cursor-pointer transition-colors text-sm font-semibold">
-                  Corporate Orders
+                  🌾
+                </span>
+                <span
+                  className="absolute bottom-10 left-10 text-3xl opacity-40"
+                  style={{ animation: "crispoFloat 6s ease-in-out 2s infinite" }}
+                >
+                  🌿
                 </span>
               </div>
             </div>
-          </ScrollReveal>
-          <ScrollReveal direction="right">
-            <div className="rounded-3xl aspect-[4/5] bg-gradient-to-br from-gold/20 to-cream flex items-center justify-center">
-              <span className="text-[120px] select-none">🎁</span>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
 
-      {/* SECTION 10: BUILD YOUR BOX */}
-      <section className="container-tight py-20" aria-label="Build your box">
-        <ScrollReveal>
-          <div className="mb-10 text-center">
-            <h2 className="section-heading mb-3">Create Your Perfect Cookie Box</h2>
-            <p className="section-subheading mx-auto">Mix and match your favourites. Coming soon.</p>
-          </div>
-        </ScrollReveal>
-        <ScrollReveal delay={100}>
-          <div className="bg-surface rounded-3xl shadow-warm p-12 text-center">
-            <span className="text-7xl block mb-4 select-none">🍪</span>
-            <span className="badge-gold mb-4 inline-flex">Coming Soon</span>
-            <p className="text-muted text-sm max-w-sm mx-auto">
-              Build your own custom cookie box by mixing and matching your favourite flavours.
-            </p>
-          </div>
-        </ScrollReveal>
-      </section>
-
-      {/* SECTION 11: TESTIMONIALS */}
-      <section className="bg-cream-dark py-20" aria-label="Customer testimonials">
-        <div className="container-tight">
-          <ScrollReveal>
-            <div className="mb-10 text-center">
-              <h2 className="section-heading mb-3">Loved By Cookie Lovers</h2>
-            </div>
-          </ScrollReveal>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((t, i) => (
-              <ScrollReveal key={t.name} delay={i * 100}>
-                <div className="bg-surface rounded-2xl p-8 shadow-warm h-full flex flex-col">
-                  <div className="flex gap-1 mb-4">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <span key={star} className="text-gold text-lg">★</span>
-                    ))}
-                  </div>
-                  <p className="font-heading text-lg italic text-navy mb-4 flex-1">
-                    &ldquo;{t.quote}&rdquo;
-                  </p>
-                  <div>
-                    <p className="text-gold font-semibold">{t.name}</p>
-                    <span className="inline-flex items-center text-xs text-green font-medium mt-1">
-                      ✓ Verified Customer
-                    </span>
-                    <p className="text-muted text-sm mt-1">{t.location}</p>
-                  </div>
-                </div>
-              </ScrollReveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 12: FAQ */}
-      <section className="container-tight py-20" aria-label="Frequently asked questions">
-        <div className="grid grid-cols-1 md:grid-cols-[40%_60%] gap-12">
-          <ScrollReveal direction="left">
-            <div className="md:sticky md:top-24 self-start">
-              <h2 className="section-heading mb-3">Frequently Asked Questions</h2>
-              <p className="text-muted text-lg">
-                Everything you need to know about our cookies.
-              </p>
-            </div>
-          </ScrollReveal>
-          <ScrollReveal direction="right">
+            {/* Right – text */}
             <div>
-              {faqs.map((faq) => (
-                <AccordionItem
-                  key={faq.question}
-                  question={faq.question}
-                  answer={faq.answer}
-                />
-              ))}
+              <p className="eyebrow mb-4">Our Story</p>
+              <h2 className="font-heading text-4xl lg:text-section text-royal font-bold mb-5">
+                Crafted with Purpose
+              </h2>
+              <p className="text-muted text-lg leading-relaxed mb-4">
+                Crispo was born from a simple passion for healthy snacking.
+                Based in Nellore, Andhra Pradesh, we set out to prove that
+                treats made with pure oats can be every bit as delicious as
+                traditional baked goods.
+              </p>
+              <p className="text-muted text-lg leading-relaxed mb-6">
+                Every bite reflects our commitment:{" "}
+                <span className="text-royal font-semibold">
+                  100% ZERO MAIDHA
+                </span>
+                , premium oats, and zero preservatives. We bake with love so
+                you can snack without guilt.
+              </p>
+              <ul className="space-y-3">
+                {[
+                  "100% pure oats, zero maida",
+                  "No preservatives, ever",
+                  "Handcrafted in Nellore, Andhra Pradesh",
+                ].map((point) => (
+                  <li key={point} className="flex items-center gap-3 text-royal">
+                    <span className="text-gold font-bold">✓</span>
+                    <span className="font-medium">{point}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </ScrollReveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SECTION 5: WHY CRISPO ─── */}
+      <section
+        className="py-16 lg:py-20 bg-cream-dark"
+        aria-label="Why Crispo"
+      >
+        <div className="container-tight">
+          <h2 className="section-heading text-center mb-10">Why Crispo?</h2>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+            {whyFeatures.map((feature) => {
+              const Icon = feature.icon;
+              return (
+                <div
+                  key={feature.title}
+                  className="surface-card rounded-2xl p-6 text-center"
+                >
+                  <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-gold/10 flex items-center justify-center">
+                    <Icon size={26} className="text-gold" />
+                  </div>
+                  <h3 className="font-heading text-base font-semibold text-royal mb-2">
+                    {feature.title}
+                  </h3>
+                  <p className="text-muted text-sm leading-relaxed">
+                    {feature.desc}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SECTION 6: ENQUIRY FORM ─── */}
+      <section className="py-16 lg:py-24" aria-label="Enquiry Form">
+        <div className="container-tight max-w-2xl mx-auto">
+          <div className="text-center mb-10">
+            <p className="eyebrow mb-3">Get in Touch</p>
+            <h2 className="section-heading">Enquire Now</h2>
+          </div>
+          <form
+            onSubmit={handleEnquirySubmit}
+            className="surface-card rounded-2xl p-8 space-y-5"
+          >
+            <div>
+              <label className="block text-sm font-semibold text-royal mb-1.5">
+                Name
+              </label>
+              <div className="relative">
+                <User
+                  size={16}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"
+                />
+                <input
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  placeholder="Your name"
+                  className="input-field pl-11"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-royal mb-1.5">
+                Phone
+              </label>
+              <div className="relative">
+                <Phone
+                  size={16}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"
+                />
+                <input
+                  type="tel"
+                  required
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
+                  placeholder="Your phone number"
+                  className="input-field pl-11"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-royal mb-1.5">
+                Email{" "}
+                <span className="text-muted font-normal">(optional)</span>
+              </label>
+              <div className="relative">
+                <Mail
+                  size={16}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"
+                />
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  placeholder="your@email.com"
+                  className="input-field pl-11"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-royal mb-1.5">
+                Product Interested In
+              </label>
+              <div className="relative">
+                <ShoppingBag
+                  size={16}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"
+                />
+                <select
+                  required
+                  value={formData.product}
+                  onChange={(e) =>
+                    setFormData({ ...formData, product: e.target.value })
+                  }
+                  className="input-field pl-11 appearance-none"
+                >
+                  <option value="">Select a product</option>
+                  {products.map((p) => (
+                    <option key={p.slug} value={p.name}>
+                      {p.name} — {formatPrice(p.price)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-royal mb-1.5">
+                Message
+              </label>
+              <div className="relative">
+                <MessageSquare
+                  size={16}
+                  className="absolute left-4 top-4 text-muted"
+                />
+                <textarea
+                  rows={4}
+                  value={formData.message}
+                  onChange={(e) =>
+                    setFormData({ ...formData, message: e.target.value })
+                  }
+                  placeholder="Tell us what you need..."
+                  className="input-field pl-11 resize-none"
+                />
+              </div>
+            </div>
+
+            <button type="submit" className="btn-gold w-full flex items-center justify-center gap-2">
+              <Send size={16} />
+              Send Enquiry
+            </button>
+          </form>
         </div>
       </section>
     </>

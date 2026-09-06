@@ -13,13 +13,13 @@ export function AccordionItem({ question, answer }: AccordionItemProps) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="border-b border-navy/10 last:border-0">
+    <div className="border-b border-royal/10 last:border-0">
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between py-5 text-left group"
         aria-expanded={open}
       >
-        <span className="font-heading text-lg font-medium text-navy group-hover:text-gold transition-colors pr-4">
+        <span className="font-heading text-lg font-medium text-royal group-hover:text-gold transition-colors pr-4">
           {question}
         </span>
         <ChevronDown
@@ -44,7 +44,7 @@ export function AccordionItem({ question, answer }: AccordionItemProps) {
 
 export default function Accordion({ items }: { items: AccordionItemProps[] }) {
   return (
-    <div className="divide-y divide-navy/10">
+    <div className="divide-y divide-royal/10">
       {items.map((item, i) => (
         <AccordionItem key={i} {...item} />
       ))}

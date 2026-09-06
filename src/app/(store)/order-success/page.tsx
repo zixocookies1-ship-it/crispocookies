@@ -16,7 +16,7 @@ function OrderSuccessContent() {
           <CheckCircle className="text-green h-10 w-10" />
         </div>
 
-        <h1 className="font-heading text-3xl font-bold text-navy mb-3">
+        <h1 className="font-heading text-3xl font-bold text-royal mb-3">
           Order Placed Successfully!
         </h1>
         <p className="text-muted mb-2">
@@ -29,7 +29,7 @@ function OrderSuccessContent() {
         <div className="bg-surface rounded-2xl shadow-warm p-6 mb-8 text-left">
           <div className="flex items-center gap-3 mb-4">
             <Package className="text-gold h-5 w-5" />
-            <h3 className="font-heading font-semibold text-navy">
+            <h3 className="font-heading font-semibold text-royal">
               What&apos;s Next?
             </h3>
           </div>
@@ -53,7 +53,7 @@ function OrderSuccessContent() {
           <Link href="/shop" className="btn-gold">
             Continue Shopping
           </Link>
-          <Link href="/" className="btn-navy-outline">
+          <Link href="/" className="btn-royal-outline">
             Track Order
           </Link>
         </div>

@@ -1,40 +1,40 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, Star } from "lucide-react";
+import { Heart, ShoppingBag, ArrowRight, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatPrice } from "@/lib/helpers";
 import { useCartStore } from "@/store/useCartStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
+import { toast } from "sonner";
 import type { IProduct } from "@/models/Product";
 
 interface ProductCardProps {
   product: IProduct;
 }
 
+const formatPrice = (p: number) => `₹${p}`;
+
 export default function ProductCard({ product }: ProductCardProps) {
   const addItem = useCartStore((s) => s.addItem);
   const toggle = useWishlistStore((s) => s.toggle);
   const isWishlisted = useWishlistStore((s) => s.isWishlisted(String(product._id)));
 
-  const lowestPrice = product.variants?.length
-    ? Math.min(...product.variants.map((v) => v.price))
-    : 0;
-
-  const hasRating = "rating" in product;
+  const variant = product.variants?.[0];
+  const price = variant?.price ?? 0;
+  const mrp = variant?.mrp ?? 0;
+  const discount = mrp > price ? Math.round((mrp - price) / mrp * 100) : 0;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const variant = product.variants?.[0];
     if (variant) {
       addItem({
         productId: String(product._id),
         name: product.name,
-        variant: variant.weight,
-        price: variant.price,
+        variant: { weight: variant.weight, price: variant.price },
         image: product.images?.[0] || "",
       });
+      toast.success(`${product.name} added to cart`);
     }
   };
 
@@ -44,117 +44,102 @@ export default function ProductCard({ product }: ProductCardProps) {
     toggle(String(product._id));
   };
 
+  const handleWhatsApp = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const message = encodeURIComponent(`Hi, I'm interested in ${product.name}. Can you share more details?`);
+    window.open(`https://wa.me/917569831560?text=${message}`, "_blank");
+  };
+
   return (
-    <Link
-      href={`/shop/${product.slug}`}
-      className="flex flex-col bg-surface rounded-2xl shadow-warm overflow-hidden transition-all duration-300 hover:shadow-warm-lg hover:-translate-y-1 cursor-pointer group h-full"
-    >
-      <div className="aspect-square relative overflow-hidden img-zoom bg-gradient-to-br from-cream via-gold/8 to-navy/5 flex items-center justify-center">
-        <span className="text-[64px] select-none" role="img" aria-label="cookie">
-          🍪
-        </span>
+    <div className="scene-3d">
+      <div className="surface-card rounded-3xl overflow-hidden group h-full flex flex-col">
+        <Link href={`/shop/${product.slug}`} className="flex flex-col h-full">
+          <div className="relative rounded-2xl overflow-hidden bg-beige aspect-square flex items-center justify-center">
+            <span className="text-[64px] select-none" role="img" aria-label="cookie">
+              🍪
+            </span>
 
-        {product.tags?.includes("bestseller") && (
-          <span className="absolute top-3 left-3 bg-gold text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">
-            Bestseller
-          </span>
-        )}
-        {!product.tags?.includes("bestseller") && product.tags?.includes("eggless") && (
-          <span className="absolute top-3 left-3 bg-navy text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">
-            Eggless
-          </span>
-        )}
-
-        <button
-          onClick={handleToggleWishlist}
-          className="absolute top-3 right-3 p-2 rounded-full bg-surface/80 backdrop-blur-sm transition-colors hover:scale-110"
-          aria-label="Toggle wishlist"
-        >
-          <Heart
-            className={cn(
-              "w-4 h-4 transition-colors",
-              isWishlisted ? "fill-gold text-gold" : "text-muted hover:text-gold"
-            )}
-          />
-        </button>
-
-        <div className="absolute bottom-3 right-3 hidden group-hover:block">
-          <span className="bg-navy/80 text-white text-xs px-3 py-1.5 rounded-full backdrop-blur-sm">
-            Quick View
-          </span>
-        </div>
-      </div>
-
-      <div className="p-5 flex flex-col flex-1">
-        {product.tags && product.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-2">
-            {product.tags.map((tag) => (
-              <span
-                key={tag}
-                className={cn(
-                  "text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full",
-                  tag === "bestseller"
-                    ? "bg-gold/10 text-gold"
-                    : "bg-navy/10 text-navy"
-                )}
-              >
-                {tag}
+            <div className="absolute top-3 left-3 flex flex-col gap-2">
+              <span className="bg-green-600 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+                100% Zero Maidha
               </span>
-            ))}
-          </div>
-        )}
+              {discount > 0 && (
+                <span className="bg-red-500 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+                  {discount}% OFF
+                </span>
+              )}
+            </div>
 
-        <h3 className="font-heading text-lg font-semibold text-navy leading-snug mb-1.5 group-hover:text-gold transition-colors">
-          {product.name}
-        </h3>
-
-        {product.shortDescription && (
-          <p className="text-muted text-sm leading-relaxed line-clamp-2 mb-3 flex-1">
-            {product.shortDescription}
-          </p>
-        )}
-
-        {hasRating && (
-          <div className="flex items-center gap-1 mb-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
+            <button
+              onClick={handleToggleWishlist}
+              className="absolute top-3 right-3 p-2 rounded-full bg-surface/80 backdrop-blur-sm transition-colors hover:scale-110"
+              aria-label="Toggle wishlist"
+            >
+              <Heart
                 className={cn(
-                  "w-3.5 h-3.5",
-                  i < Math.round((product as { rating?: number }).rating ?? 0)
-                    ? "fill-gold text-gold"
-                    : "fill-gray-200 text-gray-200"
+                  "w-4 h-4 transition-colors",
+                  isWishlisted ? "fill-red-500 text-red-500" : "text-muted hover:text-red-500"
                 )}
               />
-            ))}
-            {"reviewCount" in product && (product as { reviewCount?: number }).reviewCount !== undefined && (
-              <span className="text-muted text-xs ml-1">
-                ({(product as { reviewCount?: number }).reviewCount})
-              </span>
-            )}
+            </button>
           </div>
-        )}
 
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-gold font-bold text-xl">
-              {formatPrice(lowestPrice)}
-            </span>
-            {product.variants?.[0]?.mrp && product.variants[0].mrp > lowestPrice && (
-              <span className="text-muted text-sm line-through">
-                {formatPrice(product.variants[0].mrp)}
-              </span>
+          <div className="p-5 flex flex-col flex-1">
+            <h3 className="font-heading text-lg font-semibold text-royal leading-snug mb-1.5 group-hover:text-gold transition-colors">
+              {product.name}
+            </h3>
+
+            {product.shortDescription && (
+              <p className="text-muted text-sm leading-relaxed line-clamp-2 mb-3 flex-1">
+                {product.shortDescription}
+              </p>
             )}
-          </div>
-        </div>
 
-        <button
-          onClick={handleAddToCart}
-          className="w-full bg-gold hover:bg-gold-hover text-white font-semibold py-2.5 rounded-full text-sm transition-all duration-200 hover:shadow-gold mt-auto"
-        >
-          Add to Cart
-        </button>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-royal font-bold text-xl">
+                {formatPrice(price)}
+              </span>
+              {mrp > price && (
+                <span className="text-muted text-sm line-through">
+                  {formatPrice(mrp)}
+                </span>
+              )}
+              {discount > 0 && (
+                <span className="text-green-600 text-sm font-semibold">
+                  ({discount}% OFF)
+                </span>
+              )}
+            </div>
+
+            <div className="flex gap-2 mt-auto">
+              <button
+                onClick={handleAddToCart}
+                className="flex-1 bg-royal text-white rounded-full py-2.5 text-sm font-semibold transition-all hover:opacity-90 flex items-center justify-center gap-2"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                Add to Cart
+              </button>
+              <Link
+                href={`/shop/${product.slug}`}
+                onClick={(e) => e.stopPropagation()}
+                className="flex-1 border border-royal text-royal rounded-full py-2.5 text-sm font-semibold transition-all hover:bg-royal hover:text-white flex items-center justify-center gap-2"
+              >
+                VIEW PRODUCT
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            <button
+              onClick={handleWhatsApp}
+              className="w-full mt-3 bg-green-500 text-white rounded-full py-2.5 text-sm font-semibold transition-all hover:bg-green-600 flex items-center justify-center gap-2"
+            >
+              <MessageCircle className="w-4 h-4" />
+              ORDER ON WHATSAPP
+            </button>
+          </div>
+        </Link>
       </div>
-    </Link>
+    </div>
   );
 }

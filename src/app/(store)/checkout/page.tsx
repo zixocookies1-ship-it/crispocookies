@@ -129,7 +129,7 @@ export default function CheckoutPage() {
     return (
       <div className="bg-cream-dark min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-navy font-heading text-xl mb-4">Your cart is empty</p>
+          <p className="text-royal font-heading text-xl mb-4">Your cart is empty</p>
           <a href="/shop" className="btn-gold">Start Shopping</a>
         </div>
       </div>
@@ -139,7 +139,7 @@ export default function CheckoutPage() {
   return (
     <div className="bg-cream-dark min-h-screen">
       <div className="container-tight py-8">
-        <h1 className="font-heading text-4xl text-navy font-bold">
+        <h1 className="font-heading text-4xl text-royal font-bold">
           Checkout
         </h1>
       </div>
@@ -147,13 +147,13 @@ export default function CheckoutPage() {
       <div className="container-tight pb-16 grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* Left: Form */}
         <div className="lg:col-span-3">
-          <h2 className="font-heading text-xl font-semibold text-navy mb-6">
+          <h2 className="font-heading text-xl font-semibold text-royal mb-6">
             Delivery Details
           </h2>
           <div className="bg-surface rounded-2xl shadow-warm p-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-navy mb-1">Full Name</label>
+                <label className="block text-sm font-medium text-royal mb-1">Full Name</label>
                 <input
                   name="fullName"
                   value={form.fullName}
@@ -164,7 +164,7 @@ export default function CheckoutPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-navy mb-1">Phone</label>
+                <label className="block text-sm font-medium text-royal mb-1">Phone</label>
                 <input
                   name="phone"
                   value={form.phone}
@@ -176,7 +176,7 @@ export default function CheckoutPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-navy mb-1">Email</label>
+                <label className="block text-sm font-medium text-royal mb-1">Email</label>
                 <input
                   name="email"
                   type="email"
@@ -188,7 +188,7 @@ export default function CheckoutPage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-navy mb-1">Address Line 1</label>
+                <label className="block text-sm font-medium text-royal mb-1">Address Line 1</label>
                 <input
                   name="addressLine1"
                   value={form.addressLine1}
@@ -199,7 +199,7 @@ export default function CheckoutPage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-navy mb-1">Address Line 2 (Optional)</label>
+                <label className="block text-sm font-medium text-royal mb-1">Address Line 2 (Optional)</label>
                 <input
                   name="addressLine2"
                   value={form.addressLine2}
@@ -209,7 +209,7 @@ export default function CheckoutPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-navy mb-1">City</label>
+                <label className="block text-sm font-medium text-royal mb-1">City</label>
                 <input
                   name="city"
                   value={form.city}
@@ -220,7 +220,7 @@ export default function CheckoutPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-navy mb-1">State</label>
+                <label className="block text-sm font-medium text-royal mb-1">State</label>
                 <input
                   name="state"
                   value={form.state}
@@ -231,7 +231,7 @@ export default function CheckoutPage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-navy mb-1">Pincode</label>
+                <label className="block text-sm font-medium text-royal mb-1">Pincode</label>
                 <input
                   name="pincode"
                   value={form.pincode}
@@ -249,48 +249,48 @@ export default function CheckoutPage() {
         {/* Right: Summary */}
         <div className="lg:col-span-2">
           <div className="bg-surface rounded-2xl shadow-warm p-6 sticky top-24">
-            <h2 className="font-heading text-lg font-semibold text-navy mb-6">
+            <h2 className="font-heading text-lg font-semibold text-royal mb-6">
               Order Summary
             </h2>
 
             <div className="max-h-60 overflow-y-auto space-y-3 mb-4 pr-1">
               {items.map((item) => (
                 <div
-                  key={`${item.productId}-${item.variant}`}
+                   key={`${item.productId}-${item.variant.weight}`}
                   className="flex gap-3 items-start"
                 >
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cream to-gold/10 flex items-center justify-center shrink-0">
                     <span className="text-lg select-none">🍪</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-navy text-sm font-medium truncate">{item.name}</p>
-                    <p className="text-muted text-xs">{item.variant} × {item.qty}</p>
+                    <p className="text-royal text-sm font-medium truncate">{item.name}</p>
+                     <p className="text-muted text-xs">{item.variant.weight} × {item.qty}</p>
                   </div>
-                  <span className="text-navy font-medium text-sm whitespace-nowrap">
-                    {formatPrice(item.price * item.qty)}
+                  <span className="text-royal font-medium text-sm whitespace-nowrap">
+                     {formatPrice(item.variant.price * item.qty)}
                   </span>
                 </div>
               ))}
             </div>
 
-            <div className="border-t border-navy/10 pt-3 space-y-2 mb-4">
+            <div className="border-t border-royal/10 pt-3 space-y-2 mb-4">
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Subtotal</span>
-                <span className="text-navy font-medium">{formatPrice(subtotal)}</span>
+                <span className="text-royal font-medium">{formatPrice(subtotal)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Delivery</span>
-                <span className={delivery === 0 ? "text-green font-medium" : "text-navy font-medium"}>
+                <span className={delivery === 0 ? "text-green font-medium" : "text-royal font-medium"}>
                   {delivery === 0 ? "Free" : formatPrice(delivery)}
                 </span>
               </div>
             </div>
 
-            <div className="border-t border-navy/10 my-4" />
+            <div className="border-t border-royal/10 my-4" />
 
             <div className="flex justify-between items-baseline mb-6">
-              <span className="font-heading text-lg font-bold text-navy">Total</span>
-              <span className="font-heading text-xl font-bold text-navy">{formatPrice(total)}</span>
+              <span className="font-heading text-lg font-bold text-royal">Total</span>
+              <span className="font-heading text-xl font-bold text-royal">{formatPrice(total)}</span>
             </div>
 
             <button

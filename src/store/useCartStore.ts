@@ -7,8 +7,7 @@ export interface CartItem {
   productId: string;
   name: string;
   image: string;
-  variant: string;
-  price: number;
+  variant: { weight: string; price: number };
   qty: number;
 }
 
@@ -29,13 +28,14 @@ export const useCartStore = create<CartStore>()(
 
       addItem: (item) => {
         set((state) => {
+          const key = `${item.productId}-${item.variant.weight}`;
           const existing = state.items.find(
-            (i) => i.productId === item.productId && i.variant === item.variant
+            (i) => `${i.productId}-${i.variant.weight}` === key
           );
           if (existing) {
             return {
               items: state.items.map((i) =>
-                i.productId === item.productId && i.variant === item.variant
+                `${i.productId}-${i.variant.weight}` === key
                   ? { ...i, qty: i.qty + 1 }
                   : i
               ),
@@ -48,7 +48,7 @@ export const useCartStore = create<CartStore>()(
       removeItem: (productId, variant) => {
         set((state) => ({
           items: state.items.filter(
-            (i) => !(i.productId === productId && i.variant === variant)
+            (i) => !(i.productId === productId && i.variant.weight === variant)
           ),
         }));
       },
@@ -58,10 +58,10 @@ export const useCartStore = create<CartStore>()(
           items:
             qty <= 0
               ? state.items.filter(
-                  (i) => !(i.productId === productId && i.variant === variant)
+                  (i) => !(i.productId === productId && i.variant.weight === variant)
                 )
               : state.items.map((i) =>
-                  i.productId === productId && i.variant === variant
+                  i.productId === productId && i.variant.weight === variant
                     ? { ...i, qty }
                     : i
                 ),
@@ -71,10 +71,9 @@ export const useCartStore = create<CartStore>()(
       clearCart: () => set({ items: [] }),
 
       getTotal: () =>
-        get().items.reduce((sum, item) => sum + item.price * item.qty, 0),
+        get().items.reduce((sum, i) => sum + i.variant.price * i.qty, 0),
 
-      getCount: () =>
-        get().items.reduce((sum, item) => sum + item.qty, 0),
+      getCount: () => get().items.reduce((sum, i) => sum + i.qty, 0),
     }),
     { name: "crispo-cart" }
   )

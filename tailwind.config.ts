@@ -9,19 +9,23 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        navy:     { DEFAULT: "#1B1B4B", dark: "#0F0F2D", light: "#2A2A6B" },
-        gold:     { DEFAULT: "#8B6410", light: "#A07820", hover: "#7A5A0E", 50: "#FDF8ED" },
         cream:    { DEFAULT: "#FAF7F2", dark: "#F0EBE0" },
+        beige:    { DEFAULT: "#F4EFE8" },
+        gold:     { DEFAULT: "#C4972A", light: "#D4A94A", hover: "#B08820", 50: "#FDF8ED" },
+        royal:    { DEFAULT: "#1B1B4B", light: "#2A2A6B" },
+        plum:     { DEFAULT: "#3A2A5C", light: "#5A4A7C" },
+        lavender: { DEFAULT: "#B8A9D4", light: "#D4C9E8" },
+        espresso: { DEFAULT: "#1A1413" },
+        chocolate:{ DEFAULT: "#3D2B1F", light: "#5C3D2E" },
         surface:  { DEFAULT: "#FFFFFF" },
-        muted:    { DEFAULT: "#5A5A7A", light: "#8888A4" },
-        brown:    { DEFAULT: "#3D2B1F", light: "#5C3D2E" },
+        muted:    { DEFAULT: "#7A6E8A", light: "#9A8EAA" },
         red:      { DEFAULT: "#DC2626" },
         green:    { DEFAULT: "#16A34A" },
         amber:    { DEFAULT: "#D97706" },
       },
       fontFamily: {
-        heading: ["var(--font-playfair)", "serif"],
-        body:    ["var(--font-dm-sans)", "sans-serif"],
+        heading: ["var(--font-cormorant)", "Georgia", "serif"],
+        body:    ["var(--font-manrope)", "system-ui", "sans-serif"],
       },
       fontSize: {
         "display": ["4.5rem",    { lineHeight: "1.05", letterSpacing: "-0.02em" }],
@@ -30,54 +34,41 @@ const config: Config = {
         "card":    ["1.5rem",    { lineHeight: "1.25" }],
       },
       boxShadow: {
-        warm:       "0 4px 20px rgba(27,27,75,0.06)",
-        "warm-md":  "0 6px 24px rgba(27,27,75,0.08)",
-        "warm-lg":  "0 12px 40px rgba(27,27,75,0.10)",
-        "warm-xl":  "0 20px 60px rgba(27,27,75,0.12)",
-        "gold":     "0 4px 20px rgba(139,100,16,0.15)",
-        "gold-lg":  "0 8px 30px rgba(139,100,16,0.20)",
-        "inner-warm": "inset 0 2px 4px rgba(27,27,75,0.06)",
+        soft:       "0 2px 6px -2px rgba(28,9,24,0.12), 0 14px 40px -18px rgba(28,9,24,0.28)",
+        lift:       "0 6px 12px -6px rgba(28,9,24,0.2), 0 30px 60px -24px rgba(28,9,24,0.36)",
+        gold:       "0 0 0 1px rgba(196,151,42,0.45), 0 18px 44px -20px rgba(196,151,42,0.4)",
       },
       borderRadius: {
         "4xl": "2rem",
+        "5xl": "2.5rem",
       },
       animation: {
-        "fade-up":     "fadeUp 0.6s ease-out forwards",
-        "fade-in":     "fadeIn 0.5s ease-out forwards",
-        "slide-up":    "slideUp 0.7s ease-out forwards",
-        "scale-in":    "scaleIn 0.4s ease-out forwards",
-        "float":       "float 6s ease-in-out infinite",
+        "float":       "crispoFloat 6s ease-in-out infinite",
+        "rise":        "crispoRise 1s cubic-bezier(.22,1,.36,1) both",
+        "reveal":      "crispoReveal 0.7s ease-out both",
+        "pulse-ring":  "crispoPulseRing 2s ease-in-out infinite",
         "marquee":     "marquee 25s linear infinite",
-        "pulse-soft":  "pulseSoft 2s ease-in-out infinite",
       },
       keyframes: {
-        fadeUp: {
-          "0%":   { opacity: "0", transform: "translateY(30px)" },
+        crispoFloat: {
+          "0%, 100%": { transform: "translateY(0) rotate(-1deg)" },
+          "50%":      { transform: "translateY(-14px) rotate(1deg)" },
+        },
+        crispoRise: {
+          "0%":   { opacity: "0", transform: "translateY(40px) scale(0.96)" },
+          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
+        crispoReveal: {
+          "0%":   { opacity: "0", transform: "translateY(24px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
-        fadeIn: {
-          "0%":   { opacity: "0" },
-          "100%": { opacity: "1" },
-        },
-        slideUp: {
-          "0%":   { opacity: "0", transform: "translateY(40px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
-        },
-        scaleIn: {
-          "0%":   { opacity: "0", transform: "scale(0.8)" },
-          "100%": { opacity: "1", transform: "scale(1)" },
-        },
-        float: {
-          "0%, 100%": { transform: "translateY(0)" },
-          "50%":      { transform: "translateY(-12px)" },
+        crispoPulseRing: {
+          "0%":   { boxShadow: "0 0 0 0 rgba(99,179,123,0.5)" },
+          "100%": { boxShadow: "0 0 0 12px rgba(99,179,123,0)" },
         },
         marquee: {
           "0%":   { transform: "translateX(0)" },
           "100%": { transform: "translateX(-50%)" },
-        },
-        pulseSoft: {
-          "0%, 100%": { opacity: "1" },
-          "50%":      { opacity: "0.7" },
         },
       },
     },
