@@ -333,55 +333,39 @@ export default function StoreHomePage() {
         </div>
       </section>
 
-      {/* ─── SECTION 5: ABOUT / OUR STORY ─── */}
-      <section className="py-16 lg:py-24" aria-label="Our Story">
+      {/* ─── SECTION 5: CHOOSE YOUR CRAVE ─── */}
+      <section className="py-16 lg:py-24" aria-label="Choose Your Crave">
         <div className="container-tight">
-          <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center">
-            {/* Left – image */}
-            <div className="flex justify-center">
-              <div className="w-full max-w-md aspect-square rounded-3xl overflow-hidden shadow-lift relative">
-                <img
-                  src="/our story.jpg"
-                  alt="Crispo Cookies — baked with love"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-plum/30 to-transparent pointer-events-none" />
-              </div>
-            </div>
-
-            {/* Right – text */}
-            <div>
-              <p className="eyebrow mb-4">Our Story</p>
-              <h2 className="font-heading text-4xl lg:text-section text-royal font-bold mb-5">
-                Crafted with Purpose
-              </h2>
-              <p className="text-muted text-lg leading-relaxed mb-4">
-                Crispo was born from a simple passion for healthy snacking.
-                Based in Nellore, Andhra Pradesh, we set out to prove that
-                treats made with pure oats can be every bit as delicious as
-                traditional baked goods.
-              </p>
-              <p className="text-muted text-lg leading-relaxed mb-6">
-                Every bite reflects our commitment:{" "}
-                <span className="text-royal font-semibold">
-                  100% ZERO MAIDHA
+          <div className="text-center mb-10">
+            <p className="eyebrow mb-4">Choose Your Crave</p>
+            <h2 className="font-heading text-4xl lg:text-section text-royal font-bold mb-4">
+              Five moods. One box away.
+            </h2>
+            <p className="text-muted text-lg max-w-2xl mx-auto">
+              Match your moment with oat-based cookies and brownies. No
+              compromise on taste.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-5">
+            {[
+              { emoji: "🍫", label: "Indulgent" },
+              { emoji: "🌹", label: "Floral" },
+              { emoji: "🍍", label: "Fruity" },
+              { emoji: "🌱", label: "Nutty" },
+              { emoji: "🥜", label: "Rich" },
+            ].map((mood) => (
+              <div
+                key={mood.label}
+                className="surface-card rounded-3xl p-6 text-center hover:shadow-lift transition-shadow duration-300"
+              >
+                <span className="text-5xl block mb-3 select-none">
+                  {mood.emoji}
                 </span>
-                , premium oats, and zero preservatives. We bake with love so
-                you can snack without guilt.
-              </p>
-              <ul className="space-y-3">
-                {[
-                  "100% pure oats, zero maida",
-                  "No preservatives, ever",
-                  "Handcrafted in Nellore, Andhra Pradesh",
-                ].map((point) => (
-                  <li key={point} className="flex items-center gap-3 text-royal">
-                    <span className="text-gold font-bold">✓</span>
-                    <span className="font-medium">{point}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+                <h3 className="font-heading text-lg font-semibold text-royal">
+                  {mood.label}
+                </h3>
+              </div>
+            ))}
           </div>
         </div>
       </section>
