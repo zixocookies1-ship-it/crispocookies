@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "sonner";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -34,12 +34,13 @@ export default function RootLayout({
         {children}
         <Toaster
           position="bottom-right"
+          richColors
           toastOptions={{
-            duration: 3000,
             style: {
-              background: "#FAF7F2",
+              background: "#FFFCF8",
               color: "#1B1B4B",
-              border: "1px solid #8B6410",
+              border: "1px solid #C4972A",
+              fontWeight: 500,
             },
           }}
         />

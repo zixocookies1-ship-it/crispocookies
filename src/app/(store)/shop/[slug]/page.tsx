@@ -16,6 +16,7 @@ import {
 import ProductCard from "@/components/product-card";
 import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/helpers";
+import { toast } from "sonner";
 import { useCartStore } from "@/store/useCartStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
 
@@ -170,6 +171,7 @@ export default function ProductDetailPage() {
         image: product.images?.[0] || "",
       });
     }
+    toast.success(`${quantity} × ${product.name} added to cart`);
   };
 
   const handleToggleWishlist = () => {
