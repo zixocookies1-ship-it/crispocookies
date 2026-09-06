@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Heart, Award, Leaf, ShieldCheck, MapPin, MessageCircle } from "lucide-react";
+import { Heart, Award, Leaf, ShieldCheck, MapPin } from "lucide-react";
 
 export const metadata = {
   title: "About",
@@ -202,15 +202,6 @@ export default function AboutPage() {
                 <Link href="/cookies" className="btn-gold">
                   Shop Cookies
                 </Link>
-                <a
-                  href="https://wa.me/917569831560"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 border-2 border-cream/40 text-cream hover:bg-cream hover:text-plum font-semibold px-8 py-3.5 rounded-full transition-all duration-300 text-sm tracking-wider uppercase"
-                >
-                  <MessageCircle size={16} />
-                  Order on WhatsApp
-                </a>
               </div>
             </div>
           </div>

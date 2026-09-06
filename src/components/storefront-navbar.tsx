@@ -3,9 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, Heart, ShoppingBag, Menu, X, ChevronRight } from "lucide-react";
+import { Search, ShoppingBag, Menu, X, ChevronRight } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
-import { useWishlistStore } from "@/store/useWishlistStore";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -20,7 +19,6 @@ export default function StorefrontNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const cartCount = useCartStore((s) => s.getCount());
-  const wishlistItems = useWishlistStore((s) => s.items);
 
   useEffect(() => {
     if (mobileOpen) {
@@ -80,24 +78,6 @@ export default function StorefrontNavbar() {
               className="text-plum/60 hover:text-gold transition-colors p-2.5"
             >
               <Search size={20} strokeWidth={1.5} />
-            </Link>
-
-            <Link
-              href="/wishlist"
-              className="relative text-plum/60 hover:text-gold transition-colors p-2.5"
-            >
-              <Heart
-                size={20}
-                strokeWidth={1.5}
-                className={cn(
-                  wishlistItems.length > 0 && "fill-gold text-gold"
-                )}
-              />
-              {wishlistItems.length > 0 && (
-                <span className="absolute top-1.5 right-1 w-4 h-4 bg-gold text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
-                  {wishlistItems.length}
-                </span>
-              )}
             </Link>
 
             <Link
@@ -241,24 +221,6 @@ export default function StorefrontNavbar() {
                 className="text-plum/50 hover:text-gold transition-colors p-2"
               >
                 <Search size={22} strokeWidth={1.5} />
-              </Link>
-              <Link
-                href="/wishlist"
-                onClick={() => setMobileOpen(false)}
-                className="relative text-plum/50 hover:text-gold transition-colors p-2"
-              >
-                <Heart
-                  size={22}
-                  strokeWidth={1.5}
-                  className={cn(
-                    wishlistItems.length > 0 && "fill-gold text-gold"
-                  )}
-                />
-                {wishlistItems.length > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 bg-gold text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
-                    {wishlistItems.length}
-                  </span>
-                )}
               </Link>
               <Link
                 href="/cart"

@@ -31,21 +31,12 @@ export default function StorefrontFooter() {
           </Link>
           <p className="text-[#F5F0E8]/70 text-sm mt-4 max-w-xl mx-auto leading-relaxed">
             Baked to impress, made to crave. Premium oat-based cookies and
-            brownies with 100% ZERO MAIDHA, handcrafted in Nellore. Order on
-            WhatsApp.
+            brownies with 100% ZERO MAIDHA, handcrafted in Nellore.
           </p>
-          <a
-            href="https://wa.me/917569831560"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 mt-5 bg-[#D4A843] hover:bg-[#C99A38] text-[#1A1413] font-semibold text-sm px-6 py-2.5 rounded-full transition-colors"
-          >
-            Order on WhatsApp
-          </a>
         </div>
 
         {/* Footer Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 lg:gap-8">
           {/* Quick Links */}
           <div>
             <h3 className="font-heading text-sm font-semibold text-[#D4A843] uppercase tracking-widest mb-5">
@@ -90,31 +81,6 @@ export default function StorefrontFooter() {
                   className="text-[#F5F0E8]/60 hover:text-[#D4A843] text-sm transition-colors"
                 >
                   Contact
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Legal */}
-          <div>
-            <h3 className="font-heading text-sm font-semibold text-[#D4A843] uppercase tracking-widest mb-5">
-              Legal
-            </h3>
-            <ul className="space-y-3">
-              <li>
-                <Link
-                  href="/privacy"
-                  className="text-[#F5F0E8]/60 hover:text-[#D4A843] text-sm transition-colors"
-                >
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/terms"
-                  className="text-[#F5F0E8]/60 hover:text-[#D4A843] text-sm transition-colors"
-                >
-                  Terms of Order
                 </Link>
               </li>
             </ul>

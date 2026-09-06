@@ -5,14 +5,11 @@ import Link from "next/link";
 import { toast } from "sonner";
 import {
   ShoppingBag,
-  Heart,
   ArrowRight,
-  MessageCircle,
   Filter,
   ChevronDown,
 } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
-import { useWishlistStore } from "@/store/useWishlistStore";
 
 const products = [
   {
@@ -110,8 +107,6 @@ export default function ShopPage() {
   const [sortOpen, setSortOpen] = useState(false);
 
   const addItem = useCartStore((s) => s.addItem);
-  const toggleWishlist = useWishlistStore((s) => s.toggle);
-  const isWishlisted = useWishlistStore((s) => s.isWishlisted);
 
   const filtered = useMemo(() => {
     let list = [...products];
@@ -141,13 +136,6 @@ export default function ShopPage() {
       image: "",
     });
     toast.success(`${product.name} added to cart`);
-  };
-
-  const handleWhatsApp = (product: (typeof products)[number]) => {
-    const msg = encodeURIComponent(
-      `Hi! I'd like to order ${product.name} (${product.packQuantity}) — ₹${product.price}`
-    );
-    window.open(`https://wa.me/917569831560?text=${msg}`, "_blank");
   };
 
   return (
@@ -222,7 +210,6 @@ export default function ShopPage() {
               const discount = Math.round(
                 ((product.mrp - product.price) / product.mrp) * 100
               );
-              const isWished = isWishlisted(product._id);
 
               return (
                 <div
@@ -237,18 +224,6 @@ export default function ShopPage() {
                         -{discount}%
                       </span>
                     )}
-                    <button
-                      onClick={() =>
-                        toggleWishlist(product._id)
-                      }
-                      className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-white transition-colors"
-                    >
-                      <Heart
-                        className={`w-4 h-4 ${
-                          isWished ? "fill-red-500 text-red-500" : "text-royal"
-                        }`}
-                      />
-                    </button>
                   </div>
 
                   {/* Info */}
@@ -288,13 +263,6 @@ export default function ShopPage() {
                           View
                           <ArrowRight className="w-3.5 h-3.5" />
                         </Link>
-                        <button
-                          onClick={() => handleWhatsApp(product)}
-                          className="flex-1 flex items-center justify-center gap-1.5 border border-green-500/30 text-green-700 text-sm font-medium py-2.5 rounded-xl hover:bg-green-50 transition-colors"
-                        >
-                          <MessageCircle className="w-3.5 h-3.5" />
-                          WhatsApp
-                        </button>
                       </div>
                     </div>
                   </div>

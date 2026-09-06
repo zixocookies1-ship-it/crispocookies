@@ -14,7 +14,6 @@ import {
   Phone,
   MapPin,
   ArrowRight,
-  MessageCircle,
 } from "lucide-react";
 
 const InstagramIcon = ({ className }: { className?: string }) => (
@@ -190,14 +189,12 @@ export default function StoreHomePage() {
               <Link href="/cookies" className="btn-gold">
                 Explore Cookies
               </Link>
-              <a
-                href="https://wa.me/917569831560"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                href="/cart"
                 className="inline-flex items-center justify-center font-body font-semibold px-8 py-3.5 rounded-full border-2 border-cream/40 text-cream hover:bg-cream hover:text-plum transition-all duration-300 text-sm tracking-wider uppercase"
               >
-                Order on WhatsApp
-              </a>
+                View Cart
+              </Link>
             </div>
           </div>
         </div>
@@ -588,15 +585,9 @@ export default function StoreHomePage() {
             </div>
           </div>
           <div className="max-w-md mx-auto mt-10">
-            <a
-              href="https://wa.me/917569831560"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-royal w-full"
-            >
-              <MessageCircle size={18} />
-              Chat with us on WhatsApp
-            </a>
+            <Link href="/shop" className="btn-royal w-full">
+              Order Now
+            </Link>
           </div>
         </div>
       </section>

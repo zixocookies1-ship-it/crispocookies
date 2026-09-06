@@ -1,10 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, ShoppingBag, ArrowRight, MessageCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ShoppingBag, ArrowRight } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
-import { useWishlistStore } from "@/store/useWishlistStore";
 import { toast } from "sonner";
 import type { IProduct } from "@/models/Product";
 
@@ -16,8 +14,6 @@ const formatPrice = (p: number) => `₹${p}`;
 
 export default function ProductCard({ product }: ProductCardProps) {
   const addItem = useCartStore((s) => s.addItem);
-  const toggle = useWishlistStore((s) => s.toggle);
-  const isWishlisted = useWishlistStore((s) => s.isWishlisted(String(product._id)));
 
   const variant = product.variants?.[0];
   const price = variant?.price ?? 0;
@@ -36,19 +32,6 @@ export default function ProductCard({ product }: ProductCardProps) {
       });
       toast.success(`${product.name} added to cart`);
     }
-  };
-
-  const handleToggleWishlist = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggle(String(product._id));
-  };
-
-  const handleWhatsApp = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const message = encodeURIComponent(`Hi, I'm interested in ${product.name}. Can you share more details?`);
-    window.open(`https://wa.me/917569831560?text=${message}`, "_blank");
   };
 
   return (
@@ -70,19 +53,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                 </span>
               )}
             </div>
-
-            <button
-              onClick={handleToggleWishlist}
-              className="absolute top-3 right-3 p-2 rounded-full bg-surface/80 backdrop-blur-sm transition-colors hover:scale-110"
-              aria-label="Toggle wishlist"
-            >
-              <Heart
-                className={cn(
-                  "w-4 h-4 transition-colors",
-                  isWishlisted ? "fill-red-500 text-red-500" : "text-muted hover:text-red-500"
-                )}
-              />
-            </button>
           </div>
 
           <div className="p-5 flex flex-col flex-1">
@@ -129,14 +99,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-
-            <button
-              onClick={handleWhatsApp}
-              className="w-full mt-3 bg-green-500 text-white rounded-full py-2.5 text-sm font-semibold transition-all hover:bg-green-600 flex items-center justify-center gap-2"
-            >
-              <MessageCircle className="w-4 h-4" />
-              ORDER ON WHATSAPP
-            </button>
           </div>
         </Link>
       </div>

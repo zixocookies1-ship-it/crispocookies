@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
-  Heart,
   Star,
   Minus,
   Plus,
@@ -18,7 +17,6 @@ import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/helpers";
 import { toast } from "sonner";
 import { useCartStore } from "@/store/useCartStore";
-import { useWishlistStore } from "@/store/useWishlistStore";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const allProducts: any[] = [
@@ -149,8 +147,6 @@ export default function ProductDetailPage() {
   const product = allProducts.find((p) => p.slug === slug) || allProducts[0];
 
   const addItem = useCartStore((s) => s.addItem);
-  const toggle = useWishlistStore((s) => s.toggle);
-  const isWishlisted = useWishlistStore((s) => s.isWishlisted(String(product._id)));
 
   const [selectedVariant, setSelectedVariant] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -172,10 +168,6 @@ export default function ProductDetailPage() {
       });
     }
     toast.success(`${quantity} × ${product.name} added to cart`);
-  };
-
-  const handleToggleWishlist = () => {
-    toggle(String(product._id));
   };
 
   const stockStatus =
@@ -281,9 +273,6 @@ export default function ProductDetailPage() {
 
             <div className="flex gap-3 mb-6">
               <button onClick={handleAddToCart} className="btn-gold flex-1">Add to Cart</button>
-              <button onClick={handleToggleWishlist} className="btn-royal-outline px-4">
-                <Heart className={cn("w-5 h-5", isWishlisted ? "fill-gold text-gold" : "text-royal")} />
-              </button>
             </div>
 
             <div className="pt-6 border-t border-royal/10 space-y-3">

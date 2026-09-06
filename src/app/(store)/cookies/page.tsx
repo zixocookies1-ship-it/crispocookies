@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { ShoppingBag, ArrowRight, MessageCircle } from "lucide-react";
+import { ShoppingBag, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useCartStore } from "@/store/useCartStore";
 import { formatPrice } from "@/lib/helpers";
@@ -78,11 +78,6 @@ export default function CookieCollectionPage() {
     toast.success(`${cookie.name} added to cart`);
   };
 
-  const whatsappUrl = (name: string, packQuantity: string, weight: string, price: number) =>
-    `https://wa.me/917569831560?text=${encodeURIComponent(
-      `Hello CRISPO COOKIES! I would like to order: ${name} \u2014 ${packQuantity} / ${weight} \u00D7 1 = \u20B9${price}. Please confirm availability and delivery.`
-    )}`;
-
   return (
     <div className="bg-cream-dark min-h-screen">
       {/* Hero Section */}
@@ -155,15 +150,6 @@ export default function CookieCollectionPage() {
                           VIEW PRODUCT
                           <ArrowRight size={14} />
                         </Link>
-                        <a
-                          href={whatsappUrl(cookie.name, cookie.packQuantity, cookie.weight, cookie.price)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-1 flex items-center justify-center gap-1.5 bg-green hover:bg-green/90 text-white font-semibold py-2.5 rounded-full text-xs transition-all duration-300 uppercase tracking-wider"
-                        >
-                          <MessageCircle size={14} />
-                          ORDER ON WHATSAPP
-                        </a>
                       </div>
                     </div>
                   </div>
