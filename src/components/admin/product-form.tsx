@@ -131,7 +131,7 @@ export default function ProductForm({ product }: Props) {
     if (variants.length === 0 || variants.every((v) => !v.weight || !v.price)) {
       newErrors.variants = "At least one variant with weight and price is required";
     }
-    if (images.length === 0) newErrors.images = "At least one image is required";
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -335,7 +335,11 @@ export default function ProductForm({ product }: Props) {
             {images.map((img, i) => (
               <div key={i} className="relative group">
                 <div className="aspect-square bg-[#FAF7F2] rounded-xl flex items-center justify-center text-2xl overflow-hidden">
-                  🍪
+                  {images[i] ? (
+                    <img src={images[i]} alt={`Product ${i + 1}`} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-[#5A5A7A] text-xs">No image</span>
+                  )}
                 </div>
                 {i === 0 && (
                   <span className="absolute top-2 left-2 bg-[#8B6410] text-white text-xs px-2 py-0.5 rounded-full">

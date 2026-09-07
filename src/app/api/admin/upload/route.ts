@@ -28,10 +28,10 @@ export async function POST(request: NextRequest) {
     const result = await uploadImage(buffer, filename);
 
     return NextResponse.json(result);
-  } catch (error) {
-    console.error("POST /api/admin/upload error:", error);
+  } catch (error: any) {
+    console.error("POST /api/admin/upload error:", error?.message || error);
     return NextResponse.json(
-      { error: "Failed to upload file" },
+      { error: error?.message || "Failed to upload file" },
       { status: 500 }
     );
   }
