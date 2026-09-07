@@ -1,392 +1,474 @@
 "use client";
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  Star,
-  Minus,
-  Plus,
-  Truck,
-  Package,
-  Shield,
-  Leaf,
-} from "lucide-react";
-import ProductCard from "@/components/product-card";
+import Image from "next/image";
+import { Minus, Plus, Truck, Package, Shield, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatPrice } from "@/lib/helpers";
-import { toast } from "sonner";
+import {
+  fetchProductBySlug,
+  fetchProducts,
+  StoreProduct,
+  formatINR,
+  discountOf,
+} from "@/lib/storefront";
 import { useCartStore } from "@/store/useCartStore";
+import { toast } from "sonner";
+import WishlistButton from "@/components/wishlist-button";
+import ProductCard from "@/components/product-card";
+import BenefitsSection from "@/components/benefits-section";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-const allProducts: any[] = [
-  {
-    _id: "1",
-    name: "Double Chocolate Cookie",
-    slug: "double-chocolate-cookie",
-    shortDescription: "Rich, indulgent and deeply chocolatey — made with pure oats and loaded with chocolate goodness.",
-    fullDescription: "Rich, indulgent and deeply chocolatey, our Double Chocolate Cookie is made with pure oats powder and loaded with chocolate goodness. A premium cookie crafted for chocolate lovers who want indulgence with wholesome ingredients. Each box contains 6 handcrafted cookies weighing 300 grams total. 100% ZERO MAIDHA — made with pure oats, no artificial flavors, no preservatives.",
-    ingredients: ["Oats Powder", "Cocoa", "Chocolate Chips", "Butter", "Sugar", "Vanilla", "Baking Powder"],
-    images: [],
-    category: "Cookies",
-    tags: ["bestseller", "zero-maida"],
-    nutrition: { protein: "4g", calories: "235 kcal", weight: "50g per cookie" },
-    benefits: ["100% ZERO MAIDHA", "Pure oats goodness", "Protein packed", "No artificial flavors", "No preservatives", "Pure & wholesome"],
-    variants: [{ weight: "300g (6 cookies)", price: 219, mrp: 399, stock: 50 }],
-    isActive: true,
-    createdAt: "",
-  },
-  {
-    _id: "2",
-    name: "Rose Cookie",
-    slug: "rose-cookie",
-    shortDescription: "A delicate floral twist — made with homemade rose syrup and fresh rose petals.",
-    fullDescription: "A delicate floral twist on a wholesome cookie. Our Rose Cookie is made with homemade rose syrup prepared with fresh rose petals, creating a naturally aromatic and beautifully distinctive flavor. Each box contains 6 handcrafted cookies weighing 300 grams total. 100% ZERO MAIDHA.",
-    ingredients: ["Oats Powder", "Homemade Rose Syrup", "Fresh Rose Petals", "Butter", "Sugar", "Baking Powder"],
-    images: [],
-    category: "Cookies",
-    tags: ["zero-maida"],
-    nutrition: { protein: "3.5g", calories: "220 kcal", weight: "50g per cookie" },
-    benefits: ["Homemade rose syrup", "Fresh rose petals", "Natural aroma", "100% ZERO MAIDHA", "Protein packed", "No preservatives"],
-    variants: [{ weight: "300g (6 cookies)", price: 219, mrp: 399, stock: 40 }],
-    isActive: true,
-    createdAt: "",
-  },
-  {
-    _id: "3",
-    name: "Pineapple Cookie",
-    slug: "pineapple-cookie",
-    shortDescription: "A tropical, refreshing cookie with homemade pineapple syrup and wholesome oats.",
-    fullDescription: "A tropical, refreshing cookie crafted with homemade pineapple syrup and wholesome oats. Bright pineapple flavor meets a deliciously crisp cookie for a unique tropical experience. Each box contains 6 handcrafted cookies weighing 300 grams total. 100% ZERO MAIDHA.",
-    ingredients: ["Oats Powder", "Homemade Pineapple Syrup", "Butter", "Sugar", "Baking Powder"],
-    images: [],
-    category: "Cookies",
-    tags: ["zero-maida"],
-    nutrition: { protein: "2g", calories: "225 kcal", weight: "50g per cookie" },
-    benefits: ["Homemade pineapple syrup", "100% ZERO MAIDHA", "Pure oats goodness", "No artificial flavors", "No preservatives", "Pure & wholesome"],
-    variants: [{ weight: "300g (6 cookies)", price: 219, mrp: 399, stock: 35 }],
-    isActive: true,
-    createdAt: "",
-  },
-  {
-    _id: "4",
-    name: "Dry Seeds Cookie",
-    slug: "dry-seeds-cookie",
-    shortDescription: "Loaded with 4 super seeds — crunchy, nutritious and satisfying.",
-    fullDescription: "A nutrient-rich cookie loaded with four powerful seeds for a satisfying combination of crunch, nutrition and taste. Packed with 10g protein per cookie. Each box contains 4 cookies weighing 300 grams total. 100% ZERO MAIDHA.",
-    ingredients: ["Oats Powder", "Pumpkin Seeds", "Flax Seeds", "Sunflower Seeds", "Watermelon Seeds", "Butter", "Sugar"],
-    images: [],
-    category: "Cookies",
-    tags: ["bestseller", "zero-maida", "high-protein"],
-    nutrition: { protein: "10g", calories: "403 kcal", weight: "75g per cookie" },
-    benefits: ["Packed with 4 super seeds", "High in protein & healthy fats", "100% ZERO MAIDHA", "Guilt-free snack", "No preservatives", "Pure & wholesome"],
-    variants: [{ weight: "300g (4 cookies)", price: 219, mrp: 399, stock: 30 }],
-    isActive: true,
-    createdAt: "",
-  },
-  {
-    _id: "5",
-    name: "All Mix Cookies",
-    slug: "all-mix-cookies",
-    shortDescription: "A discovery box with a mix of CRISPO cookie flavors — find your favourite bite.",
-    fullDescription: "A discovery box with a mix of CRISPO cookie flavors — the easiest way to find your favourite bite. Each box contains 4 assorted cookies weighing 200 grams total. 100% ZERO MAIDHA.",
-    ingredients: ["Oats Powder", "Butter", "Sugar", "Assorted Flavors"],
-    images: [],
-    category: "Cookies",
-    tags: ["zero-maida", "variety"],
-    nutrition: { protein: "3g", calories: "200 kcal", weight: "50g per cookie" },
-    benefits: ["100% ZERO MAIDHA", "Mix of CRISPO flavors", "Made with oats", "Pure & wholesome"],
-    variants: [{ weight: "200g (4 cookies)", price: 179, mrp: 299, stock: 45 }],
-    isActive: true,
-    createdAt: "",
-  },
-  {
-    _id: "6",
-    name: "Double Chocolate Oats Brownie",
-    slug: "double-chocolate-oats-brownie",
-    shortDescription: "Rich, fudgy chocolate brownie crafted with oats and deep chocolate flavor.",
-    fullDescription: "A rich, fudgy chocolate brownie crafted with oats and deep chocolate flavor. Crisp on the outside, fudgy inside and packed with irresistible chocolate goodness. Each box contains 6 brownie pieces weighing 300 grams total. 100% ZERO MAIDHA.",
-    ingredients: ["Oats Powder", "Cocoa", "Chocolate", "Butter", "Sugar", "Eggs", "Vanilla", "Baking Powder"],
-    images: [],
-    category: "Brownies",
-    tags: ["zero-maida"],
-    nutrition: { protein: "4g", calories: "203 kcal", weight: "50g per brownie" },
-    benefits: ["100% ZERO MAIDHA", "Made with oats", "Deep chocolate flavor", "No preservatives", "Pure & wholesome"],
-    variants: [{ weight: "300g (6 pieces)", price: 250, mrp: 499, stock: 25 }],
-    isActive: true,
-    createdAt: "",
-  },
-  {
-    _id: "7",
-    name: "Kaju Oats Brownie",
-    slug: "kaju-oats-brownie",
-    shortDescription: "Rich fudgy brownie combined with premium cashews and wholesome oats.",
-    fullDescription: "A rich and fudgy chocolate brownie combined with the delicious crunch of premium cashews and the wholesome goodness of oats. Each box contains 6 brownie pieces weighing 300 grams total. 100% ZERO MAIDHA.",
-    ingredients: ["Oats Powder", "Cocoa", "Premium Cashews", "Butter", "Sugar", "Eggs", "Vanilla", "Baking Powder"],
-    images: [],
-    category: "Brownies",
-    tags: ["bestseller", "zero-maida"],
-    nutrition: { protein: "3.5g", calories: "195 kcal", weight: "50g per brownie" },
-    benefits: ["100% ZERO MAIDHA", "Premium cashews", "Made with oats", "No preservatives", "Pure & wholesome"],
-    variants: [{ weight: "300g (6 pieces)", price: 250, mrp: 499, stock: 30 }],
-    isActive: true,
-    createdAt: "",
-  },
-];
-
-const processSteps = [
-  { num: "01", title: "Quality Ingredients", description: "Carefully selected ingredients form the foundation of every creation." },
-  { num: "02", title: "Crafted With Care", description: "Each product is prepared with attention to flavour, texture and quality." },
-  { num: "03", title: "Baked To Perfection", description: "Rich cookies and fudgy brownies made for an unforgettable bite." },
-  { num: "04", title: "Made With Love", description: "Every CRISPO creation is made to bring a little more joy to your day." },
-];
+const highlightLabel: Record<string, string> = {
+  "zero-maida": "100% ZERO MAIDHA",
+  bestseller: "Bestseller",
+  "high-protein": "High Protein",
+  variety: "Variety Box",
+  eggless: "Eggless",
+};
 
 export default function ProductDetailPage() {
   const params = useParams();
-  const slug = params?.slug as string;
-  const product = allProducts.find((p) => p.slug === slug) || allProducts[0];
-
+  const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
+  const slug = (params?.slug as string) || "";
 
+  const [product, setProduct] = useState<StoreProduct | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [error, setError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [related, setRelated] = useState<StoreProduct[]>([]);
+
+  const [activeImage, setActiveImage] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState<"description" | "ingredients" | "nutrition">("description");
+  const [activeTab, setActiveTab] = useState<"description" | "ingredients">("description");
+  const [imgFailed, setImgFailed] = useState(false);
 
-  const variant = product.variants[selectedVariant];
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setNotFound(false);
+    setError(false);
+    setProduct(null);
+    setActiveImage(0);
+    setSelectedVariant(0);
+    setQuantity(1);
+    setImgFailed(false);
 
-  const relatedProducts = allProducts
-    .filter((p) => p._id !== product._id)
-    .slice(0, 4);
+    (async () => {
+      try {
+        const data = await fetchProductBySlug(slug);
+        if (cancelled) return;
+        setProduct(data);
+        const all = await fetchProducts();
+        if (!cancelled) {
+          setRelated(
+            all.filter((p) => p.id !== data.id && p.category?.slug === data.category?.slug).slice(0, 4)
+          );
+        }
+      } catch (e) {
+        if (cancelled) return;
+        if ((e as { notFound?: boolean }).notFound) setNotFound(true);
+        else setError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, attempt]);
+
+  if (loading) {
+    return (
+      <div className="bg-cream min-h-screen">
+        <div className="container-tight py-8 grid grid-cols-1 lg:grid-cols-2 gap-10">
+          <div className="aspect-square rounded-3xl bg-[#F4EFE8] animate-pulse" />
+          <div className="space-y-4">
+            <div className="h-4 w-24 bg-[#F4EFE8] rounded-full animate-pulse" />
+            <div className="h-8 w-3/4 bg-[#F4EFE8] rounded animate-pulse" />
+            <div className="h-5 w-full bg-[#F4EFE8] rounded animate-pulse" />
+            <div className="h-5 w-2/3 bg-[#F4EFE8] rounded animate-pulse" />
+            <div className="h-12 w-full bg-[#F4EFE8] rounded-full animate-pulse mt-8" />
+            <div className="h-12 w-full bg-[#F4EFE8] rounded-full animate-pulse" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (notFound || !product) {
+    return (
+      <div className="bg-cream min-h-screen flex items-center justify-center">
+        <div className="text-center px-6 py-20">
+          <div className="text-6xl mb-4">🍪</div>
+          <h1 className="font-heading text-3xl font-bold text-royal mb-2">Product unavailable</h1>
+          <p className="text-muted mb-8">This product may be out of stock or no longer available.</p>
+          <Link href="/shop" className="btn-primary">
+            Continue Shopping
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-cream min-h-screen flex items-center justify-center">
+        <div className="text-center px-6 py-20">
+          <h1 className="font-heading text-2xl font-bold text-royal mb-2">Something went wrong</h1>
+          <p className="text-muted mb-8">We couldn&apos;t load this product.</p>
+          <button onClick={() => setAttempt((a) => a + 1)} className="btn-royal">
+            <RefreshCw size={16} />
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const images = product.images;
+  const variant = product.variants[selectedVariant] || product.variants[0];
+  const discount = variant ? discountOf(variant) : 0;
+  const stock = variant?.stock ?? 0;
+  const outOfStock = stock <= 0;
+  const lowStock = stock > 0 && stock <= 10;
+
+  const highlights = product.tags
+    .map((t) => highlightLabel[t])
+    .filter(Boolean) as string[];
+
+  const tags = highlights.filter(
+    (t, i) => highlights.indexOf(t) === i
+  );
 
   const handleAddToCart = () => {
+    if (!variant || outOfStock) {
+      toast.error("This product is currently out of stock");
+      return;
+    }
     for (let i = 0; i < quantity; i++) {
       addItem({
-        productId: String(product._id),
+        productId: product.id,
         name: product.name,
         variant: { weight: variant.weight, price: variant.price },
-        image: product.images?.[0] || "",
+        image: images[0] || product.emoji,
       });
     }
     toast.success(`${quantity} × ${product.name} added to cart`);
   };
 
-  const stockStatus =
-    variant.stock > 10
-      ? { label: "In Stock", color: "text-green" }
-      : variant.stock > 0
-      ? { label: "Low Stock", color: "text-amber" }
-      : { label: "Out of Stock", color: "text-red" };
+  const handleBuyNow = () => {
+    if (!variant || outOfStock) {
+      toast.error("This product is currently out of stock");
+      return;
+    }
+    for (let i = 0; i < quantity; i++) {
+      addItem({
+        productId: product.id,
+        name: product.name,
+        variant: { weight: variant.weight, price: variant.price },
+        image: images[0] || product.emoji,
+      });
+    }
+    router.push("/checkout");
+  };
 
-  const discount = variant.mrp
-    ? Math.round(((variant.mrp - variant.price) / variant.mrp) * 100)
-    : 0;
+  const selectVariant = (i: number) => {
+    setSelectedVariant(i);
+    setQuantity(1);
+  };
+
+  const hasIngredients = product.ingredients.length > 0;
 
   return (
-    <div className="bg-cream-dark min-h-screen">
-      <div className="container-tight py-4">
-        <nav className="flex flex-wrap items-center gap-2 text-sm text-muted">
-          <Link href="/" className="hover:text-gold transition-colors">Home</Link>
+    <div className="bg-cream min-h-screen">
+      <div className="container-tight pt-4">
+        <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-[13px] text-muted">
+          <Link href="/" className="hover:text-royal transition-colors">Home</Link>
           <span>/</span>
-          <Link href="/shop" className="hover:text-gold transition-colors">Shop</Link>
+          <Link href="/shop" className="hover:text-royal transition-colors">Shop</Link>
           <span>/</span>
-          <span className="text-royal">{product.name}</span>
+          <span className="text-royal font-medium truncate max-w-[45vw]">{product.name}</span>
         </nav>
       </div>
 
-      <div className="container-tight py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+      <div className="container-tight py-6 lg:py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14">
+          {/* Gallery */}
           <div>
-            <div className="aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-cream via-gold/10 to-royal/5 flex items-center justify-center shadow-lift">
-              <span className="text-[120px] select-none" role="img" aria-label="product">🍪</span>
+            <div className="relative aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-cream via-beige to-cream border border-royal/5 shadow-soft">
+              {images.length > 0 && !imgFailed ? (
+                <Image
+                  src={images[activeImage % images.length]}
+                  alt={product.name}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-contain p-4 sm:p-8"
+                  priority
+                  onError={() => setImgFailed(true)}
+                />
+              ) : (
+                <span
+                  className="absolute inset-0 flex items-center justify-center text-[96px] sm:text-[120px] select-none"
+                  role="img"
+                  aria-label={product.name}
+                >
+                  {product.emoji}
+                </span>
+              )}
+
+              <div className="absolute top-3 left-3 flex flex-col gap-2 items-start">
+                {product.badge && (
+                  <span className="bg-gold/90 text-white text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+                    {product.badge}
+                  </span>
+                )}
+                {discount > 0 && (
+                  <span className="discount-chip px-2.5 py-1">{discount}% OFF</span>
+                )}
+              </div>
+
+              <div className="absolute top-3 right-3">
+                <WishlistButton slug={product.slug} name={product.name} className="w-11 h-11" />
+              </div>
             </div>
+
+            {images.length > 1 && (
+              <div className="flex gap-3 mt-4 overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+                {images.map((img, i) => (
+                  <button
+                    key={img + i}
+                    onClick={() => {
+                      setActiveImage(i);
+                      setImgFailed(false);
+                    }}
+                    aria-label={`View image ${i + 1}`}
+                    className={cn(
+                      "relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-beige border-2 transition-all shrink-0",
+                      activeImage === i ? "border-royal" : "border-transparent opacity-80 hover:opacity-100"
+                    )}
+                  >
+                    <Image
+                      src={img}
+                      alt={`${product.name} thumbnail ${i + 1}`}
+                      fill
+                      sizes="80px"
+                      className="object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div>
-            <span className="text-gold text-xs font-semibold uppercase tracking-widest mb-2 block">
-              {product.category}
-            </span>
+          {/* Info */}
+          <div className="min-w-0">
+            {product.category?.name && (
+              <span className="text-gold text-xs font-bold uppercase tracking-widest block mb-2">
+                {product.category.name}
+              </span>
+            )}
 
-            <h1 className="font-heading text-4xl font-bold text-royal mb-3">
+            <h1 className="font-heading text-3xl sm:text-4xl font-bold text-royal leading-tight mb-3">
               {product.name}
             </h1>
 
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex items-center gap-0.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className={cn("w-4 h-4", i < 4 ? "fill-gold text-gold" : "fill-gray-200 text-gray-200")} />
+            {product.shortDescription && (
+              <p className="text-muted leading-relaxed mb-4">{product.shortDescription}</p>
+            )}
+
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-5">
+                {tags.map((t) => (
+                  <span key={t} className="highlight-chip">
+                    {t}
+                  </span>
                 ))}
               </div>
-              <span className="text-muted text-sm">(4.8)</span>
-            </div>
+            )}
 
             <div className="flex items-center gap-3 mb-6">
-              <span className="font-heading text-3xl font-bold text-gold">{formatPrice(variant.price)}</span>
-              {variant.mrp && variant.mrp > variant.price && (
+              <span className="font-heading text-4xl font-bold text-royal">
+                {formatINR(variant?.price ?? 0)}
+              </span>
+              {variant?.mrp && variant.mrp > variant.price && (
                 <>
-                  <span className="text-muted text-lg line-through">{formatPrice(variant.mrp)}</span>
-                  <span className="bg-green/10 text-green text-sm font-semibold px-2 py-0.5 rounded-full">{discount}% OFF</span>
+                  <span className="text-muted text-lg line-through">
+                    {formatINR(variant.mrp)}
+                  </span>
+                  {discount > 0 && (
+                    <span className="discount-chip px-2.5 py-1">{discount}% OFF</span>
+                  )}
                 </>
               )}
             </div>
 
-            <p className="text-muted leading-relaxed mb-6">{product.shortDescription}</p>
+            {product.variants.length > 1 && (
+              <div className="mb-6">
+                <p className="text-sm font-semibold text-royal mb-3">Select Weight</p>
+                <div className="flex flex-wrap gap-2.5">
+                  {product.variants.map((v, i) => {
+                    const selected = i === selectedVariant;
+                    const soldOut = v.stock <= 0;
+                    return (
+                      <button
+                        key={v.weight}
+                        onClick={() => selectVariant(i)}
+                        disabled={false}
+                        aria-pressed={selected}
+                        className={cn(
+                          "px-5 py-2.5 rounded-full text-sm font-semibold border-2 transition-all",
+                          selected
+                            ? "bg-royal border-royal text-white"
+                            : soldOut
+                              ? "border-royal/10 text-muted line-through opacity-60"
+                              : "border-royal/25 text-royal hover:border-royal"
+                        )}
+                      >
+                        {v.weight}
+                        {soldOut && <span className="ml-1 normal-case text-[10px] no-underline">· Sold out</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
-            <div className="mb-6">
-              <p className="text-sm font-medium text-royal mb-3">Select Weight</p>
-              <div className="flex flex-wrap gap-3">
-                {product.variants.map((v: any, i: number) => (
+            <div className="mb-6 flex items-center gap-5">
+              <div>
+                <p className="text-sm font-semibold text-royal mb-2.5">Quantity</p>
+                <div className="flex items-center gap-3 w-fit bg-white border border-royal/15 rounded-full px-3 py-1.5">
                   <button
-                    key={i}
-                    onClick={() => setSelectedVariant(i)}
-                    className={cn(
-                      "px-5 py-2 rounded-full text-sm font-medium border-2 transition-all",
-                      selectedVariant === i
-                        ? "bg-gold border-gold text-white"
-                        : "border-royal/20 text-royal hover:border-gold/50"
-                    )}
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    disabled={quantity <= 1}
+                    aria-label="Decrease quantity"
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-royal hover:bg-royal/5 transition-colors disabled:opacity-30"
                   >
-                    {v.weight}
+                    <Minus size={16} />
                   </button>
+                  <span className="w-8 text-center font-bold text-lg text-royal tabular-nums">
+                    {quantity}
+                  </span>
+                  <button
+                    onClick={() => setQuantity((q) => Math.min(stock, q + 1))}
+                    disabled={outOfStock || quantity >= stock}
+                    aria-label="Increase quantity"
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-royal hover:bg-royal/5 transition-colors disabled:opacity-30"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+                <p className={cn("text-sm font-medium mt-3", outOfStock ? "text-red" : lowStock ? "text-amber" : "text-green")}>
+                  {outOfStock
+                    ? "Out of Stock"
+                    : lowStock
+                      ? `Only ${stock} left in stock`
+                      : "In Stock"}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3 mb-8">
+              <button
+                onClick={handleAddToCart}
+                disabled={outOfStock}
+                className="btn-primary w-full py-4 disabled:bg-[#EEE6DA] disabled:text-muted disabled:shadow-none"
+              >
+                {outOfStock ? "Out of Stock" : "Add to Cart"}
+              </button>
+              <button
+                onClick={handleBuyNow}
+                disabled={outOfStock}
+                className="btn-royal w-full py-4 disabled:opacity-40"
+              >
+                Buy It Now
+              </button>
+            </div>
+
+            <div className="space-y-3 rounded-2xl bg-white border border-royal/5 p-5">
+              <div className="flex items-center gap-3 text-muted text-sm">
+                <Truck className="w-4 h-4 text-royal shrink-0" />
+                <span>Free delivery on orders above ₹499</span>
+              </div>
+              <div className="flex items-center gap-3 text-muted text-sm">
+                <Package className="w-4 h-4 text-royal shrink-0" />
+                <span>Baked fresh &amp; delivered in 2–3 days</span>
+              </div>
+              <div className="flex items-center gap-3 text-muted text-sm">
+                <Shield className="w-4 h-4 text-royal shrink-0" />
+                <span>100% ZERO MAIDHA · Pure oats, no preservatives</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <BenefitsSection />
+
+      {/* Description / Ingredients */}
+      <section className="container-tight py-10">
+        <div className="max-w-3xl">
+          <div className="flex gap-8 border-b border-royal/10">
+            {product.fullDescription && (
+              <button
+                onClick={() => setActiveTab("description")}
+                className={cn(
+                  "pb-3 text-sm font-bold transition-all capitalize",
+                  activeTab === "description"
+                    ? "text-royal border-b-2 border-royal"
+                    : "text-muted hover:text-royal"
+                )}
+              >
+                Description
+              </button>
+            )}
+            {hasIngredients && (
+              <button
+                onClick={() => setActiveTab("ingredients")}
+                className={cn(
+                  "pb-3 text-sm font-bold transition-all capitalize",
+                  activeTab === "ingredients" && hasIngredients
+                    ? "text-royal border-b-2 border-royal"
+                    : "text-muted hover:text-royal"
+                )}
+              >
+                Ingredients
+              </button>
+            )}
+          </div>
+
+          <div className="bg-white rounded-2xl border border-royal/5 p-5 sm:p-8 mt-5">
+            {activeTab === "description" && product.fullDescription ? (
+              <p className="text-muted leading-relaxed whitespace-pre-line">
+                {product.fullDescription}
+              </p>
+            ) : hasIngredients ? (
+              <div className="flex flex-wrap gap-2.5">
+                {product.ingredients.map((ing) => (
+                  <span key={ing} className="bg-cream px-4 py-2 rounded-full text-sm text-royal font-medium">
+                    {ing}
+                  </span>
                 ))}
               </div>
-            </div>
-
-            <div className="mb-6">
-              <p className="text-sm font-medium text-royal mb-3">Quantity</p>
-              <div className="flex items-center gap-3">
-                <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="w-10 h-10 rounded-full border-2 border-royal/20 flex items-center justify-center hover:border-gold transition-colors">
-                  <Minus className="w-4 h-4 text-royal" />
-                </button>
-                <span className="w-10 text-center font-semibold text-lg text-royal">{quantity}</span>
-                <button onClick={() => setQuantity((q) => Math.min(variant.stock, q + 1))} className="w-10 h-10 rounded-full border-2 border-royal/20 flex items-center justify-center hover:border-gold transition-colors">
-                  <Plus className="w-4 h-4 text-royal" />
-                </button>
-              </div>
-            </div>
-
-            <p className={cn("text-sm mb-6", stockStatus.color)}>
-              {stockStatus.label}
-              {variant.stock > 0 && variant.stock <= 10 && (
-                <span className="text-muted ml-1">— Only {variant.stock} left</span>
-              )}
-            </p>
-
-            <div className="flex gap-3 mb-6">
-              <button onClick={handleAddToCart} className="btn-gold flex-1">Add to Cart</button>
-            </div>
-
-            <div className="pt-6 border-t border-royal/10 space-y-3">
-              <div className="flex items-center gap-3 text-muted text-sm">
-                <Truck className="w-4 h-4 text-royal" />
-                <span>Free delivery above ₹499</span>
-              </div>
-              <div className="flex items-center gap-3 text-muted text-sm">
-                <Package className="w-4 h-4 text-royal" />
-                <span>Delivered in 2–3 days</span>
-              </div>
-              <div className="flex items-center gap-3 text-muted text-sm">
-                <Shield className="w-4 h-4 text-royal" />
-                <span>100% ZERO MAIDHA — Pure Oats</span>
-              </div>
-            </div>
+            ) : null}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Benefits */}
-      {product.benefits && (
-        <div className="container-tight mt-8">
-          <div className="bg-surface rounded-2xl p-6 shadow-soft">
-            <div className="flex items-center gap-2 mb-4">
-              <Leaf className="w-5 h-5 text-green" />
-              <h3 className="font-heading text-lg font-semibold text-royal">Key Benefits</h3>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {product.benefits.map((b: string) => (
-                <div key={b} className="flex items-center gap-2 text-sm text-muted">
-                  <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
-                  {b}
-                </div>
-              ))}
-            </div>
+      {/* Related */}
+      {related.length > 0 && (
+        <section className="container-tight py-12 pb-24">
+          <h2 className="font-heading text-2xl font-bold text-royal mb-8">You May Also Like</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5">
+            {related.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
           </div>
-        </div>
+        </section>
       )}
-
-      {/* Tabs */}
-      <div className="container-tight mt-12">
-        <div className="flex border-b border-royal/10 gap-8">
-          {(["description", "ingredients", "nutrition"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={cn(
-                "pb-3 text-sm font-medium transition-all capitalize",
-                activeTab === tab
-                  ? "text-royal border-b-2 border-gold"
-                  : "text-muted hover:text-royal"
-              )}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-
-        <div className="bg-surface rounded-2xl p-6 sm:p-8 shadow-soft mt-6">
-          {activeTab === "description" && (
-            <p className="text-muted leading-relaxed">{product.fullDescription}</p>
-          )}
-          {activeTab === "ingredients" && (
-            <div className="flex flex-wrap gap-2">
-              {product.ingredients.map((ing: string) => (
-                <span key={ing} className="bg-cream px-4 py-2 rounded-full text-sm text-royal font-medium">{ing}</span>
-              ))}
-            </div>
-          )}
-          {activeTab === "nutrition" && product.nutrition && (
-            <div className="grid grid-cols-3 gap-6">
-              <div className="text-center p-4 bg-cream rounded-xl">
-                <p className="text-gold font-bold text-2xl">{product.nutrition.protein}</p>
-                <p className="text-muted text-sm mt-1">Protein</p>
-              </div>
-              <div className="text-center p-4 bg-cream rounded-xl">
-                <p className="text-gold font-bold text-2xl">{product.nutrition.calories}</p>
-                <p className="text-muted text-sm mt-1">Calories</p>
-              </div>
-              <div className="text-center p-4 bg-cream rounded-xl">
-                <p className="text-gold font-bold text-2xl">{product.nutrition.weight}</p>
-                <p className="text-muted text-sm mt-1">Weight</p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Process Steps */}
-      <div className="container-tight mt-16">
-        <h2 className="font-heading text-2xl text-royal font-bold mb-8 text-center">Our Process</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {processSteps.map((step) => (
-            <div key={step.num} className="text-center p-4">
-              <span className="font-heading text-3xl text-gold/30 font-bold">{step.num}</span>
-              <h4 className="font-heading font-semibold text-royal text-sm mt-2 mb-1">{step.title}</h4>
-              <p className="text-muted text-xs leading-relaxed">{step.description}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Related Products */}
-      <div className="container-tight py-16">
-        <h2 className="font-heading text-2xl text-royal font-bold mb-8">You May Also Like</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {relatedProducts.map((p) => (
-            <div key={p._id} className="h-full">
-              <ProductCard product={p} />
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

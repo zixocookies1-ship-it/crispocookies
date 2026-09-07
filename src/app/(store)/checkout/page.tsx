@@ -36,6 +36,30 @@ declare global {
   }
 }
 
+function loadRazorpayScript(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const SRC = "https://checkout.razorpay.com/v1/checkout.js";
+    const existing = document.querySelector<HTMLScriptElement>(
+      `script[src="${SRC}"]`
+    );
+    if (existing) {
+      existing.addEventListener("load", () => resolve(true));
+      existing.addEventListener("error", () => resolve(false));
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = SRC;
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.head.appendChild(script);
+  });
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const items = useCartStore((s) => s.items);
@@ -70,6 +94,12 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
+      const sdkLoaded = await loadRazorpayScript();
+      if (!sdkLoaded) {
+        toast.error("Payment gateway failed to load. Please try again.");
+        return;
+      }
+
       const orderRes = await fetch("/api/razorpay/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -112,7 +142,7 @@ export default function CheckoutPage() {
           email: form.email,
           contact: form.phone,
         },
-        theme: { color: "#8B6410" },
+        theme: { color: "#1B1B4B" },
       };
 
       const rzp = new window.Razorpay(options);
@@ -340,7 +370,7 @@ export default function CheckoutPage() {
             <button
               onClick={handlePayment}
               disabled={loading}
-              className="btn-gold w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full py-4 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>

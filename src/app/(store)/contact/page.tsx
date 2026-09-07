@@ -185,14 +185,19 @@ export default function ContactPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-gold flex items-center gap-2 w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loading ? (
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <>
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Sending...
+                  </>
                 ) : (
-                  <Send size={16} />
+                  <>
+                    <Send size={16} />
+                    SEND ENQUIRY
+                  </>
                 )}
-                SEND ENQUIRY
               </button>
             </form>
           </div>
@@ -285,7 +290,7 @@ export default function ContactPage() {
               href="https://wa.me/917569831560"
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-gold flex items-center gap-2 w-full justify-center mt-10"
+              className="btn-primary w-full"
             >
               <MessageCircle size={18} />
               CHAT ON WHATSAPP

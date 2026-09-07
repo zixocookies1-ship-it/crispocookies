@@ -50,11 +50,11 @@ function OrderSuccessContent() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link href="/shop" className="btn-gold">
+          <Link href="/shop" className="btn-primary">
             Continue Shopping
           </Link>
-          <Link href="/" className="btn-royal-outline">
-            Track Order
+          <Link href="/" className="btn-royal">
+            Back to Home
           </Link>
         </div>
       </div>

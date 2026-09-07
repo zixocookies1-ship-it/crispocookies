@@ -1,168 +1,127 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import Link from "next/link";
-import { toast } from "sonner";
-import {
-  ShoppingBag,
-  ArrowRight,
-  Filter,
-  ChevronDown,
-} from "lucide-react";
-import { useCartStore } from "@/store/useCartStore";
+import { useState, useEffect, useMemo } from "react";
+import { ChevronDown, SlidersHorizontal, PackageSearch, RefreshCw, Search } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { fetchProducts, StoreProduct } from "@/lib/storefront";
+import { ProductCardSkeleton } from "@/components/skeleton";
+import ProductCard from "@/components/product-card";
 
-const products = [
-  {
-    _id: "1",
-    name: "Double Chocolate Cookie",
-    slug: "double-chocolate-cookie",
-    price: 179,
-    mrp: 299,
-    weight: "200g",
-    packQuantity: "4 cookies",
-    category: "Cookie",
-    description: "Rich, indulgent and deeply chocolatey.",
-    emoji: "🍪",
-  },
-  {
-    _id: "2",
-    name: "Rose Cookie",
-    slug: "rose-cookie",
-    price: 179,
-    mrp: 299,
-    weight: "200g",
-    packQuantity: "4 cookies",
-    category: "Cookie",
-    description: "Delicate floral twist with homemade rose syrup.",
-    emoji: "🍪",
-  },
-  {
-    _id: "3",
-    name: "Pineapple Cookie",
-    slug: "pine-apple-cookie",
-    price: 179,
-    mrp: 299,
-    weight: "200g",
-    packQuantity: "4 cookies",
-    category: "Cookie",
-    description: "Tropical, refreshing with pineapple and oats.",
-    emoji: "🍪",
-  },
-  {
-    _id: "4",
-    name: "Dry Seeds Cookie",
-    slug: "dry-seed-cookies",
-    price: 219,
-    mrp: 399,
-    weight: "300g",
-    packQuantity: "4 cookies",
-    category: "Cookie",
-    description: "Nutrient-rich with four powerful seeds.",
-    emoji: "🍪",
-  },
-  {
-    _id: "5",
-    name: "All Mix Cookies",
-    slug: "all-mix-cookies",
-    price: 219,
-    mrp: 399,
-    weight: "300g",
-    packQuantity: "6 cookies",
-    category: "Cookie",
-    description: "Assortment of our finest cookies.",
-    emoji: "🍪",
-  },
-  {
-    _id: "6",
-    name: "Double Chocolate Oats Brownie",
-    slug: "double-chocolate-oats-brownie",
-    price: 250,
-    mrp: 499,
-    weight: "403 kcal",
-    packQuantity: "1 brownie",
-    category: "Brownie",
-    description: "Rich, fudgy brownie with oats.",
-    emoji: "🍫",
-  },
-  {
-    _id: "7",
-    name: "Kaju Oats Brownie",
-    slug: "kaju-oats-brownie",
-    price: 250,
-    mrp: 499,
-    weight: "250g",
-    packQuantity: "1 brownie",
-    category: "Brownie",
-    description: "Fudgy brownie with premium cashews.",
-    emoji: "🍫",
-  },
-];
-
-const categories = ["All", "Cookies", "Brownies"] as const;
 const sortOptions = ["Popular", "Price: Low to High", "Price: High to Low"] as const;
 
 export default function ShopPage() {
-  const [activeCategory, setActiveCategory] = useState<string>("All");
-  const [sortBy, setSortBy] = useState<string>("Popular");
-  const [sortOpen, setSortOpen] = useState(false);
+  const [products, setProducts] = useState<StoreProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
-  const addItem = useCartStore((s) => s.addItem);
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [sortBy, setSortBy] = useState<(typeof sortOptions)[number]>("Popular");
+  const [sortOpen, setSortOpen] = useState(false);
+  const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(false);
+    fetchProducts()
+      .then((data) => {
+        if (!cancelled) setProducts(data);
+      })
+      .catch(() => {
+        if (!cancelled) setError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [attempt]);
+
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    products.forEach((p) => {
+      if (p.category?.name) set.add(p.category.name);
+    });
+    return Array.from(set);
+  }, [products]);
 
   const filtered = useMemo(() => {
     let list = [...products];
-    if (activeCategory === "Cookies") {
-      list = list.filter((p) => p.category === "Cookie");
-    } else if (activeCategory === "Brownies") {
-      list = list.filter((p) => p.category === "Brownie");
+    if (activeCategory !== "All") {
+      list = list.filter((p) => p.category?.name === activeCategory);
+    }
+    if (query.trim()) {
+      const q = query.toLowerCase().trim();
+      list = list.filter((p) => p.name.toLowerCase().includes(q));
     }
     switch (sortBy) {
       case "Price: Low to High":
-        list.sort((a, b) => a.price - b.price);
+        list.sort((a, b) => {
+          const pa = a.variants[0]?.price ?? 0;
+          const pb = b.variants[0]?.price ?? 0;
+          return pa - pb;
+        });
         break;
       case "Price: High to Low":
-        list.sort((a, b) => b.price - a.price);
+        list.sort((a, b) => {
+          const pa = a.variants[0]?.price ?? 0;
+          const pb = b.variants[0]?.price ?? 0;
+          return pb - pa;
+        });
         break;
-      default:
-        break;
+      default: {
+        const rank = (p: StoreProduct) =>
+          p.tags.includes("bestseller") ? 0 : p.tags.includes("zero-maida") ? 1 : 2;
+        list.sort((a, b) => rank(a) - rank(b));
+      }
     }
     return list;
-  }, [activeCategory, sortBy]);
-
-  const handleAddToCart = (product: (typeof products)[number]) => {
-    addItem({
-      productId: product._id,
-      name: product.name,
-      variant: { weight: product.weight, price: product.price },
-      image: "",
-    });
-    toast.success(`${product.name} added to cart`);
-  };
+  }, [products, activeCategory, sortBy, query]);
 
   return (
-    <div className="min-h-screen bg-cream-dark">
+    <div className="min-h-screen bg-cream">
       {/* Hero */}
-      <section className="bg-gradient-to-b from-royal to-royal/90 text-white py-16 text-center">
-        <p className="text-gold uppercase tracking-widest text-xs font-medium mb-3">
-          Our Collection
-        </p>
-        <h1 className="font-heading text-4xl sm:text-5xl font-bold">Shop All</h1>
+      <section className="bg-gradient-to-b from-white to-cream border-b border-royal/5 py-10 sm:py-14 text-center">
+        <div className="container-tight">
+          <p className="eyebrow mb-3">Our Collection</p>
+          <h1 className="font-heading text-4xl sm:text-5xl font-bold text-royal">
+            Shop All
+          </h1>
+          <p className="text-muted mt-3 max-w-xl mx-auto">
+            100% ZERO MAIDHA oat-based cookies and brownies, baked fresh and delivered to your doorstep.
+          </p>
+        </div>
       </section>
 
-      <div className="container-tight py-10">
+      <div className="container-tight py-8 pb-20">
         {/* Filter & Sort Bar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-royal" />
-            <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div className="w-full sm:w-auto flex items-center gap-2 min-w-0">
+            <SlidersHorizontal size={16} className="text-royal shrink-0" />
+            <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-1 px-1 w-full sm:w-auto">
+              <button
+                onClick={() => setActiveCategory("All")}
+                className={cn(
+                  "shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide transition-all",
+                  activeCategory === "All"
+                    ? "bg-royal text-white"
+                    : "bg-white text-plum border border-royal/10 hover:border-royal/30"
+                )}
+              >
+                All
+              </button>
               {categories.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  className={cn(
+                    "shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide transition-all",
                     activeCategory === cat
-                      ? "bg-gold text-white"
-                      : "bg-surface text-royal hover:bg-gold/10"
-                  }`}
+                      ? "bg-royal text-white"
+                      : "bg-white text-plum border border-royal/10 hover:border-royal/30"
+                  )}
                 >
                   {cat}
                 </button>
@@ -170,120 +129,106 @@ export default function ShopPage() {
             </div>
           </div>
 
-          <div className="relative">
-            <button
-              onClick={() => setSortOpen(!sortOpen)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface text-sm font-medium text-royal hover:bg-gold/10 transition-colors"
-            >
-              {sortBy}
-              <ChevronDown className="w-4 h-4" />
-            </button>
-            {sortOpen && (
-              <div className="absolute right-0 top-full mt-1 bg-surface rounded-xl shadow-soft z-20 w-48 overflow-hidden">
-                {sortOptions.map((opt) => (
-                  <button
-                    key={opt}
-                    onClick={() => {
-                      setSortBy(opt);
-                      setSortOpen(false);
-                    }}
-                    className={`block w-full text-left px-4 py-2.5 text-sm hover:bg-gold/10 transition-colors ${
-                      sortBy === opt ? "text-gold font-semibold" : "text-royal"
-                    }`}
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
-            )}
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="relative flex-1 sm:flex-none sm:w-52">
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search…"
+                aria-label="Search products"
+                className="w-full bg-white border border-royal/10 rounded-full pl-9 pr-4 py-2 text-sm text-royal placeholder:text-muted/70 outline-none focus:border-royal focus:ring-2 focus:ring-royal/10"
+              />
+            </div>
+
+            <div className="relative shrink-0">
+              <button
+                onClick={() => setSortOpen(!sortOpen)}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-royal/10 text-sm font-semibold text-royal hover:border-royal/30 transition-colors"
+                aria-haspopup="listbox"
+                aria-expanded={sortOpen}
+              >
+                {sortBy}
+                <ChevronDown className={cn("w-4 h-4 transition-transform", sortOpen && "rotate-180")} />
+              </button>
+              {sortOpen && (
+                <div
+                  role="listbox"
+                  className="absolute right-0 top-full mt-2 bg-white rounded-2xl shadow-lift border border-royal/10 z-20 w-52 overflow-hidden"
+                >
+                  {sortOptions.map((opt) => (
+                    <button
+                      key={opt}
+                      role="option"
+                      aria-selected={sortBy === opt}
+                      onClick={() => {
+                        setSortBy(opt);
+                        setSortOpen(false);
+                      }}
+                      className={cn(
+                        "block w-full text-left px-4 py-3 text-sm hover:bg-royal/5 transition-colors",
+                        sortBy === opt ? "text-royal font-bold" : "text-plum/70"
+                      )}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        <p className="text-muted text-sm mb-6">
-          {filtered.length} product{filtered.length !== 1 ? "s" : ""}
-        </p>
-
-        {/* Product Grid */}
-        {filtered.length > 0 ? (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((product) => {
-              const discount = Math.round(
-                ((product.mrp - product.price) / product.mrp) * 100
-              );
-
-              return (
-                <div
-                  key={product._id}
-                  className="bg-surface rounded-2xl shadow-soft overflow-hidden flex flex-col hover:shadow-lift transition-shadow"
-                >
-                  {/* Emoji image */}
-                  <div className="relative bg-beige rounded-2xl flex items-center justify-center h-48">
-                    <span className="text-6xl">{product.emoji}</span>
-                    {discount > 0 && (
-                      <span className="absolute top-3 left-3 bg-gold text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                        -{discount}%
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div className="p-5 flex flex-col flex-1">
-                    <p className="text-xs text-muted uppercase tracking-wide mb-1">
-                      {product.packQuantity}
-                    </p>
-                    <h3 className="font-heading text-lg font-semibold text-royal mb-1">
-                      {product.name}
-                    </h3>
-                    <p className="text-sm text-muted mb-4">{product.description}</p>
-
-                    {/* Price */}
-                    <div className="flex items-baseline gap-2 mb-4">
-                      <span className="text-xl font-bold text-royal">
-                        ₹{product.price}
-                      </span>
-                      <span className="text-sm text-muted line-through">
-                        ₹{product.mrp}
-                      </span>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="mt-auto flex flex-col gap-2">
-                      <button
-                        onClick={() => handleAddToCart(product)}
-                        className="w-full flex items-center justify-center gap-2 bg-gold hover:bg-gold-hover text-white font-semibold py-2.5 rounded-xl transition-colors"
-                      >
-                        <ShoppingBag className="w-4 h-4" />
-                        Add to Cart
-                      </button>
-                      <div className="flex gap-2">
-                        <Link
-                          href={`/shop/${product.slug}`}
-                          className="flex-1 flex items-center justify-center gap-1.5 border border-royal/20 text-royal text-sm font-medium py-2.5 rounded-xl hover:bg-royal/5 transition-colors"
-                        >
-                          View
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+        {loading && (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
           </div>
-        ) : (
+        )}
+
+        {!loading && error && (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🍪</div>
             <h3 className="font-heading text-xl text-royal mb-2">
-              No products found
+              We couldn&apos;t load the products
             </h3>
-            <p className="text-muted mb-6">Try adjusting your filters</p>
+            <p className="text-muted mb-6">Please check your connection and try again.</p>
+            <button onClick={() => setAttempt((a) => a + 1)} className="btn-royal">
+              <RefreshCw size={16} />
+              Retry
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && filtered.length === 0 && (
+          <div className="text-center py-20">
+            <PackageSearch className="w-12 h-12 mx-auto text-muted mb-4" />
+            <h3 className="font-heading text-xl text-royal mb-2">No products found</h3>
+            <p className="text-muted mb-6">Try adjusting your filters or search.</p>
             <button
-              onClick={() => setActiveCategory("All")}
-              className="bg-gold hover:bg-gold-hover text-white font-semibold px-6 py-2.5 rounded-xl transition-colors"
+              onClick={() => {
+                setActiveCategory("All");
+                setQuery("");
+              }}
+              className="btn-royal"
             >
               Show All
             </button>
           </div>
+        )}
+
+        {!loading && !error && filtered.length > 0 && (
+          <>
+            <p className="text-muted text-sm mb-4">
+              {filtered.length} product{filtered.length !== 1 ? "s" : ""}
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+              {filtered.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

@@ -1,106 +1,140 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { ShoppingBag, ArrowRight } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { toast } from "sonner";
-import type { IProduct } from "@/models/Product";
+import { cn } from "@/lib/utils";
+import { StoreProduct, cheapestVariant, discountOf, formatINR } from "@/lib/storefront";
+import WishlistButton from "@/components/wishlist-button";
 
 interface ProductCardProps {
-  product: IProduct;
+  product: StoreProduct;
+  priority?: boolean;
 }
 
-const formatPrice = (p: number) => `₹${p}`;
-
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product, priority = false }: ProductCardProps) {
+  const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
+  const [imgFailed, setImgFailed] = useState(false);
 
-  const variant = product.variants?.[0];
+  const hasImages = product.images.length > 0;
+  const showImage = hasImages && !imgFailed;
+  const image = product.images[0];
+
+  const variant =
+    product.variants.find((v) => v.stock > 0) || cheapestVariant(product);
   const price = variant?.price ?? 0;
   const mrp = variant?.mrp ?? 0;
-  const discount = mrp > price ? Math.round((mrp - price) / mrp * 100) : 0;
+  const discount = variant ? discountOf(variant) : 0;
+  const outOfStock = !variant || variant.stock <= 0;
+  const multiVariant = product.variants.length > 1;
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    if (variant) {
-      addItem({
-        productId: String(product._id),
-        name: product.name,
-        variant: { weight: variant.weight, price: variant.price },
-        image: product.images?.[0] || "",
-      });
-      toast.success(`${product.name} added to cart`);
+    if (multiVariant) {
+      router.push(`/shop/${product.slug}`);
+      return;
     }
+    if (!variant || variant.stock <= 0) {
+      toast.error(`${product.name} is currently out of stock`);
+      return;
+    }
+    addItem({
+      productId: product.id,
+      name: product.name,
+      variant: { weight: variant.weight, price: variant.price },
+      image: image || product.emoji,
+    });
+    toast.success(`${product.name} added to cart`);
   };
 
   return (
-    <div className="scene-3d">
-      <div className="surface-card rounded-3xl overflow-hidden group h-full flex flex-col">
-        <Link href={`/shop/${product.slug}`} className="flex flex-col h-full">
-          <div className="relative rounded-2xl overflow-hidden bg-beige aspect-square flex items-center justify-center">
-            <span className="text-[64px] select-none" role="img" aria-label="cookie">
-              🍪
+    <div className="relative flex flex-col h-full bg-white rounded-2xl border border-[#EFE7DB] shadow-soft hover:shadow-lift transition-all duration-300 overflow-hidden group">
+      <Link
+        href={`/shop/${product.slug}`}
+        aria-label={product.name}
+        className="relative block aspect-square overflow-hidden bg-gradient-to-br from-cream via-beige to-cream"
+      >
+        {showImage ? (
+          <Image
+            src={image}
+            alt={product.name}
+            fill
+            sizes="(max-width: 640px) 45vw, (max-width: 1024px) 31vw, 22vw"
+            className="object-contain p-4"
+            priority={priority}
+            onError={() => setImgFailed(true)}
+          />
+        ) : (
+          <span
+            className="absolute inset-0 flex items-center justify-center text-6xl select-none"
+            role="img"
+            aria-label={product.name}
+          >
+            {product.emoji}
+          </span>
+        )}
+
+        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5 items-start">
+          {product.badge && (
+            <span className="bg-gold/90 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
+              {product.badge}
             </span>
+          )}
+          {discount > 0 && multiVariant && (
+            <span className="discount-chip">{discount}% OFF</span>
+          )}
+        </div>
+      </Link>
 
-            <div className="absolute top-3 left-3 flex flex-col gap-2">
-              <span className="bg-green-600 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">
-                100% Zero Maidha
-              </span>
-              {discount > 0 && (
-                <span className="bg-red-500 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">
-                  {discount}% OFF
-                </span>
-              )}
-            </div>
-          </div>
+      <div className="absolute top-2.5 right-2.5 z-10">
+        <WishlistButton slug={product.slug} name={product.name} />
+      </div>
 
-          <div className="p-5 flex flex-col flex-1">
-            <h3 className="font-heading text-lg font-semibold text-royal leading-snug mb-1.5 group-hover:text-gold transition-colors">
-              {product.name}
-            </h3>
-
-            {product.shortDescription && (
-              <p className="text-muted text-sm leading-relaxed line-clamp-2 mb-3 flex-1">
-                {product.shortDescription}
-              </p>
-            )}
-
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-royal font-bold text-xl">
-                {formatPrice(price)}
-              </span>
-              {mrp > price && (
-                <span className="text-muted text-sm line-through">
-                  {formatPrice(mrp)}
-                </span>
-              )}
-              {discount > 0 && (
-                <span className="text-green-600 text-sm font-semibold">
-                  ({discount}% OFF)
-                </span>
-              )}
-            </div>
-
-            <div className="flex gap-2 mt-auto">
-              <button
-                onClick={handleAddToCart}
-                className="flex-1 bg-royal text-white rounded-full py-2.5 text-sm font-semibold transition-all hover:opacity-90 flex items-center justify-center gap-2"
-              >
-                <ShoppingBag className="w-4 h-4" />
-                Add to Cart
-              </button>
-              <Link
-                href={`/shop/${product.slug}`}
-                onClick={(e) => e.stopPropagation()}
-                className="flex-1 border border-royal text-royal rounded-full py-2.5 text-sm font-semibold transition-all hover:bg-royal hover:text-white flex items-center justify-center gap-2"
-              >
-                VIEW PRODUCT
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
+      <div className="p-3 sm:p-4 flex flex-col flex-1 gap-1.5 min-w-0">
+        <Link href={`/shop/${product.slug}`}>
+          <h3 className="font-body text-sm sm:text-[15px] font-bold text-royal leading-snug line-clamp-2 min-h-[2.5em] group-hover:text-royal-light transition-colors">
+            {product.name}
+          </h3>
         </Link>
+
+        {variant && (
+          <p className="text-[11px] sm:text-xs text-muted truncate">
+            {variant.weight}
+            {outOfStock && <span className="text-red font-semibold"> · Out of stock</span>}
+          </p>
+        )}
+
+        <div className="mt-auto pt-1.5 flex items-baseline gap-1.5 flex-wrap">
+          <span className="text-base sm:text-lg font-extrabold text-royal">
+            {formatINR(price)}
+          </span>
+          {mrp > price && (
+            <span className="text-xs text-muted line-through">{formatINR(mrp)}</span>
+          )}
+          {discount > 0 && !multiVariant && (
+            <span className="discount-chip">{discount}% OFF</span>
+          )}
+        </div>
+
+        <button
+          onClick={handleAddToCart}
+          disabled={outOfStock}
+          className={cn(
+            "mt-2 w-full rounded-full py-2.5 text-xs font-bold uppercase tracking-wide transition-all duration-300 flex items-center justify-center gap-1.5",
+            outOfStock
+              ? "bg-[#EEE6DA] text-muted cursor-not-allowed"
+              : "bg-royal text-white hover:bg-royal-light active:scale-[0.98]"
+          )}
+        >
+          <Plus size={14} strokeWidth={2.5} />
+          {outOfStock ? "Out of Stock" : multiVariant ? "Select Options" : "Add to Cart"}
+        </button>
       </div>
     </div>
   );

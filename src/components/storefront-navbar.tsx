@@ -2,10 +2,24 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Search, ShoppingBag, Menu, X, ChevronRight } from "lucide-react";
+import {
+  Search,
+  ShoppingBag,
+  Heart,
+  Menu,
+  X,
+  Home,
+  Store,
+  Info,
+  Phone,
+  Cookie,
+} from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
+import { useWishlistStore } from "@/store/useWishlistStore";
 import { cn } from "@/lib/utils";
+import StorefrontSearch from "@/components/storefront-search";
 
 const navLinks = [
   { label: "About", href: "/about" },
@@ -14,14 +28,25 @@ const navLinks = [
   { label: "Contact", href: "/contact" },
 ];
 
+const menuLinks = [
+  { label: "Home", href: "/", icon: Home },
+  { label: "Shop All", href: "/shop", icon: Store },
+  { label: "Cookies", href: "/cookies", icon: Cookie },
+  { label: "Brownies", href: "/brownies", icon: Cookie },
+  { label: "About", href: "/about", icon: Info },
+  { label: "Contact", href: "/contact", icon: Phone },
+];
+
 export default function StorefrontNavbar() {
   const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const cartCount = useCartStore((s) => s.getCount());
+  const wishCount = useWishlistStore((s) => s.slugs.length);
 
   useEffect(() => {
-    if (mobileOpen) {
+    if (menuOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -29,215 +54,226 @@ export default function StorefrontNavbar() {
     return () => {
       document.body.style.overflow = "";
     };
-  }, [mobileOpen]);
+  }, [menuOpen]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    if (menuOpen) window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
+  const isActive = (href: string, exact = false) =>
+    exact
+      ? pathname === href
+      : pathname === href || pathname.startsWith(href + "/");
 
   return (
     <>
-      <nav className="sticky inset-x-0 top-0 z-50 border-b border-lavender/40 bg-cream/85 backdrop-blur-md">
+      <nav className="sticky inset-x-0 top-0 z-50 bg-white/95 backdrop-blur-md border-b border-royal/10">
         {/* Desktop */}
-        <div className="hidden md:flex items-center justify-between max-w-7xl mx-auto px-6 h-[72px]">
-          <Link href="/" className="flex-shrink-0 flex items-center gap-2">
-            <img
+        <div className="hidden md:grid grid-cols-[1fr_auto_1fr] items-center max-w-7xl mx-auto px-6 h-[72px]">
+          <Link href="/" className="flex items-center gap-2 justify-self-start">
+            <Image
               src="/logo.jpeg"
               alt="Crispo Cookies"
+              width={44}
+              height={44}
               className="h-11 w-auto object-contain"
+              priority
             />
-            <span className="font-heading text-xl font-bold text-plum tracking-[0.12em] uppercase">
-              CRISPO
-            </span>
           </Link>
 
           <div className="flex items-center gap-8">
-            {navLinks.map((link) => {
-              const isActive =
-                pathname === link.href ||
-                (link.href !== "/" && pathname.startsWith(link.href + "/"));
-              return (
-                <Link
-                  key={`${link.href}-${link.label}`}
-                  href={link.href}
-                  className={cn(
-                    "font-body text-[13px] font-medium tracking-wide uppercase transition-colors relative py-1",
-                    isActive
-                      ? "text-gold"
-                      : "text-plum/70 hover:text-gold"
-                  )}
-                >
-                  {link.label}
-                  {isActive && (
-                    <span className="absolute bottom-0 left-0 w-full h-[2px] bg-gold rounded-full" />
-                  )}
-                </Link>
-              );
-            })}
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "font-body text-[13px] font-bold tracking-wide uppercase transition-colors relative py-1",
+                  isActive(link.href)
+                    ? "text-royal"
+                    : "text-plum/60 hover:text-royal"
+                )}
+              >
+                {link.label}
+                {isActive(link.href) && (
+                  <span className="absolute -bottom-0.5 left-0 w-full h-0.5 bg-royal rounded-full" />
+                )}
+              </Link>
+            ))}
           </div>
 
-          <div className="flex items-center gap-1">
-            <Link
-              href="/shop"
-              className="text-plum/60 hover:text-gold transition-colors p-2.5"
+          <div className="flex items-center gap-1 justify-self-end">
+            <button
+              onClick={() => setSearchOpen(true)}
+              aria-label="Search products"
+              className="text-plum/60 hover:text-royal transition-colors p-2.5"
             >
-              <Search size={20} strokeWidth={1.5} />
-            </Link>
-
+              <Search size={20} strokeWidth={1.75} />
+            </button>
             <Link
-              href="/cart"
-              className="relative text-plum/60 hover:text-gold transition-colors p-2.5"
+              href="/wishlist"
+              aria-label="Wishlist"
+              className="relative text-plum/60 hover:text-royal transition-colors p-2.5"
             >
-              <ShoppingBag size={20} strokeWidth={1.5} />
-              {cartCount > 0 && (
-                <span className="absolute top-1.5 right-1 w-4 h-4 bg-gold text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
-                  {cartCount}
+              <Heart size={20} strokeWidth={1.75} />
+              {wishCount > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 bg-royal text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                  {wishCount > 9 ? "9+" : wishCount}
                 </span>
               )}
             </Link>
-
             <Link
-              href="/cookies"
-              className="btn-gold ml-2 px-5 py-2 text-xs font-bold tracking-wider uppercase rounded-full"
+              href="/cart"
+              aria-label="Shopping cart"
+              className="relative text-plum/60 hover:text-royal transition-colors p-2.5"
             >
-              SHOP COOKIES
+              <ShoppingBag size={20} strokeWidth={1.75} />
+              {cartCount > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 bg-royal text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                  {cartCount > 9 ? "9+" : cartCount}
+                </span>
+              )}
+            </Link>
+            <Link href="/shop" className="btn-primary ml-2 px-6 py-2.5 text-xs">
+              Shop Now
             </Link>
           </div>
         </div>
 
         {/* Mobile */}
-        <div className="flex md:hidden items-center justify-between px-4 h-[64px]">
-          <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-1.5">
-            <img
+        <div className="relative flex md:hidden items-center justify-between px-3 h-[56px]">
+          <button
+            onClick={() => setMenuOpen(true)}
+            className="text-plum/70 p-2"
+            aria-label="Open menu"
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
+          >
+            <Menu size={24} strokeWidth={1.75} />
+          </button>
+
+          <Link
+            href="/"
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center"
+            aria-label="Crispo Cookies home"
+          >
+            <Image
               src="/logo.jpeg"
               alt="Crispo Cookies"
+              width={96}
+              height={40}
               className="h-9 w-auto object-contain"
+              priority
             />
-            <span className="font-heading text-lg font-bold text-plum tracking-[0.12em] uppercase">
-              CRISPO
-            </span>
           </Link>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="text-plum/70 p-2"
+              aria-label="Search products"
+            >
+              <Search size={21} strokeWidth={1.75} />
+            </button>
             <Link
               href="/cart"
-              className="relative text-plum/60 hover:text-gold transition-colors p-2"
+              className="relative text-plum/70 p-2.5"
+              aria-label="Shopping cart"
             >
-              <ShoppingBag size={20} strokeWidth={1.5} />
+              <ShoppingBag size={21} strokeWidth={1.75} />
               {cartCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-gold text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
-                  {cartCount}
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-royal text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                  {cartCount > 9 ? "9+" : cartCount}
                 </span>
               )}
             </Link>
-            <button
-              onClick={() => setMobileOpen(true)}
-              className="text-plum/60 hover:text-gold transition-colors p-2"
-              aria-label="Open menu"
-            >
-              <Menu size={24} strokeWidth={1.5} />
-            </button>
           </div>
         </div>
       </nav>
 
-      {/* Mobile overlay */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-[60] md:hidden">
-          {/* Dark backdrop */}
+      {/* Mobile menu */}
+      {menuOpen && (
+        <div id="mobile-menu" className="fixed inset-0 z-[60] md:hidden">
           <div
             className="absolute inset-0 bg-plum/50 backdrop-blur-sm"
-            onClick={() => setMobileOpen(false)}
+            onClick={() => setMenuOpen(false)}
+            aria-hidden="true"
           />
-
-          {/* Slide-in panel */}
-          <div className="absolute inset-y-0 right-0 w-[85%] max-w-[300px] bg-cream shadow-2xl flex flex-col animate-slide-in-right">
-            <div className="flex items-center justify-between px-5 h-[64px] border-b border-lavender/30">
-              <Link
-                href="/"
-                onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-1.5"
-              >
-                <img
-                  src="/logo.jpeg"
-                  alt="Crispo Cookies"
-                  className="h-9 w-auto object-contain"
-                />
-                <span className="font-heading text-lg font-bold text-plum tracking-[0.12em] uppercase">
-                  CRISPO
-                </span>
-              </Link>
+          <div className="absolute inset-y-0 left-0 w-[85%] max-w-[320px] bg-white shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between px-5 h-[56px] border-b border-royal/10">
+              <Image
+                src="/logo.jpeg"
+                alt="Crispo Cookies"
+                width={96}
+                height={40}
+                className="h-8 w-auto object-contain"
+              />
               <button
-                onClick={() => setMobileOpen(false)}
-                className="text-plum/60 hover:text-gold transition-colors p-2"
+                onClick={() => setMenuOpen(false)}
+                className="text-plum/60 p-2"
                 aria-label="Close menu"
               >
-                <X size={24} strokeWidth={1.5} />
+                <X size={24} strokeWidth={1.75} />
               </button>
             </div>
 
-            <div className="flex flex-col flex-1 px-6 py-6 gap-1">
-              {navLinks.map((link, i) => {
-                const isActive =
-                  pathname === link.href ||
-                  (link.href !== "/" && pathname.startsWith(link.href + "/"));
+            <div className="flex flex-col flex-1 px-4 py-4 gap-1 overflow-y-auto">
+              {menuLinks.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.href, item.href === "/");
                 return (
                   <Link
-                    key={`${link.href}-${link.label}`}
-                    href={link.href}
-                    onClick={() => setMobileOpen(false)}
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMenuOpen(false)}
                     className={cn(
-                      "flex items-center justify-between font-body text-lg py-3 px-3 rounded-lg transition-colors",
-                      isActive
-                        ? "bg-gold/10 text-gold font-semibold"
-                        : "text-plum/80 hover:bg-lavender/20 hover:text-gold"
+                      "flex items-center gap-3.5 font-body text-[15px] font-semibold py-3.5 px-4 rounded-xl transition-colors",
+                      active
+                        ? "bg-royal text-white"
+                        : "text-plum/80 hover:bg-royal/5 hover:text-royal"
                     )}
-                    style={{ animationDelay: `${i * 60}ms` }}
                   >
-                    {link.label}
-                    <ChevronRight
-                      size={18}
-                      strokeWidth={1.5}
-                      className={cn(
-                        "transition-colors",
-                        isActive ? "text-gold/60" : "text-plum/30"
-                      )}
+                    <Icon
+                      size={20}
+                      strokeWidth={1.75}
+                      className={active ? "text-white" : "text-muted"}
                     />
+                    {item.label}
                   </Link>
                 );
               })}
             </div>
 
-            <div className="px-6 pb-8">
+            <div className="px-5 pb-8 space-y-3">
               <Link
-                href="/cookies"
-                onClick={() => setMobileOpen(false)}
-                className="btn-gold block w-full text-center px-5 py-3 text-sm font-bold tracking-wider uppercase rounded-full"
+                href="/wishlist"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center justify-center gap-2 border-2 border-royal text-royal font-semibold rounded-full px-5 py-3 text-sm"
               >
-                SHOP COOKIES
-              </Link>
-            </div>
-
-            <div className="flex items-center justify-center gap-6 pb-6 border-t border-lavender/20 pt-5">
-              <Link
-                href="/shop"
-                onClick={() => setMobileOpen(false)}
-                className="text-plum/50 hover:text-gold transition-colors p-2"
-              >
-                <Search size={22} strokeWidth={1.5} />
-              </Link>
-              <Link
-                href="/cart"
-                onClick={() => setMobileOpen(false)}
-                className="relative text-plum/50 hover:text-gold transition-colors p-2"
-              >
-                <ShoppingBag size={22} strokeWidth={1.5} />
-                {cartCount > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 bg-gold text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
-                    {cartCount}
+                <Heart size={16} />
+                My Wishlist
+                {wishCount > 0 && (
+                  <span className="w-5 h-5 bg-royal text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {wishCount}
                   </span>
                 )}
+              </Link>
+              <Link
+                href="/shop"
+                onClick={() => setMenuOpen(false)}
+                className="btn-primary w-full"
+              >
+                Shop Now
               </Link>
             </div>
           </div>
         </div>
       )}
+
+      <StorefrontSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
 }

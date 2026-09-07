@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Heart, Award, Leaf, ShieldCheck, MapPin } from "lucide-react";
 
 export const metadata = {
@@ -70,11 +71,13 @@ export default function AboutPage() {
       {/* Story Block 1 */}
       <section className="container-tight py-20">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div className="rounded-3xl aspect-[4/3] overflow-hidden shadow-lift">
-            <img
+          <div className="rounded-3xl aspect-[4/3] overflow-hidden shadow-lift relative">
+            <Image
               src="/our story.jpg"
               alt="Crispo Cookies — our story"
-              className="w-full h-full object-cover"
+              fill
+              sizes="(max-width: 768px) 90vw, 50vw"
+              className="object-cover"
             />
           </div>
           <div>
@@ -118,18 +121,20 @@ export default function AboutPage() {
               bring a little more joy to your day.
             </p>
           </div>
-          <div className="order-1 md:order-2 rounded-3xl aspect-[4/3] overflow-hidden shadow-lift bg-cream flex items-center justify-center p-10">
-            <img
+          <div className="order-1 md:order-2 rounded-3xl aspect-[4/3] overflow-hidden shadow-lift bg-cream relative">
+            <Image
               src="/logo.jpeg"
               alt="Crispo Cookies"
-              className="max-w-full h-auto object-contain"
+              fill
+              sizes="(max-width: 768px) 90vw, 50vw"
+              className="object-contain p-8"
             />
           </div>
         </div>
       </section>
 
       {/* Our Values */}
-      <section className="bg-cream-dark py-20">
+      <section className="bg-[#F0EBE0] py-20">
         <div className="container-tight">
           <p className="eyebrow text-center mb-3">Our Values</p>
           <h2 className="section-heading text-center mb-12">
@@ -139,7 +144,7 @@ export default function AboutPage() {
             {values.map((v) => (
               <div
                 key={v.label}
-                className="surface-card rounded-3xl p-8 text-center hover:shadow-lift transition-shadow duration-300"
+                className="bg-white rounded-3xl p-8 text-center border border-royal/5 shadow-soft hover:shadow-lift transition-shadow duration-300"
               >
                 <div className="w-16 h-16 bg-gold/10 rounded-full flex items-center justify-center mx-auto mb-5">
                   <v.icon size={28} className="text-gold" />
@@ -194,7 +199,7 @@ export default function AboutPage() {
                 Explore our 100% ZERO MAIDHA cookies and brownies.
               </p>
               <div className="flex flex-wrap justify-center gap-4">
-                <Link href="/cookies" className="btn-gold">
+                <Link href="/cookies" className="btn-primary">
                   Shop Cookies
                 </Link>
               </div>

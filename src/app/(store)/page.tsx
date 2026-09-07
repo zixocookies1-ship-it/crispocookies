@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useCartStore } from "@/store/useCartStore";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import {
-  ShoppingCart,
   Wheat,
   Heart,
   Gem,
@@ -14,7 +13,12 @@ import {
   Phone,
   MapPin,
   ArrowRight,
+  RefreshCw,
 } from "lucide-react";
+import { fetchProducts, StoreProduct } from "@/lib/storefront";
+import { ProductCardSkeleton } from "@/components/skeleton";
+import ProductCard from "@/components/product-card";
+import BenefitsSection from "@/components/benefits-section";
 
 const InstagramIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -30,89 +34,6 @@ const YoutubeIcon = ({ className }: { className?: string }) => (
     <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/>
   </svg>
 );
-
-const formatPrice = (p: number) => `₹${p}`;
-const calcDiscount = (mrp: number, price: number) =>
-  Math.round(((mrp - price) / mrp) * 100);
-
-interface Product {
-  slug: string;
-  name: string;
-  emoji: string;
-  price: number;
-  mrp: number;
-  weight: string;
-  category: "Cookie" | "Brownie";
-}
-
-const products: Product[] = [
-  {
-    slug: "double-chocolate-cookie",
-    name: "Double Chocolate Cookie",
-    emoji: "🍪",
-    price: 179,
-    mrp: 299,
-    weight: "200g (4 cookies)",
-    category: "Cookie",
-  },
-  {
-    slug: "rose-cookie",
-    name: "Rose Cookie",
-    emoji: "🌹",
-    price: 179,
-    mrp: 299,
-    weight: "200g (4 cookies)",
-    category: "Cookie",
-  },
-  {
-    slug: "pineapple-cookie",
-    name: "Pineapple Cookie",
-    emoji: "🍍",
-    price: 179,
-    mrp: 299,
-    weight: "200g (4 cookies)",
-    category: "Cookie",
-  },
-  {
-    slug: "dry-seed-cookies",
-    name: "Dry Seeds Cookie",
-    emoji: "🌱",
-    price: 219,
-    mrp: 399,
-    weight: "300g (4 cookies)",
-    category: "Cookie",
-  },
-  {
-    slug: "all-mix-cookies",
-    name: "All Mix Cookies",
-    emoji: "🥣",
-    price: 219,
-    mrp: 399,
-    weight: "300g (6 cookies)",
-    category: "Cookie",
-  },
-  {
-    slug: "double-chocolate-oats-brownie",
-    name: "Double Chocolate Oats Brownie",
-    emoji: "🍫",
-    price: 250,
-    mrp: 499,
-    weight: "300g (6 pieces)",
-    category: "Brownie",
-  },
-  {
-    slug: "kaju-oats-brownie",
-    name: "Kaju Oats Brownie",
-    emoji: "🥜",
-    price: 250,
-    mrp: 499,
-    weight: "300g (6 pieces)",
-    category: "Brownie",
-  },
-];
-
-const cookieProducts = products.filter((p) => p.category === "Cookie");
-const brownieProducts = products.filter((p) => p.category === "Brownie");
 
 const whyFeatures = [
   {
@@ -138,17 +59,35 @@ const whyFeatures = [
 ];
 
 export default function StoreHomePage() {
-  const addItem = useCartStore((s) => s.addItem);
   const [activeCollection, setActiveCollection] = useState<"cookies" | "brownies">("cookies");
+  const [products, setProducts] = useState<StoreProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
-  const handleAddToCart = (product: Product) => {
-    addItem({
-      productId: product.slug,
-      name: product.name,
-      variant: { weight: product.weight, price: product.price },
-      image: product.emoji,
-    });
-  };
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(false);
+    fetchProducts()
+      .then((data) => {
+        if (!cancelled) setProducts(data);
+      })
+      .catch(() => {
+        if (!cancelled) setError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [attempt]);
+
+  const collectionProducts =
+    activeCollection === "cookies"
+      ? products.filter((p) => p.category?.name.toLowerCase() === "cookies")
+      : products.filter((p) => p.category?.name.toLowerCase() === "brownies");
 
   return (
     <>
@@ -157,7 +96,6 @@ export default function StoreHomePage() {
         className="relative min-h-screen min-h-[100svh] flex items-center overflow-hidden bg-gradient-to-br from-espresso via-plum to-royal"
         aria-label="Hero"
       >
-        {/* Static background */}
         <div className="absolute inset-0 z-0">
           <div
             className="absolute inset-0 bg-gradient-to-r from-espresso/70 via-plum/40 to-transparent"
@@ -182,7 +120,7 @@ export default function StoreHomePage() {
               A Little Crisp. A Lot of Love.
             </p>
             <div className="flex flex-wrap items-center gap-4 justify-center lg:justify-start">
-              <Link href="/cookies" className="btn-gold">
+              <Link href="/cookies" className="btn-primary">
                 Explore Cookies
               </Link>
               <Link
@@ -196,8 +134,10 @@ export default function StoreHomePage() {
         </div>
       </section>
 
+      <BenefitsSection />
+
       {/* ─── SECTION 2: OUR STORY ─── */}
-      <section className="py-16 lg:py-24" aria-label="Our Story">
+      <section className="py-16 lg:py-24 bg-cream" aria-label="Our Story">
         <div className="container-tight max-w-4xl mx-auto text-center">
           <p className="eyebrow mb-4">Our Story</p>
           <h2 className="font-heading text-4xl lg:text-section text-royal font-bold mb-6">
@@ -242,15 +182,14 @@ export default function StoreHomePage() {
             </p>
           </div>
 
-          {/* Tabs */}
           <div className="flex justify-center mb-10">
-            <div className="inline-flex p-1.5 rounded-full bg-cream border border-lavender/40 shadow-soft">
+            <div className="inline-flex p-1.5 rounded-full bg-white border border-royal/10 shadow-soft">
               {(["cookies", "brownies"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveCollection(tab)}
                   className={cn(
-                    "px-8 py-2.5 rounded-full text-sm font-bold tracking-wider uppercase transition-all duration-300 cursor-pointer",
+                    "px-6 sm:px-8 py-2.5 rounded-full text-sm font-bold tracking-wider uppercase transition-all duration-300 cursor-pointer",
                     activeCollection === tab
                       ? "bg-royal text-cream shadow-lift"
                       : "text-plum/60 hover:text-plum"
@@ -262,54 +201,49 @@ export default function StoreHomePage() {
             </div>
           </div>
 
-          {/* Products */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {(activeCollection === "cookies" ? cookieProducts : brownieProducts).map(
-              (product) => {
-                const discount = calcDiscount(product.mrp, product.price);
-                return (
-                  <div
-                    key={product.slug}
-                    className="surface-card rounded-2xl overflow-hidden flex flex-col hover:shadow-lift transition-shadow duration-300"
-                  >
-                    <div className="bg-gradient-to-br from-gold/10 via-cream to-beige h-48 flex items-center justify-center">
-                      <span className="text-7xl select-none">
-                        {product.emoji}
-                      </span>
-                    </div>
-                    <div className="p-5 flex flex-col flex-1">
-                      <h3 className="font-heading text-lg font-semibold text-royal mb-2">
-                        {product.name}
-                      </h3>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-gold font-bold text-lg">
-                          {formatPrice(product.price)}
-                        </span>
-                        <span className="text-muted text-sm line-through">
-                          {formatPrice(product.mrp)}
-                        </span>
-                      </div>
-                      <span className="text-green text-xs font-semibold mb-4">
-                        {discount}% OFF
-                      </span>
-                      <button
-                        onClick={() => handleAddToCart(product)}
-                        className="btn-gold btn-sm w-full mt-auto flex items-center justify-center gap-2"
-                      >
-                        <ShoppingCart size={14} />
-                        Add to Cart
-                      </button>
-                    </div>
-                  </div>
-                );
-              }
-            )}
+          {loading && (
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <ProductCardSkeleton key={i} />
+              ))}
+            </div>
+          )}
+
+          {!loading && error && (
+            <div className="text-center py-16">
+              <h3 className="font-heading text-xl text-royal mb-2">We couldn&apos;t load the products</h3>
+              <button onClick={() => setAttempt((a) => a + 1)} className="btn-royal mt-4">
+                <RefreshCw size={16} />
+                Retry
+              </button>
+            </div>
+          )}
+
+          {!loading && !error && collectionProducts.length === 0 && (
+            <p className="text-center text-muted py-16">
+              New treats are being baked — check back soon.
+            </p>
+          )}
+
+          {!loading && !error && collectionProducts.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
+              {collectionProducts.slice(0, 4).map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          )}
+
+          <div className="text-center mt-10">
+            <Link href="/shop" className="btn-primary">
+              Shop All Products
+              <ArrowRight size={16} />
+            </Link>
           </div>
         </div>
       </section>
 
       {/* ─── SECTION 4: FROM OUR OVEN ─── */}
-      <section className="py-16 lg:py-24" aria-label="From Our Oven">
+      <section className="py-16 lg:py-24 bg-cream" aria-label="From Our Oven">
         <div className="container-tight">
           <div className="text-center mb-10">
             <p className="eyebrow mb-4">From Our Oven</p>
@@ -340,7 +274,7 @@ export default function StoreHomePage() {
       </section>
 
       {/* ─── SECTION 5: CHOOSE YOUR CRAVE ─── */}
-      <section className="py-16 lg:py-24" aria-label="Choose Your Crave">
+      <section className="py-16 lg:py-24 bg-cream" aria-label="Choose Your Crave">
         <div className="container-tight">
           <div className="text-center mb-10">
             <p className="eyebrow mb-4">Choose Your Crave</p>
@@ -362,7 +296,7 @@ export default function StoreHomePage() {
             ].map((mood) => (
               <div
                 key={mood.label}
-                className="surface-card rounded-3xl p-6 text-center hover:shadow-lift transition-shadow duration-300"
+                className="bg-white rounded-3xl p-6 text-center border border-royal/5 shadow-soft hover:shadow-lift transition-shadow duration-300"
               >
                 <span className="text-5xl block mb-3 select-none">
                   {mood.emoji}
@@ -389,7 +323,7 @@ export default function StoreHomePage() {
               return (
                 <div
                   key={feature.title}
-                  className="surface-card rounded-2xl p-6 text-center"
+                  className="bg-white rounded-2xl p-6 text-center border border-royal/5 shadow-soft"
                 >
                   <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-gold/10 flex items-center justify-center">
                     <Icon size={26} className="text-gold" />
@@ -408,15 +342,17 @@ export default function StoreHomePage() {
       </section>
 
       {/* ─── SECTION 7: ABOUT CRISPO ─── */}
-      <section className="py-16 lg:py-24" aria-label="About Crispo">
+      <section className="py-16 lg:py-24 bg-cream" aria-label="About Crispo">
         <div className="container-tight">
           <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center">
             <div className="flex justify-center order-2 lg:order-1">
               <div className="w-full max-w-md aspect-square rounded-3xl overflow-hidden shadow-lift relative">
-                <img
+                <Image
                   src="/our story.jpg"
                   alt="Crispo Cookies — about us"
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="(max-width: 1024px) 90vw, 40vw"
+                  className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-plum/30 to-transparent pointer-events-none" />
               </div>
@@ -452,7 +388,7 @@ export default function StoreHomePage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/about" className="btn-gold">
+              <Link href="/about" className="btn-primary">
                 Our Story
                 <ArrowRight size={16} />
               </Link>
@@ -479,7 +415,7 @@ export default function StoreHomePage() {
               href="https://www.instagram.com/rahul.bites"
               target="_blank"
               rel="noopener noreferrer"
-              className="surface-card rounded-[2rem] p-8 sm:p-10 flex flex-col items-center text-center hover:shadow-lift hover:-translate-y-1 transition-all duration-300 group"
+              className="bg-white rounded-[2rem] p-8 sm:p-10 flex flex-col items-center text-center border border-royal/5 shadow-soft hover:shadow-lift hover:-translate-y-1 transition-all duration-300 group"
             >
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gold to-royal flex items-center justify-center mb-5">
                 <InstagramIcon className="w-8 h-8 text-cream" />
@@ -500,7 +436,7 @@ export default function StoreHomePage() {
               href="https://www.youtube.com/@Rahul-Bites"
               target="_blank"
               rel="noopener noreferrer"
-              className="surface-card rounded-[2rem] p-8 sm:p-10 flex flex-col items-center text-center hover:shadow-lift hover:-translate-y-1 transition-all duration-300 group"
+              className="bg-white rounded-[2rem] p-8 sm:p-10 flex flex-col items-center text-center border border-royal/5 shadow-soft hover:shadow-lift hover:-translate-y-1 transition-all duration-300 group"
             >
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-plum to-royal flex items-center justify-center mb-5">
                 <YoutubeIcon className="w-8 h-8 text-cream" />
@@ -522,7 +458,7 @@ export default function StoreHomePage() {
       </section>
 
       {/* ─── SECTION 9: CONTACT ─── */}
-      <section className="py-16 lg:py-24" aria-label="Contact Crispo">
+      <section className="py-16 lg:py-24 bg-cream" aria-label="Contact Crispo">
         <div className="container-tight">
           <div className="text-center mb-12">
             <p className="eyebrow mb-4">Get In Touch</p>
@@ -535,7 +471,7 @@ export default function StoreHomePage() {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            <div className="surface-card rounded-3xl p-8 text-center hover:shadow-lift transition-shadow duration-300">
+            <div className="bg-white rounded-3xl p-8 text-center border border-royal/5 shadow-soft hover:shadow-lift transition-shadow duration-300">
               <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-gold/10 flex items-center justify-center">
                 <Mail size={22} className="text-gold" />
               </div>
@@ -549,7 +485,7 @@ export default function StoreHomePage() {
                 ccrispocookies@gmail.com
               </a>
             </div>
-            <div className="surface-card rounded-3xl p-8 text-center hover:shadow-lift transition-shadow duration-300">
+            <div className="bg-white rounded-3xl p-8 text-center border border-royal/5 shadow-soft hover:shadow-lift transition-shadow duration-300">
               <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-gold/10 flex items-center justify-center">
                 <Phone size={22} className="text-gold" />
               </div>
@@ -563,7 +499,7 @@ export default function StoreHomePage() {
                 +91 75698 31560
               </a>
             </div>
-            <div className="surface-card rounded-3xl p-8 text-center hover:shadow-lift transition-shadow duration-300">
+            <div className="bg-white rounded-3xl p-8 text-center border border-royal/5 shadow-soft hover:shadow-lift transition-shadow duration-300">
               <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-gold/10 flex items-center justify-center">
                 <MapPin size={22} className="text-gold" />
               </div>
@@ -574,7 +510,7 @@ export default function StoreHomePage() {
             </div>
           </div>
           <div className="max-w-md mx-auto mt-10">
-            <Link href="/shop" className="btn-royal w-full">
+            <Link href="/shop" className="btn-primary w-full">
               Order Now
             </Link>
           </div>

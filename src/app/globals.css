@@ -46,6 +46,25 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--royal);
 }
 
+:focus-visible {
+  outline: 2px solid var(--royal);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -73,7 +92,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Card surface */
 .surface-card {
   background: var(--card-bg);
-  border: 1px solid var(--lavender);
+  border: 1px solid var(--border);
   box-shadow: var(--shadow-soft);
 }
 
@@ -167,23 +186,46 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 bg-royal hover:bg-royal-light text-white font-bold px-8 py-3.5 rounded-full transition-all duration-300 text-sm tracking-wide uppercase;
+    letter-spacing: 0.06em;
+    box-shadow: 0 12px 28px -14px rgba(27, 27, 75, 0.55);
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 18px 34px -14px rgba(27, 27, 75, 0.55);
+  }
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .btn-royal {
+    @apply inline-flex items-center justify-center gap-2 border-2 border-royal text-royal hover:bg-royal hover:text-white font-semibold px-8 py-3.5 rounded-full transition-all duration-300 text-sm tracking-wide uppercase;
+    letter-spacing: 0.06em;
+  }
+  .btn-royal:hover {
+    transform: translateY(-1px);
+  }
   .btn-gold {
-    @apply bg-gold hover:bg-gold/90 text-white font-semibold px-8 py-3.5 rounded-full transition-all duration-300 text-sm tracking-wider uppercase;
+    @apply inline-flex items-center justify-center gap-2 bg-gold hover:bg-gold/90 text-white font-semibold px-8 py-3.5 rounded-full transition-all duration-300 text-sm tracking-wider uppercase;
     letter-spacing: 0.08em;
   }
   .btn-gold:hover {
     box-shadow: var(--shadow-gold);
     transform: translateY(-1px);
   }
-  .btn-royal {
-    @apply border-2 border-royal text-royal hover:bg-royal hover:text-white font-semibold px-8 py-3.5 rounded-full transition-all duration-300 text-sm tracking-wider uppercase;
-    letter-spacing: 0.08em;
-  }
-  .btn-royal:hover {
-    transform: translateY(-1px);
-  }
   .btn-sm {
     @apply px-5 py-2 text-xs;
+  }
+  .highlight-chip {
+    @apply inline-flex items-center gap-1.5 rounded-full bg-royal/5 border border-royal/10 px-3 py-1.5 text-xs font-semibold text-royal;
+  }
+  .discount-chip {
+    @apply inline-flex items-center rounded-full bg-red text-white px-2 py-0.5 text-[11px] font-bold leading-tight;
   }
   .card {
     @apply bg-white rounded-3xl;

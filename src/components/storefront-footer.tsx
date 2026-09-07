@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Mail, Phone, MapPin } from "lucide-react";
 
 const InstagramIcon = ({ className }: { className?: string }) => (
@@ -23,9 +24,11 @@ export default function StorefrontFooter() {
         {/* Top Section: Logo + Tagline */}
         <div className="text-center mb-14">
           <Link href="/" className="inline-flex items-center justify-center">
-            <img
+            <Image
               src="/logo.jpeg"
               alt="Crispo Cookies"
+              width={128}
+              height={64}
               className="h-16 w-auto object-contain mx-auto"
             />
           </Link>
