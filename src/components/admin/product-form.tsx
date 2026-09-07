@@ -336,6 +336,7 @@ export default function ProductForm({ product }: Props) {
               <div key={i} className="relative group">
                 <div className="aspect-square bg-[#FAF7F2] rounded-xl flex items-center justify-center text-2xl overflow-hidden">
                   {images[i] ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img src={images[i]} alt={`Product ${i + 1}`} className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-[#5A5A7A] text-xs">No image</span>
