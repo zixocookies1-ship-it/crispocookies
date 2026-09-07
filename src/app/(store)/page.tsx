@@ -93,10 +93,23 @@ export default function StoreHomePage() {
     <>
       {/* ─── SECTION 1: HERO ─── */}
       <section
-        className="relative min-h-screen min-h-[100svh] flex items-center overflow-hidden bg-gradient-to-br from-espresso via-plum to-royal"
+        className="relative min-h-screen min-h-[100svh] flex items-center overflow-hidden bg-royal"
         aria-label="Hero"
       >
+        {/* Full video background */}
         <div className="absolute inset-0 z-0">
+          <video
+            className="w-full h-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            poster="/logo.jpeg"
+            aria-hidden="true"
+          >
+            <source src="/hero-1.mp4" type="video/mp4" />
+          </video>
           <div
             className="absolute inset-0 bg-gradient-to-r from-espresso/70 via-plum/40 to-transparent"
             aria-hidden="true"
@@ -253,20 +266,38 @@ export default function StoreHomePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
-              { emoji: "🍪", label: "Handcrafted Cookies", sub: "100% ZERO MAIDHA oat-based cookies" },
-              { emoji: "🍫", label: "Fudgy Brownies", sub: "Rich, wholesome oat-based brownies" },
+              {
+                src: "/hero-1.mp4",
+                label: "Handcrafted Cookies",
+                sub: "100% ZERO MAIDHA oat-based cookies",
+              },
+              {
+                src: "/hero-2.mp4",
+                label: "Fudgy Brownies",
+                sub: "Rich, wholesome oat-based brownies",
+              },
             ].map((card) => (
               <div
                 key={card.label}
-                className="rounded-3xl overflow-hidden shadow-lift relative aspect-video bg-gradient-to-br from-gold/10 via-cream to-royal/5 flex flex-col items-center justify-center text-center p-6"
+                className="rounded-3xl overflow-hidden shadow-lift relative aspect-video bg-royal"
               >
-                <span className="text-6xl select-none mb-3" aria-hidden="true">
-                  {card.emoji}
-                </span>
-                <h3 className="font-heading text-xl font-semibold text-royal">
-                  {card.label}
-                </h3>
-                <p className="text-muted text-sm mt-1">{card.sub}</p>
+                <video
+                  className="w-full h-full object-cover"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="auto"
+                >
+                  <source src={card.src} type="video/mp4" />
+                </video>
+                <div className="absolute inset-0 bg-gradient-to-t from-royal/70 via-transparent to-transparent" aria-hidden="true" />
+                <div className="absolute inset-x-0 bottom-0 p-6 text-center">
+                  <h3 className="font-heading text-2xl font-semibold text-white">
+                    {card.label}
+                  </h3>
+                  <p className="text-white/80 text-sm mt-1">{card.sub}</p>
+                </div>
               </div>
             ))}
           </div>

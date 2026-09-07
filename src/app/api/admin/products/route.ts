@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import Product from "@/models/Product";
+import "@/models/Category";
 import { slugify } from "@/lib/helpers";
 
 export async function GET(request: NextRequest) {
