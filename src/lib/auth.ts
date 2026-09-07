@@ -1,42 +1,19 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
+import { connectDB } from "@/lib/mongodb";
+import Admin from "@/models/Admin";
 
-/**
- * Production guard for a misconfigured `NEXTAUTH_URL`.
- *
- * NextAuth 4 reads `NEXTAUTH_URL` BEFORE the request origin whenever it is
- * set (`utils/detect-origin.js`). A value like `http://localhost:3000` in a
- * production runtime therefore makes NextAuth build every auth URL
- * (providers, CSRF callback-url cookie, signin/callback redirects, error
- * page) against localhost. Real requests from the deployed host then break
- * auth and surface the NextAuth "Server error - There is a problem with the
- * server configuration..." page (error=Configuration).
- *
- * On Vercel the correct behavior is to let NextAuth derive the origin from
- * the actual request headers (`x-forwarded-host`), which happens as soon as
- * `NEXTAUTH_URL` is not set. This guard removes only a bad localhost value so
- * host detection can work, and loudly logs the need to clean up the Vercel
- * environment. A correctly set, real production URL is left untouched.
- *
- * Runs once per serverless instance at import time.
- */
 export function sanitizeAuthEnv(): void {
-  if (process.env.NODE_ENV !== "production") {
-    return;
-  }
+  if (process.env.NODE_ENV !== "production") return;
 
   const configured = process.env.NEXTAUTH_URL ?? process.env.AUTH_URL;
-
-  if (!configured) {
-    return;
-  }
+  if (!configured) return;
 
   const isLocalhost =
     configured.includes("localhost") || configured.includes("127.0.0.1");
 
-  if (!isLocalhost) {
-    return;
-  }
+  if (!isLocalhost) return;
 
   console.error(
     "[crispo-auth] NEXTAUTH_URL is set to a localhost URL in a production " +
@@ -59,13 +36,11 @@ if (process.env.NODE_ENV === "production" && !process.env.NEXTAUTH_SECRET) {
   );
 }
 
-if (
-  process.env.NODE_ENV === "production" &&
-  (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD)
-) {
+if (process.env.NODE_ENV === "production" && !process.env.MONGODB_URI) {
   console.error(
-    "[crispo-auth] ADMIN_EMAIL or ADMIN_PASSWORD is not set in this " +
-      "environment. Add both in Vercel (Development, Preview, and Production)."
+    "[crispo-auth] MONGODB_URI is not set in this environment. Admin " +
+      "login will fail until it is added in Vercel (Development, Preview, and " +
+      "Production)."
   );
 }
 
@@ -83,42 +58,105 @@ export const authOptions: NextAuthOptions = {
 
         const rawHeaders = req?.headers;
         let forwarded: string | undefined;
-        if (typeof (rawHeaders as { get?: unknown } | undefined)?.get === "function") {
+        if (
+          typeof (rawHeaders as { get?: unknown } | undefined)?.get ===
+          "function"
+        ) {
           forwarded =
             (rawHeaders as Headers).get("x-forwarded-for") ?? undefined;
         } else if (rawHeaders) {
-          const fwd = (rawHeaders as Record<string, string | string[] | undefined>)[
-            "x-forwarded-for"
-          ];
+          const fwd = (
+            rawHeaders as Record<string, string | string[] | undefined>
+          )["x-forwarded-for"];
           forwarded = typeof fwd === "string" ? fwd : undefined;
         }
         const ip = forwarded ? forwarded.split(",")[0].trim() : "unknown";
 
-        if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
-          console.error(
-            "[crispo-auth] ADMIN_EMAIL/ADMIN_PASSWORD missing at login " +
-              "attempt (ip=" + ip + "). Login is disabled until these are set."
+        if (!email) {
+          console.warn(
+            "[crispo-auth] login attempt with empty email (ip=" + ip + ")"
           );
           return null;
         }
 
-        const expectedEmail = process.env.ADMIN_EMAIL.trim().toLowerCase();
-        const ok =
-          email !== "" &&
-          email === expectedEmail &&
-          password === process.env.ADMIN_PASSWORD;
-
-        if (ok) {
-          console.info(
-            "[crispo-auth] admin login SUCCESS for " + email + " (ip=" + ip + ")"
+        if (!password) {
+          console.warn(
+            "[crispo-auth] login attempt with empty password for " +
+              email +
+              " (ip=" +
+              ip +
+              ")"
           );
-          return { id: "1", email: expectedEmail, name: "Admin" };
+          return null;
         }
 
-        console.warn(
-          "[crispo-auth] admin login FAILED for " + email + " (ip=" + ip + ")"
-        );
-        return null;
+        try {
+          console.info(
+            "[crispo-auth] authorize started for " +
+              email +
+              " (ip=" +
+              ip +
+              ")"
+          );
+
+          await connectDB();
+          console.info("[crispo-auth] MongoDB connected");
+
+          const admin = await Admin.findOne({
+            email,
+            isActive: true,
+          }).lean<{ password: string; _id: { toString(): string }; email: string; name: string; role: string }>();
+          if (!admin) {
+            console.warn(
+              "[crispo-auth] no active admin found for " +
+                email +
+                " (ip=" +
+                ip +
+                ")"
+            );
+            return null;
+          }
+          console.info("[crispo-auth] admin found, id=" + admin._id);
+
+          const passwordValid = await bcrypt.compare(password, admin.password);
+          if (!passwordValid) {
+            console.warn(
+              "[crispo-auth] password verification FAILED for " +
+                email +
+                " (ip=" +
+                ip +
+                ")"
+            );
+            return null;
+          }
+
+          console.info(
+            "[crispo-auth] admin login SUCCESS for " +
+              email +
+              " role=" +
+              admin.role +
+              " (ip=" +
+              ip +
+              ")"
+          );
+
+          return {
+            id: admin._id.toString(),
+            email: admin.email,
+            name: admin.name,
+            role: admin.role,
+          };
+        } catch (err) {
+          console.error(
+            "[crispo-auth] authorize error for " +
+              email +
+              " (ip=" +
+              ip +
+              "):",
+            err
+          );
+          return null;
+        }
       },
     }),
   ],
@@ -133,12 +171,14 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.role = (user as { role?: string }).role ?? "admin";
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as { id?: string }).id = token.id as string;
+        (session.user as { role?: string }).role = token.role as string;
       }
       return session;
     },
