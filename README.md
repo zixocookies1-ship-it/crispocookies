@@ -56,7 +56,7 @@ See [`.env.example`](./.env.example) for the full list with descriptions:
 |----------|-------------|
 | `MONGODB_URI` | MongoDB connection string |
 | `NEXTAUTH_SECRET` | JWT signing secret for NextAuth |
-| `NEXTAUTH_URL` | Base URL of the app |
+| `NEXTAUTH_URL` | Only for local dev. DO NOT set on Vercel — NextAuth infers the request origin, and a `http://localhost:3000` value in production breaks admin login |
 | `ADMIN_EMAIL` | Admin login email (CredentialProvider) |
 | `ADMIN_PASSWORD` | Admin login password |
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name |

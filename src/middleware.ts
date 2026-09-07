@@ -3,26 +3,33 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 export async function middleware(request: NextRequest) {
-  if (!process.env.NEXTAUTH_SECRET) {
+  const pathname = request.nextUrl.pathname;
+
+  if (!pathname.startsWith("/admin")) {
     return NextResponse.next();
   }
 
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
+  const secret = process.env.NEXTAUTH_SECRET;
 
-  if (request.nextUrl.pathname.startsWith("/admin")) {
-    if (request.nextUrl.pathname === "/admin/login") {
-      if (token) {
-        return NextResponse.redirect(new URL("/admin", request.url));
-      }
-      return NextResponse.next();
-    }
+  if (!secret) {
+    console.error(
+      "[crispo-auth] middleware: NEXTAUTH_SECRET is not set in this " +
+        "environment. Admin routes are locked down until it is configured " +
+        "in Vercel (Development, Preview, and Production)."
+    );
+  }
 
-    if (!token) {
-      return NextResponse.redirect(new URL("/admin/login", request.url));
+  const token = secret ? await getToken({ req: request, secret }) : null;
+
+  if (pathname === "/admin/login") {
+    if (token) {
+      return NextResponse.redirect(new URL("/admin", request.url));
     }
+    return NextResponse.next();
+  }
+
+  if (!token) {
+    return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
   return NextResponse.next();

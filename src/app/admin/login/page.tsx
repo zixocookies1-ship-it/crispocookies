@@ -25,12 +25,22 @@ export default function AdminLoginPage() {
       });
 
       if (result?.error) {
-        setError("Invalid credentials");
+        console.error("[admin-login] signIn returned error:", result.error);
+        if (result.error === "CredentialsSignin") {
+          setError("Invalid credentials");
+        } else if (result.error === "Configuration") {
+          setError(
+            "Login is misconfigured on the server. Check the server logs."
+          );
+        } else {
+          setError("Login failed. Please try again.");
+        }
       } else {
         router.push("/admin");
       }
-    } catch {
-      setError("Invalid credentials");
+    } catch (err) {
+      console.error("[admin-login] signIn threw an error:", err);
+      setError("Network error contacting the server. Please try again.");
     } finally {
       setLoading(false);
     }
