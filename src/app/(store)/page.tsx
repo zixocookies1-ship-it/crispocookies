@@ -267,37 +267,27 @@ export default function StoreHomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
               {
-                src: "/hero-1.mp4",
+                emoji: "🍪",
                 label: "Handcrafted Cookies",
                 sub: "100% ZERO MAIDHA oat-based cookies",
               },
               {
-                src: "/hero-2.mp4",
+                emoji: "🍫",
                 label: "Fudgy Brownies",
                 sub: "Rich, wholesome oat-based brownies",
               },
             ].map((card) => (
               <div
                 key={card.label}
-                className="rounded-3xl overflow-hidden shadow-lift relative aspect-video bg-royal"
+                className="rounded-3xl overflow-hidden shadow-lift relative aspect-video bg-gradient-to-br from-gold/10 via-cream to-royal/5 flex flex-col items-center justify-center text-center p-6"
               >
-                <video
-                  className="w-full h-full object-cover"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="auto"
-                >
-                  <source src={card.src} type="video/mp4" />
-                </video>
-                <div className="absolute inset-0 bg-gradient-to-t from-royal/70 via-transparent to-transparent" aria-hidden="true" />
-                <div className="absolute inset-x-0 bottom-0 p-6 text-center">
-                  <h3 className="font-heading text-2xl font-semibold text-white">
-                    {card.label}
-                  </h3>
-                  <p className="text-white/80 text-sm mt-1">{card.sub}</p>
-                </div>
+                <span className="text-6xl select-none mb-3" aria-hidden="true">
+                  {card.emoji}
+                </span>
+                <h3 className="font-heading text-xl font-semibold text-royal">
+                  {card.label}
+                </h3>
+                <p className="text-muted text-sm mt-1">{card.sub}</p>
               </div>
             ))}
           </div>
