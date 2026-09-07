@@ -154,23 +154,19 @@ export default function StoreHomePage() {
     <>
       {/* ─── SECTION 1: HERO ─── */}
       <section
-        className="relative min-h-screen min-h-[100svh] flex items-center overflow-hidden"
+        className="relative min-h-screen min-h-[100svh] flex items-center overflow-hidden bg-gradient-to-br from-espresso via-plum to-royal"
         aria-label="Hero"
       >
-        {/* Video background */}
+        {/* Static background */}
         <div className="absolute inset-0 z-0">
-          <video
-            className="w-full h-full object-cover"
-            autoPlay
-            muted
-            loop
-            playsInline
-            poster="/logo.jpeg"
-          >
-            <source src="/hero-1.mp4" type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 bg-gradient-to-r from-espresso/70 via-plum/40 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-cream via-transparent to-plum/20" />
+          <div
+            className="absolute inset-0 bg-gradient-to-r from-espresso/70 via-plum/40 to-transparent"
+            aria-hidden="true"
+          />
+          <div
+            className="absolute inset-0 bg-gradient-to-t from-cream via-transparent to-plum/20"
+            aria-hidden="true"
+          />
         </div>
 
         <div className="container-wide relative z-10 py-20 lg:py-0">
@@ -318,34 +314,27 @@ export default function StoreHomePage() {
           <div className="text-center mb-10">
             <p className="eyebrow mb-4">From Our Oven</p>
             <h2 className="font-heading text-4xl lg:text-section text-royal font-bold">
-              Watch the goodness come to life.
+              Baked fresh, straight from our oven.
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="rounded-3xl overflow-hidden shadow-lift relative aspect-video">
-              <video
-                className="w-full h-full object-cover"
-                autoPlay
-                muted
-                loop
-                playsInline
+            {[
+              { emoji: "🍪", label: "Handcrafted Cookies", sub: "100% ZERO MAIDHA oat-based cookies" },
+              { emoji: "🍫", label: "Fudgy Brownies", sub: "Rich, wholesome oat-based brownies" },
+            ].map((card) => (
+              <div
+                key={card.label}
+                className="rounded-3xl overflow-hidden shadow-lift relative aspect-video bg-gradient-to-br from-gold/10 via-cream to-royal/5 flex flex-col items-center justify-center text-center p-6"
               >
-                <source src="/hero-1.mp4" type="video/mp4" />
-              </video>
-              <div className="absolute inset-0 bg-gradient-to-t from-plum/40 to-transparent pointer-events-none" />
-            </div>
-            <div className="rounded-3xl overflow-hidden shadow-lift relative aspect-video">
-              <video
-                className="w-full h-full object-cover"
-                autoPlay
-                muted
-                loop
-                playsInline
-              >
-                <source src="/hero-2.mp4" type="video/mp4" />
-              </video>
-              <div className="absolute inset-0 bg-gradient-to-t from-plum/40 to-transparent pointer-events-none" />
-            </div>
+                <span className="text-6xl select-none mb-3" aria-hidden="true">
+                  {card.emoji}
+                </span>
+                <h3 className="font-heading text-xl font-semibold text-royal">
+                  {card.label}
+                </h3>
+                <p className="text-muted text-sm mt-1">{card.sub}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

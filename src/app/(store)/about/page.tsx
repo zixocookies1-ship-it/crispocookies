@@ -118,17 +118,12 @@ export default function AboutPage() {
               bring a little more joy to your day.
             </p>
           </div>
-          <div className="order-1 md:order-2 rounded-3xl aspect-[4/3] overflow-hidden shadow-lift relative">
-            <video
-              className="w-full h-full object-cover"
-              autoPlay
-              muted
-              loop
-              playsInline
-            >
-              <source src="/hero-2.mp4" type="video/mp4" />
-            </video>
-            <div className="absolute inset-0 bg-gradient-to-t from-plum/30 to-transparent pointer-events-none" />
+          <div className="order-1 md:order-2 rounded-3xl aspect-[4/3] overflow-hidden shadow-lift bg-cream flex items-center justify-center p-10">
+            <img
+              src="/logo.jpeg"
+              alt="Crispo Cookies"
+              className="max-w-full h-auto object-contain"
+            />
           </div>
         </div>
       </section>
