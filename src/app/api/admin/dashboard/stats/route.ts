@@ -22,6 +22,7 @@ export async function GET() {
       totalCustomers,
       totalProducts,
       lowStockProducts,
+      recentOrders,
     ] = await Promise.all([
       Order.aggregate([
         { $match: { paymentStatus: "paid" } },
@@ -35,6 +36,11 @@ export async function GET() {
         "variants.stock": { $lt: 10 },
       })
         .select("name variants weight")
+        .lean(),
+      Order.find()
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .select("orderId customerName total status createdAt items")
         .lean(),
     ]);
 
@@ -68,9 +74,24 @@ export async function GET() {
       },
     ]);
 
-    const formattedLowStock = lowStockProducts.map((p) => ({
-      name: p.name,
-      variants: p.variants.filter((v: { stock: number }) => v.stock < 10),
+    const formattedLowStock = lowStockProducts.flatMap((p) =>
+      p.variants
+        .filter((v: { stock: number }) => v.stock < 10)
+        .map((v: { stock: number; _id?: { toString(): string } }) => ({
+          _id: p._id?.toString() ?? "",
+          name: p.name,
+          stock: v.stock,
+        }))
+    );
+
+    const formattedRecentOrders = recentOrders.map((o) => ({
+      _id: o._id?.toString() ?? "",
+      orderId: o.orderId ?? "",
+      customerName: o.customerName ?? "",
+      totalItems: Array.isArray(o.items) ? o.items.reduce((sum: number, i: { quantity?: number }) => sum + (i.quantity ?? 0), 0) : 0,
+      total: o.total ?? 0,
+      status: o.status ?? "Pending",
+      createdAt: o.createdAt?.toISOString?.() ?? String(o.createdAt ?? ""),
     }));
 
     return NextResponse.json({
@@ -78,7 +99,14 @@ export async function GET() {
       totalOrders,
       totalCustomers,
       totalProducts,
-      revenueLast7Days,
+      lowStockCount: formattedLowStock.length,
+      revenueGrowth: 0,
+      ordersGrowth: 0,
+      customersGrowth: 0,
+      productsGrowth: 0,
+      revenueChart: revenueLast7Days.map((d) => ({ day: d.date, revenue: d.revenue })),
+      recentOrders: formattedRecentOrders,
+      categoryBreakdown: [],
       lowStockProducts: formattedLowStock,
     });
   } catch (error) {

@@ -126,6 +126,11 @@ export default function DashboardPage() {
 
   if (!stats) return null;
 
+  const recentOrders = stats.recentOrders ?? [];
+  const categoryBreakdown = stats.categoryBreakdown ?? [];
+  const lowStockProducts = stats.lowStockProducts ?? [];
+  const revenueChart = stats.revenueChart ?? [];
+
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
@@ -164,7 +169,7 @@ export default function DashboardPage() {
         </h2>
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={stats.revenueChart}>
+            <LineChart data={revenueChart}>
               <CartesianGrid strokeDasharray="3 3" stroke="#FAF7F2" />
               <XAxis
                 dataKey="day"
@@ -225,14 +230,14 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {stats.recentOrders.length === 0 ? (
+                {recentOrders.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="text-center py-8 text-[#5A5A7A]">
                       No orders yet
                     </td>
                   </tr>
                 ) : (
-                  stats.recentOrders.map((order) => (
+                  recentOrders.map((order) => (
                     <tr key={order._id} className="border-b border-gray-50 last:border-0">
                       <td className="py-3 font-medium text-[#1B1B4B]">
                         {order.orderId}
@@ -260,7 +265,7 @@ export default function DashboardPage() {
             Orders by Category
           </h2>
           <div className="h-64">
-            {stats.categoryBreakdown.length === 0 ? (
+            {categoryBreakdown.length === 0 ? (
               <div className="h-full flex items-center justify-center text-[#5A5A7A]">
                 No data available
               </div>
@@ -277,7 +282,7 @@ export default function DashboardPage() {
                     dataKey="value"
                     nameKey="name"
                   >
-                    {stats.categoryBreakdown.map((_, index) => (
+                    {categoryBreakdown.map((_, index) => (
                       <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                     ))}
                   </Pie>
@@ -294,7 +299,7 @@ export default function DashboardPage() {
             )}
           </div>
           <div className="flex flex-wrap gap-3 mt-2 justify-center">
-            {stats.categoryBreakdown.map((cat, i) => (
+            {categoryBreakdown.map((cat, i) => (
               <div key={cat.name} className="flex items-center gap-1.5 text-xs text-[#5A5A7A]">
                 <span
                   className="w-3 h-3 rounded-full"
@@ -308,13 +313,13 @@ export default function DashboardPage() {
       </div>
 
       {/* Low Stock Alert */}
-      {stats.lowStockProducts.length > 0 && (
+      {lowStockProducts.length > 0 && (
         <div className="card rounded-2xl p-6 border-l-4 border-l-[#D97706]">
           <h2 className="font-heading font-bold text-[#D97706] text-lg mb-4 flex items-center gap-2">
             ⚠️ Low Stock Alert
           </h2>
           <div className="space-y-2 mb-4">
-            {stats.lowStockProducts.map((p) => (
+            {lowStockProducts.map((p) => (
               <div key={p._id} className="flex items-center justify-between gap-3 py-2 border-b border-gray-50 last:border-0">
                 <span className="text-sm text-[#1B1B4B] font-medium truncate">{p.name}</span>
                 <span className="text-sm text-[#D97706] font-medium shrink-0">{p.stock} left</span>
