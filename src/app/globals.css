@@ -278,3 +278,169 @@ h1, h2, h3, h4, h5, h6 {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* ─────────────────────────────────────────────
+   LUXURY GOLD FRAME — HERO BANNER
+   Layered metallic gold frame with inner
+   champagne highlight, ornamental corners and
+   a slow premium shimmer. Pure CSS.
+────────────────────────────────────────────── */
+
+/* Wrapper behind the frame — dark warm stage that makes gold pop */
+.hero-backdrop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100svh;
+  padding: clamp(0.75rem, 2.5vw, 1.75rem);
+  background:
+    radial-gradient(130% 120% at 50% -10%, rgba(196, 151, 42, 0.16), rgba(196, 151, 42, 0) 55%),
+    radial-gradient(110% 90% at 50% 110%, rgba(196, 151, 42, 0.08), rgba(196, 151, 42, 0) 50%),
+    linear-gradient(180deg, #17120E, #211A12 60%, #191410);
+  overflow: hidden;
+}
+
+/* The main metallic gold frame */
+.gold-frame {
+  position: relative;
+  width: 100%;
+  max-width: 1640px;
+  border-radius: clamp(1.5rem, 3.5vw, 2.75rem);
+  padding: clamp(0.5rem, 1.8vw, 1.35rem); /* = visible frame thickness */
+  box-sizing: border-box;
+  /* metallic sweep: dark → warm → champagne → bright → warm → dark */
+  background:
+    /* top bevel light */
+    linear-gradient(180deg, rgba(255, 250, 230, 0.35), rgba(255, 250, 230, 0) 28%),
+    /* bottom bevel shade */
+    linear-gradient(0deg, rgba(60, 42, 8, 0.55), rgba(60, 42, 8, 0) 30%),
+    /* main metallic band */
+    linear-gradient(135deg,
+      #7E5E14 0%,
+      #A8831F 16%,
+      #CDA93C 32%,
+      #E8CF72 46%,
+      #F8E9A8 53%,
+      #EDD480 60%,
+      #D0AC3E 76%,
+      #A38020 90%,
+      #7E5E14 100%);
+  box-shadow:
+    /* outer raised shadow */
+    0 2px 3px rgba(0, 0, 0, 0.35),
+    0 26px 55px -18px rgba(0, 0, 0, 0.55),
+    /* close gold glow hugging the frame */
+    0 0 46px -6px rgba(196, 151, 42, 0.4),
+    /* dark 1px contour */
+    0 0 0 1px rgba(110, 82, 18, 0.75),
+    /* outer top highlight */
+    inset 0 1px 2px rgba(255, 246, 214, 0.65),
+    /* inner bottom shadow */
+    inset 0 -4px 8px rgba(74, 52, 8, 0.5),
+    /* inner left/right light + shade */
+    inset 3px 0 6px rgba(255, 246, 214, 0.4),
+    inset -4px 0 8px rgba(74, 52, 8, 0.45);
+  isolation: isolate;
+}
+
+/* Inner bright champagne hairline separating frame from artwork */
+.gold-frame::before {
+  content: "";
+  position: absolute;
+  inset: clamp(0.3rem, 1.1vw, 0.85rem);
+  border-radius: calc(clamp(1.5rem, 3.5vw, 2.75rem) - clamp(0.3rem, 1.1vw, 0.85rem));
+  border: 2px solid rgba(255, 241, 190, 0.95);
+  box-shadow:
+    0 0 8px rgba(255, 236, 170, 0.55),
+    inset 0 0 0 1px rgba(133, 100, 24, 0.55);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Slow metallic shimmer sweep across the frame */
+.gold-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    115deg,
+    transparent 38%,
+    rgba(255, 250, 225, 0.22) 46%,
+    rgba(255, 250, 225, 0.05) 52%,
+    transparent 60%
+  );
+  background-size: 260% 260%;
+  background-position: 0% 0%;
+  animation: goldShimmer 9s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes goldShimmer {
+  0%   { background-position: 120% 0%; }
+  55%  { background-position: -20% 0%; }
+  100% { background-position: -20% 0%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gold-frame::after {
+    animation: none;
+  }
+}
+
+/* Ornamental corner highlights */
+.gold-corner {
+  position: absolute;
+  width: clamp(2.1rem, 4.6vw, 3.4rem);
+  height: clamp(2.1rem, 4.6vw, 3.4rem);
+  border: 3px solid rgba(255, 240, 185, 0.9);
+  box-shadow:
+    -2px -2px 8px rgba(255, 240, 185, 0.45),
+    inset 2px 2px 8px rgba(255, 240, 185, 0.35);
+  pointer-events: none;
+  z-index: 3;
+}
+.gold-corner-tl {
+  top: clamp(0.6rem, 1.6vw, 1.15rem);
+  left: clamp(0.6rem, 1.6vw, 1.15rem);
+  border-top-left-radius: 60% 60%;
+  border-right: none;
+  border-bottom: none;
+}
+.gold-corner-tr {
+  top: clamp(0.6rem, 1.6vw, 1.15rem);
+  right: clamp(0.6rem, 1.6vw, 1.15rem);
+  border-top-right-radius: 60% 60%;
+  border-left: none;
+  border-bottom: none;
+}
+.gold-corner-bl {
+  bottom: clamp(0.6rem, 1.6vw, 1.15rem);
+  left: clamp(0.6rem, 1.6vw, 1.15rem);
+  border-bottom-left-radius: 60% 60%;
+  border-right: none;
+  border-top: none;
+}
+.gold-corner-br {
+  bottom: clamp(0.6rem, 1.6vw, 1.15rem);
+  right: clamp(0.6rem, 1.6vw, 1.15rem);
+  border-bottom-right-radius: 60% 60%;
+  border-left: none;
+  border-top: none;
+}
+
+/* The framed artwork itself */
+.gold-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: calc(clamp(1.5rem, 3.5vw, 2.75rem) - clamp(0.5rem, 1.8vw, 1.35rem));
+  background: var(--royal);
+  min-height: calc(100svh - clamp(1.5rem, 5vw, 3.5rem) - clamp(1rem, 3.6vw, 2.7rem));
+  display: flex;
+  align-items: center;
+}
+.gold-hero > video,
+.gold-hero > div {
+  max-width: 100%;
+}

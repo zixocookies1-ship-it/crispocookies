@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -65,7 +65,7 @@ export default function StoreHomePage() {
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [activeVideo, setActiveVideo] = useState(0);
-  const videoRefs = useState<(HTMLVideoElement | null)[]>([null, null]);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([null, null]);
 
   useEffect(() => {
     let cancelled = false;
@@ -94,11 +94,11 @@ export default function StoreHomePage() {
   }, []);
 
   useEffect(() => {
-    const current = videoRefs[0][activeVideo];
+    const current = videoRefs.current[activeVideo];
     if (current) {
       current.play().catch(() => {});
     }
-  }, [activeVideo, videoRefs]);
+  }, [activeVideo]);
 
   const collectionProducts =
     activeCollection === "cookies"
@@ -108,61 +108,67 @@ export default function StoreHomePage() {
   return (
     <>
       {/* ─── SECTION 1: HERO ─── */}
-      <section
-        className="relative min-h-screen min-h-[100svh] flex items-center overflow-hidden bg-royal"
-        aria-label="Hero"
-      >
-        {/* Full video background — cycles every 8s */}
-        <div className="absolute inset-0 z-0">
-          {[0, 1].map((i) => (
-            <video
-              key={i}
-              ref={(el) => { videoRefs[0][i] = el; }}
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1500 ${
-                activeVideo === i ? "opacity-100" : "opacity-0"
-              }`}
-              muted
-              loop
-              playsInline
-              preload={i === 0 ? "auto" : "metadata"}
-              poster="/logo.jpeg"
-              aria-hidden="true"
-            >
-              <source src={`/hero-${i + 1}.mp4`} type="video/mp4" />
-            </video>
-          ))}
-          <div
-            className="absolute inset-0 bg-gradient-to-r from-espresso/70 via-plum/40 to-transparent"
-            aria-hidden="true"
-          />
-          <div
-            className="absolute inset-0 bg-gradient-to-t from-cream via-transparent to-plum/20"
-            aria-hidden="true"
-          />
-        </div>
+      <section className="hero-backdrop" aria-label="Hero">
+        <div className="gold-frame">
+          <span className="gold-corner gold-corner-tl" aria-hidden="true" />
+          <span className="gold-corner gold-corner-tr" aria-hidden="true" />
+          <span className="gold-corner gold-corner-bl" aria-hidden="true" />
+          <span className="gold-corner gold-corner-br" aria-hidden="true" />
 
-        <div className="container-wide relative z-10 py-20 lg:py-0">
-          <div className="max-w-2xl mx-auto text-center lg:text-left lg:mx-0">
-            <p className="eyebrow mb-4 text-gold-soft">Baked to Perfection</p>
-            <h1 className="font-heading text-5xl sm:text-6xl lg:text-display text-cream font-bold leading-[1.05] mb-5">
-              Baked to Impress.
-            </h1>
-            <p className="text-cream/85 text-lg mb-3">
-              Made with love for every bite.
-            </p>
-            <p className="text-gold-soft font-medium text-base mb-8">
-              A Little Crisp. A Lot of Love.
-            </p>
-            <div className="flex flex-wrap items-center gap-4 justify-center lg:justify-start">
-              <Link href="/cookies" className="btn-primary">
-                Explore Cookies
-              </Link>
-              <Link
-                href="/cart"
-                className="inline-flex items-center justify-center font-body font-semibold px-8 py-3.5 rounded-full border-2 border-cream/40 text-cream hover:bg-cream hover:text-plum transition-all duration-300 text-sm tracking-wider uppercase"
-              >
-                View Cart
-              </Link>
+          <div className="gold-hero">
+            {/* Full video background — cycles every 8s */}
+            <div className="absolute inset-0 z-0">
+              {[0, 1].map((i) => (
+                <video
+                  key={i}
+                  ref={(el) => { videoRefs.current[i] = el; }}
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1500 ${
+                    activeVideo === i ? "opacity-100" : "opacity-0"
+                  }`}
+                  muted
+                  loop
+                  playsInline
+                  preload={i === 0 ? "auto" : "metadata"}
+                  poster="/logo.jpeg"
+                  aria-hidden="true"
+                >
+                  <source src={`/hero-${i + 1}.mp4`} type="video/mp4" />
+                </video>
+              ))}
+              <div
+                className="absolute inset-0 bg-gradient-to-r from-espresso/70 via-plum/40 to-transparent"
+                aria-hidden="true"
+              />
+              <div
+                className="absolute inset-0 bg-gradient-to-t from-cream via-transparent to-plum/20"
+                aria-hidden="true"
+              />
+            </div>
+
+            <div className="container-wide relative z-10 py-20 lg:py-0">
+              <div className="max-w-2xl mx-auto text-center lg:text-left lg:mx-0">
+                <p className="eyebrow mb-4 text-gold-soft">Baked to Perfection</p>
+                <h1 className="font-heading text-5xl sm:text-6xl lg:text-display text-cream font-bold leading-[1.05] mb-5">
+                  Baked to Impress.
+                </h1>
+                <p className="text-cream/85 text-lg mb-3">
+                  Made with love for every bite.
+                </p>
+                <p className="text-gold-soft font-medium text-base mb-8">
+                  A Little Crisp. A Lot of Love.
+                </p>
+                <div className="flex flex-wrap items-center gap-4 justify-center lg:justify-start">
+                  <Link href="/cookies" className="btn-primary">
+                    Explore Cookies
+                  </Link>
+                  <Link
+                    href="/cart"
+                    className="inline-flex items-center justify-center font-body font-semibold px-8 py-3.5 rounded-full border-2 border-cream/40 text-cream hover:bg-cream hover:text-plum transition-all duration-300 text-sm tracking-wider uppercase"
+                  >
+                    View Cart
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>
