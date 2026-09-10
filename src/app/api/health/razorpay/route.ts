@@ -24,8 +24,15 @@ export async function GET() {
     result.authTest = "PASS";
     result.testOrderId = testOrder.id;
   } catch (err) {
+    const error = err as { message?: string; error?: { description?: string } } | unknown;
     result.authTest = "FAIL";
-    result.authError = err instanceof Error ? err.message : "Unknown error";
+    const message =
+      typeof error === "object" && error !== null && "message" in error && (error as { message?: string }).message
+        ? (error as { message: string }).message
+        : String(error);
+    const description =
+      typeof error === "object" && error !== null && "error" in error && (error as { error?: { description?: string } }).error?.description;
+    result.authError = message + (description ? ` — ${description}` : "");
   }
 
   try {
