@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useCartStore } from "@/store/useCartStore";
@@ -68,6 +68,7 @@ export default function CheckoutPage() {
   const [form, setForm] = useState<FormData>(initialForm);
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const processingRef = useRef(false);
 
   useEffect(() => setMounted(true), []);
 
@@ -101,7 +102,9 @@ export default function CheckoutPage() {
   };
 
   const handlePayment = async () => {
+    if (processingRef.current) return;
     if (!validate()) return;
+    processingRef.current = true;
     setLoading(true);
 
     try {
@@ -130,7 +133,7 @@ export default function CheckoutPage() {
       const orderData = await orderRes.json();
 
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        key: orderData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: orderData.amount,
         currency: orderData.currency || "INR",
         name: "Crispo Cookies",
@@ -185,8 +188,9 @@ export default function CheckoutPage() {
       });
       rzp.open();
     } catch {
-      toast.error("Something went wrong. Please try again.");
+      toast.error("Payment could not be initialized. Please try again.");
     } finally {
+      processingRef.current = false;
       setLoading(false);
     }
   };

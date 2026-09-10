@@ -6,147 +6,264 @@ import Order from "@/models/Order";
 import Customer from "@/models/Customer";
 import Notification from "@/models/Notification";
 import Product from "@/models/Product";
+import { getRazorpay } from "@/lib/razorpay";
 import { generateOrderId } from "@/lib/helpers";
 
+const FREE_DELIVERY_THRESHOLD = 499;
+const DELIVERY_CHARGE = 49;
+
+interface Address {
+  line1: string;
+  line2?: string;
+  city: string;
+  state: string;
+  pincode: string;
+}
+
+function isAddressLike(value: unknown): value is Address {
+  if (typeof value !== "object" || value === null) return false;
+  const a = value as Record<string, unknown>;
+  return (
+    typeof a.line1 === "string" &&
+    typeof a.city === "string" &&
+    typeof a.state === "string" &&
+    typeof a.pincode === "string"
+  );
+}
+
 export async function POST(request: NextRequest) {
-  try {
-    await connectDB();
-
-    const body = await request.json();
-    const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      customerName,
-      email,
-      phone,
-      address,
-      items,
-      subtotal,
-      deliveryCharge,
-      total,
-    } = body;
-
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      return NextResponse.json(
-        { error: "Missing payment verification data" },
-        { status: 400 }
-      );
-    }
-
-    if (!customerName || !email || !phone || !address) {
-      return NextResponse.json(
-        { error: "Missing customer details" },
-        { status: 400 }
-      );
-    }
-
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json(
-        { error: "Missing order items" },
-        { status: 400 }
-      );
-    }
-
-    const expectedAmount = (Number(subtotal) || 0) + (Number(deliveryCharge) || 0);
-    if (Number(total) !== expectedAmount) {
-      return NextResponse.json(
-        { error: "Invalid order total" },
-        { status: 400 }
-      );
-    }
-
-    const hmac = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
-      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-      .digest("hex");
-
-    const isValid = hmac === razorpay_signature;
-    const orderId = generateOrderId();
-
-    if (isValid) {
-      const order = await Order.create({
-        orderId,
-        customerName,
-        email,
-        phone,
-        address,
-        items,
-        subtotal,
-        deliveryCharge,
-        total,
-        razorpayOrderId: razorpay_order_id,
-        razorpayPaymentId: razorpay_payment_id,
-        razorpaySignature: razorpay_signature,
-        paymentStatus: "paid",
-        orderStatus: "processing",
-      });
-
-      await Customer.findOneAndUpdate(
-        { email },
-        { name: customerName, email, phone },
-        { upsert: true, new: true }
-      );
-
-      await Notification.create({
-        message: `New order #${orderId} from ${customerName} - ₹${total}`,
-        type: "order",
-        orderId: order._id.toString(),
-      });
-
-      for (const item of items) {
-        try {
-          const product = await Product.findById(item.productId);
-          if (product) {
-            const variant = product.variants.find(
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (v: any) => v.weight === item.variant
-            );
-            if (variant) {
-              variant.stock = Math.max(0, variant.stock - item.qty);
-              await product.save();
-
-              if (variant.stock < 10) {
-                await Notification.create({
-                  message: `Low Stock: ${product.name} (${variant.weight}) - ${variant.stock} left`,
-                  type: "stock",
-                  orderId: order._id.toString(),
-                });
-              }
-            }
-          }
-        } catch (stockErr) {
-          console.error("Stock decrement error:", stockErr);
-        }
-      }
-
-      return NextResponse.json({ success: true, orderId });
-    } else {
-      await Order.create({
-        orderId,
-        customerName,
-        email,
-        phone,
-        address,
-        items,
-        subtotal,
-        deliveryCharge,
-        total,
-        razorpayOrderId: razorpay_order_id,
-        razorpayPaymentId: razorpay_payment_id,
-        razorpaySignature: razorpay_signature,
-        paymentStatus: "failed",
-        orderStatus: "processing",
-      });
-
-      console.error("Payment signature mismatch:", { razorpay_order_id, razorpay_payment_id });
-      return NextResponse.json({ success: false, orderId });
-    }
-  } catch (error) {
-    console.error("POST /api/razorpay/verify-payment error:", error);
+  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    console.error("[verify-payment] Razorpay secrets not configured on server");
     return NextResponse.json(
-      { error: "Payment verification failed" },
+      { success: false, error: "Payment verification is not configured" },
       { status: 500 }
     );
   }
+
+  let body: Record<string, unknown>;
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return NextResponse.json(
+      { success: false, error: "Invalid JSON request body" },
+      { status: 400 }
+    );
+  }
+
+  const {
+    razorpay_order_id,
+    razorpay_payment_id,
+    razorpay_signature,
+    customerName,
+    email,
+    phone,
+    address,
+    items,
+  } = body;
+
+  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    return NextResponse.json(
+      { success: false, error: "Missing payment verification data" },
+      { status: 400 }
+    );
+  }
+
+  if (
+    typeof customerName !== "string" ||
+    typeof email !== "string" ||
+    typeof phone !== "string" ||
+    !isAddressLike(address)
+  ) {
+    return NextResponse.json(
+      { success: false, error: "Missing customer details" },
+      { status: 400 }
+    );
+  }
+
+  if (!Array.isArray(items) || items.length === 0) {
+    return NextResponse.json(
+      { success: false, error: "Missing order items" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    await connectDB();
+  } catch (error) {
+    console.error("[verify-payment] database connection failed", {
+      message: error instanceof Error ? error.message : String(error),
+    });
+    return NextResponse.json(
+      { success: false, error: "Payment verification temporarily unavailable" },
+      { status: 500 }
+    );
+  }
+
+  const existing = await Order.findOne({ razorpayOrderId: razorpay_order_id });
+  if (existing) {
+    if (existing.paymentStatus === "paid") {
+      return NextResponse.json({ success: true, orderId: existing.orderId });
+    }
+    return NextResponse.json({ success: false, orderId: existing.orderId });
+  }
+
+  let subtotal = 0;
+  const resolvedItems: Array<{
+    productId: string;
+    name: string;
+    image: string;
+    variant: string;
+    qty: number;
+    price: number;
+  }> = [];
+
+  for (const item of items as Array<{
+    productId?: string;
+    name?: string;
+    image?: string;
+    variant?: string;
+    qty?: number;
+    price?: number;
+  }>) {
+    if (!item?.productId || typeof item.qty !== "number" || item.qty <= 0) {
+      return NextResponse.json(
+        { success: false, error: "Invalid order items" },
+        { status: 400 }
+      );
+    }
+
+    const product = await Product.findById(item.productId).lean();
+    if (!product) {
+      return NextResponse.json(
+        { success: false, error: `Product not found: ${item.productId}` },
+        { status: 400 }
+      );
+    }
+
+    const variant = product.variants?.find(
+      (v: { weight: string }) => v.weight === item?.variant
+    );
+    if (!variant) {
+      return NextResponse.json(
+        { success: false, error: `Variant not found: ${item?.variant}` },
+        { status: 400 }
+      );
+    }
+
+    subtotal += variant.price * item.qty;
+    resolvedItems.push({
+      productId: String(product._id),
+      name: product.name,
+      image: item?.image || product.images?.[0] || "",
+      variant: String(item?.variant),
+      qty: item.qty,
+      price: variant.price,
+    });
+  }
+
+  const deliveryCharge = subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_CHARGE;
+  const total = subtotal + deliveryCharge;
+
+  let razorpayOrder;
+  try {
+    const razorpay = getRazorpay();
+    razorpayOrder = await razorpay.orders.fetch(String(razorpay_order_id));
+  } catch (error) {
+    console.error("[verify-payment] could not fetch Razorpay order", {
+      message: error instanceof Error ? error.message : String(error),
+    });
+    return NextResponse.json(
+      { success: false, error: "Could not verify payment with gateway" },
+      { status: 502 }
+    );
+  }
+
+  const hmac = crypto
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
+    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+    .digest("hex");
+
+  const signatureValid = hmac === razorpay_signature;
+  const amountMatches =
+    typeof razorpayOrder.amount_paid === "number" &&
+    razorpayOrder.amount_paid === Math.round(total * 100);
+  const paid = signatureValid && amountMatches && razorpayOrder.status === "paid";
+
+  const orderId = generateOrderId();
+
+  if (!paid) {
+    console.error("[verify-payment] payment not confirmed", {
+      razorpay_order_id,
+      signatureValid,
+      amountMatches,
+      razorpayStatus: razorpayOrder.status,
+    });
+    return NextResponse.json(
+      { success: false, error: "Payment could not be confirmed" },
+      { status: 400 }
+    );
+  }
+
+  const order = await Order.create({
+    orderId,
+    customerName,
+    email,
+    phone,
+    address: {
+      line1: (address as Address).line1,
+      line2: (address as Address).line2,
+      city: (address as Address).city,
+      state: (address as Address).state,
+      pincode: (address as Address).pincode,
+    },
+    items: resolvedItems,
+    subtotal,
+    deliveryCharge,
+    total,
+    razorpayOrderId: razorpay_order_id,
+    razorpayPaymentId: razorpay_payment_id,
+    razorpaySignature: razorpay_signature,
+    paymentStatus: "paid",
+    orderStatus: "processing",
+  });
+
+  await Customer.findOneAndUpdate(
+    { email },
+    { name: customerName, email, phone },
+    { upsert: true, new: true }
+  );
+
+  await Notification.create({
+    message: `New order #${orderId} from ${customerName} - ₹${total}`,
+    type: "order",
+    orderId: order._id.toString(),
+  });
+
+  for (const item of resolvedItems) {
+    try {
+      const product = await Product.findById(item.productId);
+      if (product) {
+        const variant = product.variants.find(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (v: any) => v.weight === item.variant
+        );
+        if (variant) {
+          variant.stock = Math.max(0, variant.stock - item.qty);
+          await product.save();
+
+          if (variant.stock < 10) {
+            await Notification.create({
+              message: `Low Stock: ${product.name} (${variant.weight}) - ${variant.stock} left`,
+              type: "stock",
+              orderId: order._id.toString(),
+            });
+          }
+        }
+      }
+    } catch (stockErr) {
+      console.error("Stock decrement error:", stockErr);
+    }
+  }
+
+  return NextResponse.json({ success: true, orderId });
 }
