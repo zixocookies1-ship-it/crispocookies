@@ -1,21 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Mail, Phone, MapPin } from "lucide-react";
-
-const InstagramIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-    <circle cx="12" cy="12" r="5"/>
-    <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/>
-  </svg>
-);
-
-const YoutubeIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19.13C5.12 19.56 12 19.56 12 19.56s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.43z"/>
-    <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/>
-  </svg>
-);
+import { InstagramIcon, YoutubeIcon, SOCIAL_LINKS } from "@/components/social-icons";
 
 export default function StorefrontFooter() {
   return (
@@ -39,53 +25,55 @@ export default function StorefrontFooter() {
         </div>
 
         {/* Footer Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 lg:gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
           {/* Quick Links */}
           <div>
             <h3 className="font-heading text-sm font-semibold text-[#D4A843] uppercase tracking-widest mb-5">
               Quick Links
             </h3>
             <ul className="space-y-3">
-              <li>
-                <Link
-                  href="/"
-                  className="text-[#F5F0E8]/60 hover:text-[#D4A843] text-sm transition-colors"
-                >
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/cookies"
-                  className="text-[#F5F0E8]/60 hover:text-[#D4A843] text-sm transition-colors"
-                >
-                  Cookies
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/brownies"
-                  className="text-[#F5F0E8]/60 hover:text-[#D4A843] text-sm transition-colors"
-                >
-                  Brownies
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/about"
-                  className="text-[#F5F0E8]/60 hover:text-[#D4A843] text-sm transition-colors"
-                >
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  className="text-[#F5F0E8]/60 hover:text-[#D4A843] text-sm transition-colors"
-                >
-                  Contact
-                </Link>
-              </li>
+              {[
+                { label: "Home", href: "/" },
+                { label: "Shop All", href: "/shop" },
+                { label: "Cookies", href: "/cookies" },
+                { label: "Brownies", href: "/brownies" },
+                { label: "About", href: "/about" },
+                { label: "Contact", href: "/contact" },
+              ].map((l) => (
+                <li key={l.href + l.label}>
+                  <Link
+                    href={l.href}
+                    className="text-[#F5F0E8]/60 hover:text-[#D4A843] text-sm transition-colors"
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Help */}
+          <div>
+            <h3 className="font-heading text-sm font-semibold text-[#D4A843] uppercase tracking-widest mb-5">
+              Help
+            </h3>
+            <ul className="space-y-3">
+              {[
+                { label: "My Wishlist", href: "/wishlist" },
+                { label: "My Cart", href: "/cart" },
+                { label: "Privacy Policy", href: "/privacy" },
+                { label: "Terms of Service", href: "/terms" },
+                { label: "Refunds & Returns", href: "/refunds" },
+              ].map((l) => (
+                <li key={l.href}>
+                  <Link
+                    href={l.href}
+                    className="text-[#F5F0E8]/60 hover:text-[#D4A843] text-sm transition-colors"
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -130,7 +118,7 @@ export default function StorefrontFooter() {
             <ul className="space-y-3">
               <li>
                 <a
-                  href="https://www.instagram.com/rahul.bites"
+                  href={SOCIAL_LINKS.instagram}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-[#F5F0E8]/60 hover:text-[#D4A843] text-sm transition-colors"
@@ -141,7 +129,7 @@ export default function StorefrontFooter() {
               </li>
               <li>
                 <a
-                  href="https://www.youtube.com/@Rahul-Bites"
+                  href={SOCIAL_LINKS.youtube}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-[#F5F0E8]/60 hover:text-[#D4A843] text-sm transition-colors"
@@ -170,7 +158,7 @@ export default function StorefrontFooter() {
           </p>
           <div className="flex items-center gap-4">
             <a
-              href="https://www.instagram.com/rahul.bites"
+              href={SOCIAL_LINKS.instagram}
               target="_blank"
               rel="noopener noreferrer"
               className="text-[#D4A843]/60 hover:text-[#D4A843] transition-colors"
@@ -179,7 +167,7 @@ export default function StorefrontFooter() {
               <InstagramIcon className="w-[18px] h-[18px]" />
             </a>
             <a
-              href="https://www.youtube.com/@Rahul-Bites"
+              href={SOCIAL_LINKS.youtube}
               target="_blank"
               rel="noopener noreferrer"
               className="text-[#D4A843]/60 hover:text-[#D4A843] transition-colors"

@@ -108,26 +108,55 @@ export interface FetchProductsOptions {
   search?: string;
 }
 
-export async function fetchProducts(options: FetchProductsOptions = {}): Promise<StoreProduct[]> {
-  const params = new URLSearchParams({ limit: "100" });
-  if (options.category) params.set("category", options.category);
-  const res = await fetch(`/api/products?${params.toString()}`, {
-    cache: "no-store",
-  });
-  if (!res.ok) throw new Error("Failed to load products");
-  const data = await res.json();
-  const list: ApiProduct[] = Array.isArray(data?.products) ? data.products : [];
-  let products = list.map(mapStoreProduct);
+// Short-lived in-memory cache: Home, Shop, Cookies, Brownies, Wishlist and
+// Search all request the same product list — serve repeat navigations from
+// memory instead of refetching identical payloads.
+const PRODUCT_CACHE_TTL_MS = 60_000;
+const productCache = new Map<string, { at: number; data: StoreProduct[] }>();
+const inflight = new Map<string, Promise<StoreProduct[]>>();
 
-  if (options.search) {
-    const q = options.search.toLowerCase().trim();
-    products = products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        (p.shortDescription || "").toLowerCase().includes(q)
-    );
+export function invalidateProductCache() {
+  productCache.clear();
+}
+
+export async function fetchProducts(options: FetchProductsOptions = {}): Promise<StoreProduct[]> {
+  const key = JSON.stringify(options);
+  const cached = productCache.get(key);
+  if (cached && Date.now() - cached.at < PRODUCT_CACHE_TTL_MS) {
+    return cached.data;
   }
-  return products;
+  const pending = inflight.get(key);
+  if (pending) return pending;
+
+  const task = (async () => {
+    const params = new URLSearchParams({ limit: "100" });
+    if (options.category) params.set("category", options.category);
+    const res = await fetch(`/api/products?${params.toString()}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error("Failed to load products");
+    const data = await res.json();
+    const list: ApiProduct[] = Array.isArray(data?.products) ? data.products : [];
+    let products = list.map(mapStoreProduct);
+
+    if (options.search) {
+      const q = options.search.toLowerCase().trim();
+      products = products.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          (p.shortDescription || "").toLowerCase().includes(q)
+      );
+    }
+    productCache.set(key, { at: Date.now(), data: products });
+    return products;
+  })();
+
+  inflight.set(key, task);
+  try {
+    return await task;
+  } finally {
+    inflight.delete(key);
+  }
 }
 
 export async function fetchProductBySlug(slug: string): Promise<StoreProduct> {

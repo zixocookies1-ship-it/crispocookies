@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle, Package } from "lucide-react";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
-  const orderId = searchParams.get("orderId") || "CR" + Date.now();
+  // Capture once in state so the render stays deterministic
+  // (no Date.now() during render → no hydration mismatch).
+  const [orderId] = useState(() => searchParams.get("orderId") || "CR" + Date.now());
 
   return (
     <div className="bg-cream-dark min-h-screen flex items-center justify-center">

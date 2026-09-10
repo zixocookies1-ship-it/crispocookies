@@ -19,21 +19,7 @@ import { fetchProducts, StoreProduct } from "@/lib/storefront";
 import { ProductCardSkeleton } from "@/components/skeleton";
 import ProductCard from "@/components/product-card";
 import BenefitsSection from "@/components/benefits-section";
-
-const InstagramIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-    <circle cx="12" cy="12" r="5"/>
-    <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/>
-  </svg>
-);
-
-const YoutubeIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19.13C5.12 19.56 12 19.56 12 19.56s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.43z"/>
-    <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/>
-  </svg>
-);
+import { InstagramIcon, YoutubeIcon, SOCIAL_LINKS } from "@/components/social-icons";
 
 const whyFeatures = [
   {
@@ -162,10 +148,10 @@ export default function StoreHomePage() {
                     Explore Cookies
                   </Link>
                   <Link
-                    href="/cart"
+                    href="/about"
                     className="inline-flex items-center justify-center font-body font-semibold px-8 py-3.5 rounded-full border-2 border-cream/40 text-cream hover:bg-cream hover:text-plum transition-all duration-300 text-sm tracking-wider uppercase"
                   >
-                    View Cart
+                    Our Story
                   </Link>
                 </div>
               </div>
@@ -177,7 +163,7 @@ export default function StoreHomePage() {
       <BenefitsSection />
 
       {/* ─── SECTION 2: OUR STORY ─── */}
-      <section className="py-16 lg:py-24 bg-cream" aria-label="Our Story">
+      <section className="py-12 lg:py-20 bg-cream" aria-label="Our Story">
         <div className="container-tight max-w-4xl mx-auto text-center">
           <p className="eyebrow mb-4">Our Story</p>
           <h2 className="font-heading text-4xl lg:text-section text-royal font-bold mb-6">
@@ -209,7 +195,7 @@ export default function StoreHomePage() {
       </section>
 
       {/* ─── SECTION 3: THE COLLECTION ─── */}
-      <section className="py-16 lg:py-24 bg-cream-dark" aria-label="The Collection">
+      <section className="py-12 lg:py-20 bg-cream-dark" aria-label="The Collection">
         <div className="container-tight">
           <div className="text-center mb-10">
             <p className="eyebrow mb-4">The Collection</p>
@@ -282,8 +268,8 @@ export default function StoreHomePage() {
         </div>
       </section>
 
-      {/* ─── SECTION 4: FROM OUR OVEN ─── */}
-      <section className="py-16 lg:py-24 bg-cream" aria-label="From Our Oven">
+      {/* ─── SECTION 4: SHOP BY CATEGORY ─── */}
+      <section className="py-12 lg:py-20 bg-cream" aria-label="Shop by Category">
         <div className="container-tight">
           <div className="text-center mb-10">
             <p className="eyebrow mb-4">From Our Oven</p>
@@ -294,35 +280,44 @@ export default function StoreHomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
               {
+                href: "/cookies",
                 emoji: "🍪",
                 label: "Handcrafted Cookies",
                 sub: "100% ZERO MAIDHA oat-based cookies",
+                cta: "Shop Cookies",
               },
               {
+                href: "/brownies",
                 emoji: "🍫",
                 label: "Fudgy Brownies",
                 sub: "Rich, wholesome oat-based brownies",
+                cta: "Shop Brownies",
               },
             ].map((card) => (
-              <div
+              <Link
                 key={card.label}
-                className="rounded-3xl overflow-hidden shadow-lift relative aspect-video bg-gradient-to-br from-gold/10 via-cream to-royal/5 flex flex-col items-center justify-center text-center p-6"
+                href={card.href}
+                className="group rounded-3xl overflow-hidden shadow-soft hover:shadow-lift hover:-translate-y-1 transition-all duration-300 relative bg-gradient-to-br from-gold/10 via-cream to-royal/5 flex flex-col items-center justify-center text-center p-8"
               >
-                <span className="text-6xl select-none mb-3" aria-hidden="true">
+                <span className="text-6xl select-none mb-3 group-hover:scale-110 transition-transform duration-300" aria-hidden="true">
                   {card.emoji}
                 </span>
                 <h3 className="font-heading text-xl font-semibold text-royal">
                   {card.label}
                 </h3>
-                <p className="text-muted text-sm mt-1">{card.sub}</p>
-              </div>
+                <p className="text-muted text-sm mt-1 mb-4">{card.sub}</p>
+                <span className="inline-flex items-center gap-2 text-sm font-bold tracking-wider uppercase text-gold group-hover:text-royal transition-colors">
+                  {card.cta}
+                  <ArrowRight size={15} />
+                </span>
+              </Link>
             ))}
           </div>
         </div>
       </section>
 
       {/* ─── SECTION 5: CHOOSE YOUR CRAVE ─── */}
-      <section className="py-16 lg:py-24 bg-cream" aria-label="Choose Your Crave">
+      <section className="py-12 lg:py-20 bg-cream" aria-label="Choose Your Crave">
         <div className="container-tight">
           <div className="text-center mb-10">
             <p className="eyebrow mb-4">Choose Your Crave</p>
@@ -360,7 +355,7 @@ export default function StoreHomePage() {
 
       {/* ─── SECTION 6: WHY CRISPO ─── */}
       <section
-        className="py-16 lg:py-20 bg-cream-dark"
+        className="py-12 lg:py-20 bg-cream-dark"
         aria-label="Why Crispo"
       >
         <div className="container-tight">
@@ -390,7 +385,7 @@ export default function StoreHomePage() {
       </section>
 
       {/* ─── SECTION 7: ABOUT CRISPO ─── */}
-      <section className="py-16 lg:py-24 bg-cream" aria-label="About Crispo">
+      <section className="py-12 lg:py-20 bg-cream" aria-label="About Crispo">
         <div className="container-tight">
           <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center">
             <div className="flex justify-center order-2 lg:order-1">
@@ -446,7 +441,7 @@ export default function StoreHomePage() {
       </section>
 
       {/* ─── SECTION 8: FOLLOW US ─── */}
-      <section className="py-16 lg:py-24 bg-cream-dark" aria-label="Follow Us">
+      <section className="py-12 lg:py-20 bg-cream-dark" aria-label="Follow Us">
         <div className="container-tight">
           <div className="text-center mb-12">
             <p className="eyebrow mb-4">Stay Connected</p>
@@ -460,7 +455,7 @@ export default function StoreHomePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
             <a
-              href="https://www.instagram.com/rahul.bites"
+              href={SOCIAL_LINKS.instagram}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-white rounded-[2rem] p-8 sm:p-10 flex flex-col items-center text-center border border-royal/5 shadow-soft hover:shadow-lift hover:-translate-y-1 transition-all duration-300 group"
@@ -481,7 +476,7 @@ export default function StoreHomePage() {
               </span>
             </a>
             <a
-              href="https://www.youtube.com/@Rahul-Bites"
+              href={SOCIAL_LINKS.youtube}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-white rounded-[2rem] p-8 sm:p-10 flex flex-col items-center text-center border border-royal/5 shadow-soft hover:shadow-lift hover:-translate-y-1 transition-all duration-300 group"
@@ -506,7 +501,7 @@ export default function StoreHomePage() {
       </section>
 
       {/* ─── SECTION 9: CONTACT ─── */}
-      <section className="py-16 lg:py-24 bg-cream" aria-label="Contact Crispo">
+      <section className="py-12 lg:py-20 bg-cream" aria-label="Contact Crispo">
         <div className="container-tight">
           <div className="text-center mb-12">
             <p className="eyebrow mb-4">Get In Touch</p>
@@ -518,44 +513,64 @@ export default function StoreHomePage() {
               from you.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            <div className="bg-white rounded-3xl p-8 text-center border border-royal/5 shadow-soft hover:shadow-lift transition-shadow duration-300">
-              <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-gold/10 flex items-center justify-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-5xl mx-auto">
+            <a
+              href="mailto:ccrispocookies@gmail.com"
+              className="group bg-white rounded-3xl p-7 text-left border border-royal/5 shadow-soft hover:shadow-lift hover:-translate-y-1 hover:border-gold/30 transition-all duration-300"
+            >
+              <div className="w-12 h-12 mb-4 rounded-2xl bg-gold/10 flex items-center justify-center group-hover:bg-gold/20 transition-colors">
                 <Mail size={22} className="text-gold" />
               </div>
-              <h3 className="font-heading text-lg font-semibold text-royal mb-2">
+              <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-muted mb-1.5">
                 Email
-              </h3>
-              <a
-                href="mailto:ccrispocookies@gmail.com"
-                className="text-muted text-sm hover:text-gold transition-colors break-all"
-              >
+              </p>
+              <p className="font-heading text-base font-semibold text-royal break-all leading-snug">
                 ccrispocookies@gmail.com
-              </a>
-            </div>
-            <div className="bg-white rounded-3xl p-8 text-center border border-royal/5 shadow-soft hover:shadow-lift transition-shadow duration-300">
-              <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-gold/10 flex items-center justify-center">
+              </p>
+              <p className="text-muted text-xs mt-2">Replies within a day</p>
+            </a>
+            <a
+              href="tel:+917569831560"
+              className="group bg-white rounded-3xl p-7 text-left border border-royal/5 shadow-soft hover:shadow-lift hover:-translate-y-1 hover:border-gold/30 transition-all duration-300"
+            >
+              <div className="w-12 h-12 mb-4 rounded-2xl bg-gold/10 flex items-center justify-center group-hover:bg-gold/20 transition-colors">
                 <Phone size={22} className="text-gold" />
               </div>
-              <h3 className="font-heading text-lg font-semibold text-royal mb-2">
+              <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-muted mb-1.5">
                 Phone
-              </h3>
-              <a
-                href="tel:+917569831560"
-                className="text-muted text-sm hover:text-gold transition-colors"
-              >
+              </p>
+              <p className="font-heading text-base font-semibold text-royal leading-snug">
                 +91 75698 31560
-              </a>
-            </div>
-            <div className="bg-white rounded-3xl p-8 text-center border border-royal/5 shadow-soft hover:shadow-lift transition-shadow duration-300">
-              <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-gold/10 flex items-center justify-center">
+              </p>
+              <p className="text-muted text-xs mt-2">Mon–Sat, 9am–8pm IST</p>
+            </a>
+            <div className="group bg-white rounded-3xl p-7 text-left border border-royal/5 shadow-soft hover:shadow-lift hover:-translate-y-1 hover:border-gold/30 transition-all duration-300">
+              <div className="w-12 h-12 mb-4 rounded-2xl bg-gold/10 flex items-center justify-center group-hover:bg-gold/20 transition-colors">
                 <MapPin size={22} className="text-gold" />
               </div>
-              <h3 className="font-heading text-lg font-semibold text-royal mb-2">
+              <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-muted mb-1.5">
                 Location
-              </h3>
-              <p className="text-muted text-sm">Nellore, Andhra Pradesh</p>
+              </p>
+              <p className="font-heading text-base font-semibold text-royal leading-snug">
+                Nellore, Andhra Pradesh
+              </p>
+              <p className="text-muted text-xs mt-2">Baked fresh & shipped across India</p>
             </div>
+            <Link
+              href="/contact"
+              className="group bg-royal rounded-3xl p-7 text-left shadow-soft hover:shadow-lift hover:-translate-y-1 transition-all duration-300"
+            >
+              <div className="w-12 h-12 mb-4 rounded-2xl bg-gold/20 flex items-center justify-center group-hover:bg-gold/30 transition-colors">
+                <ArrowRight size={22} className="text-gold-soft" />
+              </div>
+              <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-cream/60 mb-1.5">
+                Bulk Orders
+              </p>
+              <p className="font-heading text-base font-semibold text-cream leading-snug">
+                Gifting & events
+              </p>
+              <p className="text-cream/60 text-xs mt-2">Send an enquiry in a minute</p>
+            </Link>
           </div>
           <div className="max-w-md mx-auto mt-10">
             <Link href="/shop" className="btn-primary w-full">

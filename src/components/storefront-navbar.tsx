@@ -41,9 +41,28 @@ export default function StorefrontNavbar() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
-  const cartCount = useCartStore((s) => s.getCount());
-  const wishCount = useWishlistStore((s) => s.slugs.length);
+  const rawCartCount = useCartStore((s) => s.getCount());
+  const rawWishCount = useWishlistStore((s) => s.slugs.length);
+  // Render 0 until mounted so server HTML and first client paint match
+  // (persisted cart/wishlist rehydrate right after mount).
+  const cartCount = mounted ? rawCartCount : 0;
+  const wishCount = mounted ? rawWishCount : 0;
+
+  useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     if (menuOpen) {
@@ -71,7 +90,15 @@ export default function StorefrontNavbar() {
 
   return (
     <>
-      <nav className="sticky inset-x-0 top-0 z-50 bg-white/95 backdrop-blur-md border-b border-royal/10">
+      <nav
+        aria-label="Primary"
+        className={cn(
+          "sticky inset-x-0 top-0 z-50 bg-cream/90 backdrop-blur-md border-b transition-shadow duration-300",
+          scrolled
+            ? "border-royal/10 shadow-[0_8px_30px_-12px_rgba(27,27,75,0.25)]"
+            : "border-transparent"
+        )}
+      >
         {/* Desktop */}
         <div className="hidden md:grid grid-cols-[1fr_auto_1fr] items-center max-w-7xl mx-auto px-6 h-[72px]">
           <Link href="/" className="flex items-center gap-2 justify-self-start">
@@ -90,17 +117,24 @@ export default function StorefrontNavbar() {
               <Link
                 key={link.href}
                 href={link.href}
+                aria-current={isActive(link.href) ? "page" : undefined}
                 className={cn(
-                  "font-body text-[13px] font-bold tracking-wide uppercase transition-colors relative py-1",
+                  "group font-body text-[13px] font-bold tracking-[0.14em] uppercase transition-colors relative py-1.5",
                   isActive(link.href)
                     ? "text-royal"
                     : "text-plum/60 hover:text-royal"
                 )}
               >
                 {link.label}
-                {isActive(link.href) && (
-                  <span className="absolute -bottom-0.5 left-0 w-full h-0.5 bg-royal rounded-full" />
-                )}
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "absolute -bottom-0.5 left-0 h-0.5 rounded-full bg-gradient-to-r from-gold to-gold-light transition-all duration-300",
+                    isActive(link.href)
+                      ? "w-full"
+                      : "w-0 group-hover:w-full"
+                  )}
+                />
               </Link>
             ))}
           </div>
@@ -202,7 +236,7 @@ export default function StorefrontNavbar() {
             onClick={() => setMenuOpen(false)}
             aria-hidden="true"
           />
-          <div className="absolute inset-y-0 left-0 w-[85%] max-w-[320px] bg-white shadow-2xl flex flex-col">
+          <div className="absolute inset-y-0 left-0 w-[85%] max-w-[320px] bg-cream shadow-2xl flex flex-col animate-[slide-in-left_0.28s_ease-out]">
             <div className="flex items-center justify-between px-5 h-[56px] border-b border-royal/10">
               <Image
                 src="/logo.jpeg"
@@ -232,14 +266,14 @@ export default function StorefrontNavbar() {
                     className={cn(
                       "flex items-center gap-3.5 font-body text-[15px] font-semibold py-3.5 px-4 rounded-xl transition-colors",
                       active
-                        ? "bg-royal text-white"
-                        : "text-plum/80 hover:bg-royal/5 hover:text-royal"
+                        ? "bg-royal text-cream shadow-lift"
+                        : "text-plum/80 hover:bg-gold/10 hover:text-royal"
                     )}
                   >
                     <Icon
                       size={20}
                       strokeWidth={1.75}
-                      className={active ? "text-white" : "text-muted"}
+                      className={active ? "text-gold-soft" : "text-muted"}
                     />
                     {item.label}
                   </Link>

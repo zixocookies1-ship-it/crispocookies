@@ -1,5 +1,3 @@
-"use client";
-
 export default function AnnouncementBar() {
   const items = [
     "Welcome to Crispo Cookies",

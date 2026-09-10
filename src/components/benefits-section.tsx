@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { Truck, ShieldCheck, Leaf, MessageCircle } from "lucide-react";
 import { WHATSAPP_LINK } from "@/lib/storefront";

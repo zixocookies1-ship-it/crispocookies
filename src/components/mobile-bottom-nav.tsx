@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Store, Heart, ShoppingBag, Headphones } from "lucide-react";
@@ -17,8 +18,13 @@ const items = [
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
-  const cartCount = useCartStore((s) => s.getCount());
-  const wishCount = useWishlistStore((s) => s.slugs.length);
+  const [mounted, setMounted] = useState(false);
+  const rawCartCount = useCartStore((s) => s.getCount());
+  const rawWishCount = useWishlistStore((s) => s.slugs.length);
+  const cartCount = mounted ? rawCartCount : 0;
+  const wishCount = mounted ? rawWishCount : 0;
+
+  useEffect(() => setMounted(true), []);
 
   return (
     <nav

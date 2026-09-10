@@ -66,7 +66,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
             alt={product.name}
             fill
             sizes="(max-width: 640px) 45vw, (max-width: 1024px) 31vw, 22vw"
-            className="object-contain p-4"
+            className="object-contain p-4 transition-transform duration-500 ease-out group-hover:scale-[1.06]"
             priority={priority}
             onError={() => setImgFailed(true)}
           />
