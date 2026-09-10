@@ -1,6 +1,5 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import Admin from "@/models/Admin";
 
@@ -118,6 +117,9 @@ export const authOptions: NextAuthOptions = {
           }
           console.info("[crispo-auth] admin found, id=" + admin._id);
 
+          // Loaded lazily so every admin API route doesn't pay the bcryptjs
+          // parse cost on cold start — only actual logins load it.
+          const { default: bcrypt } = await import("bcryptjs");
           const passwordValid = await bcrypt.compare(password, admin.password);
           if (!passwordValid) {
             console.warn(

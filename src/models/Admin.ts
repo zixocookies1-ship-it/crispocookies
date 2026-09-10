@@ -44,6 +44,9 @@ const AdminSchema = new Schema<IAdmin>(
   { timestamps: false }
 );
 
+// Login lookup is always by email (+ isActive) — index it
+AdminSchema.index({ email: 1, isActive: 1 });
+
 const Admin: Model<IAdmin> =
   mongoose.models.Admin || mongoose.model<IAdmin>("Admin", AdminSchema);
 

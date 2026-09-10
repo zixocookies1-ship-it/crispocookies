@@ -74,5 +74,10 @@ const OrderSchema = new Schema<IOrder>({
   createdAt: { type: Date, default: Date.now },
 });
 
+// Indexes for admin dashboard + order lookups (sorts/filters must not COLLSCAN as volume grows)
+OrderSchema.index({ createdAt: -1 });
+OrderSchema.index({ paymentStatus: 1, createdAt: -1 });
+OrderSchema.index({ razorpayOrderId: 1 });
+
 export default mongoose.models.Order ||
   mongoose.model<IOrder>("Order", OrderSchema);

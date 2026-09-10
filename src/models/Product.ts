@@ -42,5 +42,8 @@ const ProductSchema = new Schema<IProduct>({
   createdAt: { type: Date, default: Date.now },
 });
 
+// Supports the dashboard low-stock query: { isActive: true, "variants.stock": { $lt: 10 } }
+ProductSchema.index({ isActive: 1, "variants.stock": 1 });
+
 export default mongoose.models.Product ||
   mongoose.model<IProduct>("Product", ProductSchema);

@@ -16,5 +16,8 @@ const NotificationSchema = new Schema<INotification>({
   createdAt: { type: Date, default: Date.now },
 });
 
+// Supports the admin notifications feed sort
+NotificationSchema.index({ createdAt: -1 });
+
 export default mongoose.models.Notification ||
   mongoose.model<INotification>("Notification", NotificationSchema);

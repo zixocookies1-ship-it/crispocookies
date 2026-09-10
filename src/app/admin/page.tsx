@@ -2,20 +2,30 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
+import dynamic from "next/dynamic";
 import StatsCard from "@/components/admin/stats-card";
+import { PIE_COLORS } from "@/components/admin/category-pie";
 import { formatPrice } from "@/lib/helpers";
+
+const RevenueChart = dynamic(
+  () => import("@/components/admin/revenue-chart"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-72 bg-gray-100 rounded-xl animate-pulse" />
+    ),
+  }
+);
+
+const CategoryPie = dynamic(
+  () => import("@/components/admin/category-pie"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 bg-gray-100 rounded-xl animate-pulse" />
+    ),
+  }
+);
 
 interface DashboardStats {
   totalRevenue: number;
@@ -40,8 +50,6 @@ interface DashboardStats {
   categoryBreakdown: { name: string; value: number }[];
   lowStockProducts: { name: string; stock: number; _id: string }[];
 }
-
-const PIE_COLORS = ["#8B6410", "#1B1B4B", "#A07820", "#0F0F2D"];
 
 function SkeletonCard() {
   return (
@@ -167,44 +175,7 @@ export default function DashboardPage() {
         <h2 className="font-heading font-bold text-[#1B1B4B] text-lg mb-6">
           Revenue Overview
         </h2>
-        <div className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={revenueChart}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#FAF7F2" />
-              <XAxis
-                dataKey="day"
-                stroke="#5A5A7A"
-                fontSize={12}
-                tickLine={false}
-              />
-              <YAxis
-                stroke="#5A5A7A"
-                fontSize={12}
-                tickLine={false}
-                tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#fff",
-                  border: "1px solid #eee",
-                  borderRadius: "12px",
-                  color: "#1B1B4B",
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-                }}
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                formatter={(value: any) => [formatPrice(Number(value)), "Revenue"]}
-              />
-              <Line
-                type="monotone"
-                dataKey="revenue"
-                stroke="#8B6410"
-                strokeWidth={3}
-                dot={{ fill: "#1B1B4B", strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, fill: "#8B6410" }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        <RevenueChart data={revenueChart} />
       </div>
 
       {/* Two Column: Recent Orders + Category Pie */}
@@ -264,40 +235,13 @@ export default function DashboardPage() {
           <h2 className="font-heading font-bold text-[#1B1B4B] text-lg mb-4">
             Orders by Category
           </h2>
-          <div className="h-64">
-            {categoryBreakdown.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-[#5A5A7A]">
-                No data available
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={stats.categoryBreakdown}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={4}
-                    dataKey="value"
-                    nameKey="name"
-                  >
-                    {categoryBreakdown.map((_, index) => (
-                      <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#fff",
-                      border: "1px solid #eee",
-                      borderRadius: "12px",
-                      color: "#1B1B4B",
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </div>
+          {categoryBreakdown.length === 0 ? (
+            <div className="h-64 flex items-center justify-center text-[#5A5A7A]">
+              No data available
+            </div>
+          ) : (
+            <CategoryPie data={categoryBreakdown} />
+          )}
           <div className="flex flex-wrap gap-3 mt-2 justify-center">
             {categoryBreakdown.map((cat, i) => (
               <div key={cat.name} className="flex items-center gap-1.5 text-xs text-[#5A5A7A]">
