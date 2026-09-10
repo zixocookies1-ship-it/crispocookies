@@ -4,6 +4,7 @@ import StorefrontFooter from "@/components/storefront-footer";
 import FloatingWhatsApp from "@/components/floating-whatsapp";
 import AnnouncementBar from "@/components/announcement-bar";
 import MobileBottomNav from "@/components/mobile-bottom-nav";
+import StoreHydration from "@/components/store-hydration";
 
 export const metadata: Metadata = {
   title: {
@@ -25,6 +26,7 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
     <div className="min-h-screen flex flex-col">
       <AnnouncementBar />
       <StorefrontNavbar />
+      <StoreHydration />
       <main className="flex-1 pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-0">
         {children}
       </main>

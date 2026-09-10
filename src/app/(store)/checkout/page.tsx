@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useCartStore } from "@/store/useCartStore";
@@ -67,10 +67,21 @@ export default function CheckoutPage() {
   const clearCart = useCartStore((s) => s.clearCart);
   const [form, setForm] = useState<FormData>(initialForm);
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   const subtotal = getTotal();
   const delivery = subtotal >= 499 ? 0 : 49;
   const total = subtotal + delivery;
+
+  if (!mounted) {
+    return (
+      <div className="bg-cream min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>

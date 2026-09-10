@@ -26,6 +26,6 @@ export const useWishlistStore = create<WishlistStore>()(
         })),
       clear: () => set({ slugs: [] }),
     }),
-    { name: "crispo-wishlist" }
+    { name: "crispo-wishlist", skipHydration: true }
   )
 );

@@ -9,11 +9,14 @@ import { ProductCardSkeleton } from "@/components/skeleton";
 import ProductCard from "@/components/product-card";
 
 export default function WishlistPage() {
+  const [mounted, setMounted] = useState(false);
   const slugs = useWishlistStore((s) => s.slugs);
   const [products, setProducts] = useState<StoreProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,6 +38,14 @@ export default function WishlistPage() {
   }, [attempt]);
 
   const wishlist = products.filter((p) => slugs.includes(p.slug));
+
+  if (!mounted) {
+    return (
+      <div className="bg-cream min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-cream min-h-screen">

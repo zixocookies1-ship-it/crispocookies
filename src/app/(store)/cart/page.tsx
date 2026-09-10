@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Minus, Plus, X, ShoppingBag } from "lucide-react";
@@ -27,16 +28,27 @@ function CartImage({ src, name, emoji }: { src: string; name: string; emoji: str
 }
 
 export default function CartPage() {
+  const [mounted, setMounted] = useState(false);
   const items = useCartStore((s) => s.items);
   const updateQty = useCartStore((s) => s.updateQty);
   const removeItem = useCartStore((s) => s.removeItem);
   const getTotal = useCartStore((s) => s.getTotal);
+
+  useEffect(() => setMounted(true), []);
 
   const subtotal = getTotal();
   const delivery = subtotal >= 499 ? 0 : 49;
   const total = subtotal + delivery;
   const freeDeliveryDiff = 499 - subtotal;
   const progress = Math.min(100, Math.round((subtotal / 499) * 100));
+
+  if (!mounted) {
+    return (
+      <div className="bg-cream min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
