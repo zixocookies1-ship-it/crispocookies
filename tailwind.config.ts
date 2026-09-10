@@ -42,6 +42,9 @@ const config: Config = {
         "4xl": "2rem",
         "5xl": "2.5rem",
       },
+      transitionDuration: {
+        "1500": "1500ms",
+      },
       animation: {
         "float":       "crispoFloat 6s ease-in-out infinite",
         "rise":        "crispoRise 1s cubic-bezier(.22,1,.36,1) both",

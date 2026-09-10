@@ -64,6 +64,8 @@ export default function StoreHomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [activeVideo, setActiveVideo] = useState(0);
+  const videoRefs = useState<(HTMLVideoElement | null)[]>([null, null]);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,6 +86,20 @@ export default function StoreHomePage() {
     };
   }, [attempt]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveVideo((prev) => (prev + 1) % 2);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const current = videoRefs[0][activeVideo];
+    if (current) {
+      current.play().catch(() => {});
+    }
+  }, [activeVideo, videoRefs]);
+
   const collectionProducts =
     activeCollection === "cookies"
       ? products.filter((p) => p.category?.name.toLowerCase() === "cookies")
@@ -96,20 +112,25 @@ export default function StoreHomePage() {
         className="relative min-h-screen min-h-[100svh] flex items-center overflow-hidden bg-royal"
         aria-label="Hero"
       >
-        {/* Full video background */}
+        {/* Full video background — cycles every 8s */}
         <div className="absolute inset-0 z-0">
-          <video
-            className="w-full h-full object-cover"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-            poster="/logo.jpeg"
-            aria-hidden="true"
-          >
-            <source src="/hero-1.mp4" type="video/mp4" />
-          </video>
+          {[0, 1].map((i) => (
+            <video
+              key={i}
+              ref={(el) => { videoRefs[0][i] = el; }}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1500 ${
+                activeVideo === i ? "opacity-100" : "opacity-0"
+              }`}
+              muted
+              loop
+              playsInline
+              preload={i === 0 ? "auto" : "metadata"}
+              poster="/logo.jpeg"
+              aria-hidden="true"
+            >
+              <source src={`/hero-${i + 1}.mp4`} type="video/mp4" />
+            </video>
+          ))}
           <div
             className="absolute inset-0 bg-gradient-to-r from-espresso/70 via-plum/40 to-transparent"
             aria-hidden="true"
