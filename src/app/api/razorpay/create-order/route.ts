@@ -18,6 +18,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No items provided" }, { status: 400 });
     }
 
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      return NextResponse.json(
+        {
+          error:
+            "Razorpay keys are not configured on the server. Add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to the deployment environment variables (Production, Preview and Development scopes).",
+        },
+        { status: 500 }
+      );
+    }
+
     await connectDB();
 
     let subtotal = 0;
@@ -96,9 +106,10 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("POST /api/razorpay/create-order error:", error);
-    return NextResponse.json(
-      { error: "Failed to create order" },
-      { status: 500 }
-    );
+    const message =
+      error instanceof Error && error.message.includes("environment variables")
+        ? error.message
+        : "Failed to create order. Please try again or contact support.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
