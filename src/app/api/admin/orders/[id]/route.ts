@@ -23,7 +23,10 @@ export async function GET(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    return NextResponse.json(order);
+    return NextResponse.json({
+      ...order,
+      status: order.orderStatus,
+    });
   } catch (error) {
     console.error("GET /api/admin/orders/[id] error:", error);
     return NextResponse.json(
@@ -45,7 +48,8 @@ export async function PATCH(
 
     await connectDB();
 
-    const { orderStatus } = await request.json();
+    const { status } = await request.json();
+    const orderStatus = status;
 
     if (
       !orderStatus ||

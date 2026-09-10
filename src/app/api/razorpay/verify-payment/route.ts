@@ -27,6 +27,35 @@ export async function POST(request: NextRequest) {
       total,
     } = body;
 
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return NextResponse.json(
+        { error: "Missing payment verification data" },
+        { status: 400 }
+      );
+    }
+
+    if (!customerName || !email || !phone || !address) {
+      return NextResponse.json(
+        { error: "Missing customer details" },
+        { status: 400 }
+      );
+    }
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return NextResponse.json(
+        { error: "Missing order items" },
+        { status: 400 }
+      );
+    }
+
+    const expectedAmount = (Number(subtotal) || 0) + (Number(deliveryCharge) || 0);
+    if (Number(total) !== expectedAmount) {
+      return NextResponse.json(
+        { error: "Invalid order total" },
+        { status: 400 }
+      );
+    }
+
     const hmac = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
@@ -66,24 +95,28 @@ export async function POST(request: NextRequest) {
       });
 
       for (const item of items) {
-        const product = await Product.findById(item.productId);
-        if (product) {
-          const variant = product.variants.find(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (v: any) => v.weight === item.variant
-          );
-          if (variant) {
-            variant.stock = Math.max(0, variant.stock - item.qty);
-            await product.save();
+        try {
+          const product = await Product.findById(item.productId);
+          if (product) {
+            const variant = product.variants.find(
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (v: any) => v.weight === item.variant
+            );
+            if (variant) {
+              variant.stock = Math.max(0, variant.stock - item.qty);
+              await product.save();
 
-            if (variant.stock < 10) {
-              await Notification.create({
-                message: `Low Stock: ${product.name} (${variant.weight}) - ${variant.stock} left`,
-                type: "stock",
-                orderId: order._id.toString(),
-              });
+              if (variant.stock < 10) {
+                await Notification.create({
+                  message: `Low Stock: ${product.name} (${variant.weight}) - ${variant.stock} left`,
+                  type: "stock",
+                  orderId: order._id.toString(),
+                });
+              }
             }
           }
+        } catch (stockErr) {
+          console.error("Stock decrement error:", stockErr);
         }
       }
 
@@ -106,6 +139,7 @@ export async function POST(request: NextRequest) {
         orderStatus: "processing",
       });
 
+      console.error("Payment signature mismatch:", { razorpay_order_id, razorpay_payment_id });
       return NextResponse.json({ success: false, orderId });
     }
   } catch (error) {

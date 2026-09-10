@@ -103,10 +103,19 @@ export default function CheckoutPage() {
       const orderRes = await fetch("/api/razorpay/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: total }),
+        body: JSON.stringify({
+          items: items.map((item) => ({
+            productId: item.productId,
+            variant: item.variant.weight,
+            qty: item.qty,
+          })),
+        }),
       });
 
-      if (!orderRes.ok) throw new Error("Failed to create order");
+      if (!orderRes.ok) {
+        const errData = await orderRes.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to create order");
+      }
       const orderData = await orderRes.json();
 
       const options = {
@@ -115,7 +124,7 @@ export default function CheckoutPage() {
         currency: orderData.currency || "INR",
         name: "Crispo Cookies",
         description: "Order Payment",
-        order_id: orderData.id,
+        order_id: orderData.orderId,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         handler: async (response: any) => {
           try {
@@ -126,13 +135,27 @@ export default function CheckoutPage() {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
+                customerName: form.fullName,
+                email: form.email,
+                phone: form.phone,
+                address: {
+                  line1: form.addressLine1,
+                  line2: form.addressLine2,
+                  city: form.city,
+                  state: form.state,
+                  pincode: form.pincode,
+                },
+                items: orderData.items,
+                subtotal: orderData.subtotal,
+                deliveryCharge: orderData.deliveryCharge,
+                total: orderData.total,
               }),
             });
 
             if (!verifyRes.ok) throw new Error("Payment verification failed");
             const verifyData = await verifyRes.json();
             clearCart();
-            router.push(`/order-success?orderId=${verifyData.orderId || orderData.id}`);
+            router.push(`/order-success?orderId=${verifyData.orderId}`);
           } catch {
             toast.error("Payment verification failed. Contact support.");
           }

@@ -19,7 +19,8 @@ interface OrderData {
   phone: string;
   email: string;
   address: {
-    street: string;
+    line1: string;
+    line2?: string;
     city: string;
     state: string;
     pincode: string;
@@ -208,7 +209,8 @@ export default function OrderDetailPage() {
             <div className="pt-2 border-t border-gray-100">
               <span className="text-[#5A5A7A] block mb-1">Address</span>
               <p className="text-[#1B1B4B]">
-                {order.address?.street}
+                {order.address?.line1}
+                {order.address?.line2 && <>, {order.address.line2}</>}
                 <br />
                 {order.address?.city}, {order.address?.state} - {order.address?.pincode}
               </p>

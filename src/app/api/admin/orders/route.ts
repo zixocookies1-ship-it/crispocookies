@@ -17,8 +17,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
     const status = searchParams.get("status");
-    const fromDate = searchParams.get("fromDate");
-    const toDate = searchParams.get("toDate");
+    const fromDate = searchParams.get("from") || searchParams.get("fromDate");
+    const toDate = searchParams.get("to") || searchParams.get("toDate");
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "20", 10);
     const skip = (page - 1) * limit;
@@ -58,11 +58,23 @@ export async function GET(request: NextRequest) {
       Order.countDocuments(filter),
     ]);
 
+    const mappedOrders = orders.map((o) => ({
+      _id: o._id,
+      orderId: o.orderId,
+      customerName: o.customerName,
+      phone: o.phone,
+      totalItems: Array.isArray(o.items) ? o.items.reduce((sum: number, i: { qty?: number }) => sum + (i.qty ?? 0), 0) : 0,
+      total: o.total,
+      paymentStatus: o.paymentStatus,
+      status: o.orderStatus,
+      createdAt: o.createdAt,
+    }));
+
     return NextResponse.json({
-      orders,
+      orders: mappedOrders,
       total,
       page,
-      pages: Math.ceil(total / limit),
+      totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
     console.error("GET /api/admin/orders error:", error);
