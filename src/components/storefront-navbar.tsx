@@ -11,30 +11,14 @@ import {
   Menu,
   X,
   Home,
-  Store,
-  Info,
-  Phone,
-  Cookie,
 } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
 import { cn } from "@/lib/utils";
 import StorefrontSearch from "@/components/storefront-search";
 
-const navLinks = [
-  { label: "About", href: "/about" },
-  { label: "Cookies", href: "/cookies" },
-  { label: "Brownies", href: "/brownies" },
-  { label: "Contact", href: "/contact" },
-];
-
 const menuLinks = [
   { label: "Home", href: "/", icon: Home },
-  { label: "Shop All", href: "/shop", icon: Store },
-  { label: "Cookies", href: "/cookies", icon: Cookie },
-  { label: "Brownies", href: "/brownies", icon: Cookie },
-  { label: "About", href: "/about", icon: Info },
-  { label: "Contact", href: "/contact", icon: Phone },
 ];
 
 function Wordmark() {
@@ -111,8 +95,8 @@ export default function StorefrontNavbar() {
         )}
       >
         {/* Desktop */}
-        <div className="hidden md:grid grid-cols-[1fr_auto_1fr] items-center max-w-7xl mx-auto px-6 h-[76px]">
-          <Link href="/" className="flex items-center gap-3 justify-self-start">
+        <div className="hidden md:flex items-center justify-between max-w-7xl mx-auto px-6 h-[76px]">
+          <Link href="/" className="flex items-center gap-3">
             <Image
               src="/logo.jpeg"
               alt="Crispo Cookies"
@@ -124,34 +108,7 @@ export default function StorefrontNavbar() {
             <Wordmark />
           </Link>
 
-          <div className="flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                aria-current={isActive(link.href) ? "page" : undefined}
-                className={cn(
-                  "group font-body text-[13px] font-bold tracking-[0.16em] uppercase transition-colors relative py-1.5",
-                  isActive(link.href)
-                    ? "text-gold-soft"
-                    : "text-lavender/75 hover:text-cream"
-                )}
-              >
-                {link.label}
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    "absolute -bottom-0.5 left-0 h-0.5 rounded-full bg-gradient-to-r from-gold to-gold-light transition-all duration-300",
-                    isActive(link.href)
-                      ? "w-full"
-                      : "w-0 group-hover:w-full"
-                  )}
-                />
-              </Link>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-1 justify-self-end">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => setSearchOpen(true)}
               aria-label="Search products"
@@ -297,19 +254,6 @@ export default function StorefrontNavbar() {
             </div>
 
             <div className="px-5 pb-[max(2rem,env(safe-area-inset-bottom))] space-y-3">
-              <Link
-                href="/wishlist"
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center justify-center gap-2 border-2 border-lavender/40 text-lavender font-semibold rounded-full px-5 py-3 text-sm"
-              >
-                <Heart size={16} />
-                My Wishlist
-                {wishCount > 0 && (
-                  <span className="w-5 h-5 bg-gold text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {wishCount}
-                  </span>
-                )}
-              </Link>
               <Link
                 href="/shop"
                 onClick={() => setMenuOpen(false)}

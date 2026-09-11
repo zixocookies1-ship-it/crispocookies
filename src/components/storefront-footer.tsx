@@ -25,47 +25,15 @@ export default function StorefrontFooter() {
         </div>
 
         {/* Footer Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 lg:gap-8">
           {/* Quick Links */}
           <div>
             <h3 className="font-heading text-sm font-semibold text-[#D4A843] uppercase tracking-widest mb-5">
               Quick Links
             </h3>
             <ul className="space-y-3">
-              {[
-                { label: "Home", href: "/" },
-                { label: "Shop All", href: "/shop" },
-                { label: "Cookies", href: "/cookies" },
-                { label: "Brownies", href: "/brownies" },
-                { label: "About", href: "/about" },
-                { label: "Contact", href: "/contact" },
-              ].map((l) => (
+              {[{ label: "Home", href: "/" }].map((l) => (
                 <li key={l.href + l.label}>
-                  <Link
-                    href={l.href}
-                    className="text-[#F5F0E8]/60 hover:text-[#D4A843] text-sm transition-colors"
-                  >
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Help */}
-          <div>
-            <h3 className="font-heading text-sm font-semibold text-[#D4A843] uppercase tracking-widest mb-5">
-              Help
-            </h3>
-            <ul className="space-y-3">
-              {[
-                { label: "My Wishlist", href: "/wishlist" },
-                { label: "My Cart", href: "/cart" },
-                { label: "Privacy Policy", href: "/privacy" },
-                { label: "Terms of Service", href: "/terms" },
-                { label: "Refunds & Returns", href: "/refunds" },
-              ].map((l) => (
-                <li key={l.href}>
                   <Link
                     href={l.href}
                     className="text-[#F5F0E8]/60 hover:text-[#D4A843] text-sm transition-colors"
