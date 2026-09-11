@@ -7,7 +7,7 @@ import { fetchProducts, StoreProduct } from "@/lib/storefront";
 import { ProductCardSkeleton } from "@/components/skeleton";
 import ProductCard from "@/components/product-card";
 
-const sortOptions = ["Popular", "Price: Low to High", "Price: High to Low"] as const;
+const sortOptions = ["Featured", "Price: Low to High", "Price: High to Low"] as const;
 
 export default function ShopPage() {
   const [products, setProducts] = useState<StoreProduct[]>([]);
@@ -16,7 +16,7 @@ export default function ShopPage() {
   const [attempt, setAttempt] = useState(0);
 
   const [activeCategory, setActiveCategory] = useState("All");
-  const [sortBy, setSortBy] = useState<(typeof sortOptions)[number]>("Popular");
+  const [sortBy, setSortBy] = useState<(typeof sortOptions)[number]>("Featured");
   const [sortOpen, setSortOpen] = useState(false);
   const [query, setQuery] = useState("");
 
@@ -71,11 +71,8 @@ export default function ShopPage() {
           return pb - pa;
         });
         break;
-      default: {
-        const rank = (p: StoreProduct) =>
-          p.tags.includes("bestseller") ? 0 : p.tags.includes("zero-maida") ? 1 : 2;
-        list.sort((a, b) => rank(a) - rank(b));
-      }
+      default:
+        break;
     }
     return list;
   }, [products, activeCategory, sortBy, query]);

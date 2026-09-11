@@ -38,9 +38,8 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    let sortOption: Record<string, 1 | -1> = { createdAt: -1 };
-    if (sort === "popular") sortOption = { createdAt: -1 };
-    else if (sort === "newest") sortOption = { createdAt: -1 };
+let sortOption: Record<string, 1 | -1> = { sortOrder: 1, createdAt: -1 };
+    if (sort === "newest") sortOption = { createdAt: -1 };
     else if (sort === "price-asc") sortOption = { "variants.0.price": 1 };
     else if (sort === "price-desc") sortOption = { "variants.0.price": -1 };
 

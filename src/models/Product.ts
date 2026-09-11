@@ -18,6 +18,7 @@ export interface IProduct extends Document {
   category: Types.ObjectId;
   tags: string[];
   variants: IProductVariant[];
+  sortOrder: number;
   isActive: boolean;
   createdAt: Date;
 }
@@ -38,6 +39,7 @@ const ProductSchema = new Schema<IProduct>({
       stock: { type: Number, default: 0 },
     },
   ],
+  sortOrder: { type: Number, default: 0 },
   isActive: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
 });

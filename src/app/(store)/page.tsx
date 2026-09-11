@@ -62,7 +62,6 @@ const STORY_BADGES = [
 ];
 
 export default function StoreHomePage() {
-  const [activeCollection, setActiveCollection] = useState<"cookies" | "brownies">("cookies");
   const [products, setProducts] = useState<StoreProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -116,10 +115,12 @@ export default function StoreHomePage() {
     };
   }, []);
 
-  const collectionProducts =
-    activeCollection === "cookies"
-      ? products.filter((p) => p.category?.name.toLowerCase() === "cookies")
-      : products.filter((p) => p.category?.name.toLowerCase() === "brownies");
+  const cookieProducts = products.filter(
+    (p) => p.category?.name.toLowerCase() === "cookies"
+  );
+  const brownieProducts = products.filter(
+    (p) => p.category?.name.toLowerCase() === "brownies"
+  );
 
   return (
     <>
@@ -305,67 +306,76 @@ export default function StoreHomePage() {
       {/* ─── THE COLLECTION ─── */}
       <section className="py-16 lg:py-24 bg-cocoa" aria-label="The Collection">
         <div className="container-tight">
-          <div className="text-center mb-10">
+          <div className="text-center mb-12">
             <p className="eyebrow mb-4">The Collection</p>
             <h2 className="section-heading mb-3">Crispo Cookies</h2>
             <p className="section-subheading max-w-2xl mx-auto">
-              Switch between cookies and brownies — every box is{" "}
+              Baked fresh in small batches — every cookie and brownie is{" "}
               <span className="text-gold-soft font-semibold">100% ZERO MAIDHA</span>.
             </p>
           </div>
 
-          <div className="flex justify-center mb-10">
-            <div className="inline-flex p-1.5 rounded-full bg-chocolate border border-gold/15 shadow-soft">
-              {(["cookies", "brownies"] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveCollection(tab)}
-                  className={cn(
-                    "px-6 sm:px-8 py-2.5 rounded-full text-sm font-bold tracking-wider uppercase transition-all duration-300 cursor-pointer",
-                    activeCollection === tab
-                      ? "crispo-btn-gold text-[12px]"
-                      : "text-cream/55 hover:text-cream"
-                  )}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {loading && (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <ProductCardSkeleton key={i} />
-              ))}
-            </div>
+          {(loading || error) && (
+            <>
+              {loading ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <ProductCardSkeleton key={i} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <h3 className="font-heading text-xl text-cream mb-2">We couldn&apos;t load the products</h3>
+                  <button onClick={() => setAttempt((a) => a + 1)} className="btn-primary mt-4">
+                    <RefreshCw size={16} />
+                    Retry
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
-          {!loading && error && (
-            <div className="text-center py-16">
-              <h3 className="font-heading text-xl text-cream mb-2">We couldn&apos;t load the products</h3>
-              <button onClick={() => setAttempt((a) => a + 1)} className="btn-primary mt-4">
-                <RefreshCw size={16} />
-                Retry
-              </button>
-            </div>
-          )}
-
-          {!loading && !error && collectionProducts.length === 0 && (
+          {!loading && !error && cookieProducts.length === 0 && (
             <p className="text-center text-muted py-16">
               New treats are being baked — check back soon.
             </p>
           )}
 
-          {!loading && !error && collectionProducts.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
-              {collectionProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+          {!loading && !error && cookieProducts.length > 0 && (
+            <>
+              <div className="flex items-center gap-4 mb-6">
+                <span className="h-px flex-1 bg-gold/25" aria-hidden="true" />
+                <h3 className="font-heading text-2xl sm:text-3xl font-semibold text-cream">
+                  Cookies
+                </h3>
+                <span className="h-px flex-1 bg-gold/25" aria-hidden="true" />
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
+                {cookieProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </>
           )}
 
-          <div className="text-center mt-10">
+          {!loading && !error && brownieProducts.length > 0 && (
+            <>
+              <div className="flex items-center gap-4 mb-6 mt-16">
+                <span className="h-px flex-1 bg-gold/25" aria-hidden="true" />
+                <h3 className="font-heading text-2xl sm:text-3xl font-semibold text-cream">
+                  Brownies
+                </h3>
+                <span className="h-px flex-1 bg-gold/25" aria-hidden="true" />
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
+                {brownieProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </>
+          )}
+
+          <div className="text-center mt-12">
             <Link href="/shop" className="crispo-btn-gold px-9 py-3.5 text-xs">
               Shop All Products
               <ArrowRight size={15} />
