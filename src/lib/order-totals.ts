@@ -19,10 +19,9 @@ import {
  * coupon validity or discount values from the browser. Product prices are
  * re-fetched from the database on every call.
  *
- * Free-delivery threshold is evaluated on the ORIGINAL catalog subtotal
- * (unchanged intentional behavior — coupons never change the threshold).
- * Minimum-order-value is likewise evaluated on the catalog subtotal so the
- * rule is stable regardless of any temporary launch offer.
+ * A flat ₹100 delivery charge applies to every order — there is no
+ * free-delivery threshold. Minimum-order-value is evaluated on the catalog
+ * subtotal so the rule is stable regardless of any temporary launch offer.
  */
 
 export interface RawCartLine {

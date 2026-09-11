@@ -436,7 +436,7 @@ export default function ProductDetailPage() {
             <div className="space-y-3 rounded-2xl bg-chocolate border border-gold/12 p-5">
               <div className="flex items-center gap-3 text-muted text-sm">
                 <Truck className="w-4 h-4 text-gold-soft shrink-0" />
-                <span>Free delivery on orders above ₹499</span>
+                <span>Flat delivery charge of ₹100 on every order</span>
               </div>
               <div className="flex items-center gap-3 text-muted text-sm">
                 <Package className="w-4 h-4 text-gold-soft shrink-0" />

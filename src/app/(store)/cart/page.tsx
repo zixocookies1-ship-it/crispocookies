@@ -78,10 +78,8 @@ export default function CartPage() {
   const promoDiscount = linePricing.reduce((s, l) => s + l.lineDiscount, 0);
   const beforeCoupon = Math.max(0, subtotal - promoDiscount);
   const couponAmount = Math.min(coupon?.discountAmount ?? 0, beforeCoupon);
-  const delivery = subtotal >= 499 ? 0 : 49;
+  const delivery = 100;
   const total = beforeCoupon - couponAmount + delivery;
-  const freeDeliveryDiff = 499 - subtotal;
-  const progress = Math.min(100, Math.round((subtotal / 499) * 100));
 
   // Revalidate the applied coupon whenever the cart changes (qty/item) so a
   // coupon that no longer meets e.g. the minimum order value is removed.
@@ -267,22 +265,20 @@ export default function CartPage() {
               Order Summary
             </h2>
 
-            {delivery !== 0 && (
-              <div className="mb-5">
+            <div className="mb-5">
                 <div className="flex justify-between text-xs mb-1.5">
-                  <span className="text-muted">Free delivery progress</span>
+                  <span className="text-muted">Delivery</span>
                   <span className="text-cream font-semibold">
-                    Add {formatPrice(freeDeliveryDiff)} more
+                    ₹100 flat on every order
                   </span>
                 </div>
                 <div className="h-2 rounded-full bg-gold/12 overflow-hidden">
                   <div
                     className="h-full bg-gold rounded-full transition-all"
-                    style={{ width: `${progress}%` }}
+                    style={{ width: "100%" }}
                   />
                 </div>
               </div>
-            )}
 
             <div className="space-y-3">
               {promoDiscount > 0 && (
@@ -299,8 +295,8 @@ export default function CartPage() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Delivery</span>
-                <span className={delivery === 0 ? "text-green font-bold" : "text-cream font-medium"}>
-                  {delivery === 0 ? "Free" : formatPrice(delivery)}
+                <span className="text-cream font-medium">
+                  {formatPrice(delivery)}
                 </span>
               </div>
             </div>

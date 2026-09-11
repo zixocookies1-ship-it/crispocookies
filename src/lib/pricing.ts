@@ -2,7 +2,6 @@ import { connectDB } from "./mongodb";
 import Promotion from "@/models/Promotion";
 import {
   ActivePromotion,
-  FREE_DELIVERY_THRESHOLD,
   DELIVERY_CHARGE,
   priceLines,
   computeOrderTotals,
@@ -21,7 +20,7 @@ export type PromotionStatus =
   | "expired"
   | "disabled";
 
-export { FREE_DELIVERY_THRESHOLD, DELIVERY_CHARGE, priceLines, computeOrderTotals };
+export { DELIVERY_CHARGE, priceLines, computeOrderTotals };
 export type { PricedLine };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

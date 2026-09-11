@@ -3,8 +3,7 @@
  * Safe to import from BOTH client and server bundles (no DB, no env access).
  */
 
-export const FREE_DELIVERY_THRESHOLD = 499;
-export const DELIVERY_CHARGE = 49;
+export const DELIVERY_CHARGE = 100;
 
 export interface ActivePromotion {
   id: string;
@@ -109,7 +108,6 @@ export function computeOrderTotals(
   lines: PricedLine[],
   overrides?: { threshold?: number; charge?: number; couponDiscount?: number }
 ): OrderTotals {
-  const threshold = overrides?.threshold ?? FREE_DELIVERY_THRESHOLD;
   const charge = overrides?.charge ?? DELIVERY_CHARGE;
   const originalSubtotal = lines.reduce((s, l) => s + l.unitPrice * l.qty, 0);
   const discount = lines.reduce((s, l) => s + l.lineDiscount, 0);
@@ -118,9 +116,8 @@ export function computeOrderTotals(
     Math.max(0, Math.round(overrides?.couponDiscount ?? 0)),
     finalSubtotal
   );
-  // Free-delivery threshold is evaluated on the ORIGINAL cart value so the
-  // existing "free above ₹499" promise stays stable during promotions/coupons.
-  const deliveryCharge = originalSubtotal >= threshold ? 0 : charge;
+  // Flat ₹100 delivery charge on every order (no free-delivery threshold).
+  const deliveryCharge = charge;
   return {
     originalSubtotal,
     discount,
@@ -129,7 +126,7 @@ export function computeOrderTotals(
     totalDiscount: discount + couponDiscount,
     deliveryCharge,
     total: Math.max(0, finalSubtotal - couponDiscount) + deliveryCharge,
-    freeDelivery: deliveryCharge === 0,
+    freeDelivery: false,
   };
 }
 

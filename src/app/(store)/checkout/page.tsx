@@ -131,7 +131,7 @@ export default function CheckoutPage() {
     coupon?.discountAmount ?? 0,
     previewBeforeCoupon
   );
-  const previewDelivery = previewSubtotal >= 499 ? 0 : 49;
+  const previewDelivery = 100;
   const previewTotal = previewBeforeCoupon - previewCouponAmount + previewDelivery;
 
   // Storefront identity for coupon-safe customer checks (guest checkout uses
@@ -667,6 +667,12 @@ export default function CheckoutPage() {
                   </span>
                 </div>
               )}
+              <div className="flex justify-between text-sm">
+                <span className="text-muted">Delivery (flat)</span>
+                <span className="text-cream font-medium">
+                  {formatPrice(displayDelivery)}
+                </span>
+              </div>
               <div className="flex justify-between items-baseline">
                 <span className="font-heading text-lg font-bold text-cream">Total</span>
                 <span className="font-heading text-xl font-bold text-cream">
