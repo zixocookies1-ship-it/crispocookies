@@ -2,31 +2,31 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Refunds & Returns",
+  title: "No Refunds & Returns",
   description:
-    "Our refund and replacement policy for Crispo Cookies orders.",
+    "Our returns and refund policy for Crispo Cookies orders — all sales are final.",
 };
 
 const sections = [
   {
-    h: "Damaged or wrong items",
-    p: "If your order arrives damaged, melted, or with the wrong items, tell us within 48 hours of delivery with your order ID and a photo of the issue. We will arrange a replacement or a full refund — your choice.",
+    h: "No returns",
+    p: "All sales are final. Because our cookies and brownies are fresh food items baked to order, we cannot accept returns or exchanges for any order once it is placed.",
   },
   {
-    h: "Taste & quality promise",
-    p: "Every batch is baked fresh with no preservatives. If something tastes off or stale on arrival, contact us within 48 hours and we will make it right with a replacement or refund.",
+    h: "No refunds",
+    p: "We do not offer refunds on any order — for change of mind, incorrect choice, late delivery or any other reason. Please review your selection carefully before you pay.",
   },
   {
-    h: "How refunds work",
-    p: "Approved refunds are issued to your original payment method within 5–7 working days through Razorpay. Prepaid order cancellations made before dispatch receive a full refund; once dispatched, the damaged-item process above applies.",
+    h: "Order confirmation",
+    p: "Please double-check the products, quantities and your delivery address at checkout. Orders cannot be cancelled, changed or refunded after payment is completed.",
   },
   {
-    h: "Non-returnable",
-    p: "Because our products are fresh food items, we cannot accept returns for change-of-mind once delivered. If you are unsure, start with a small box — or message us first and we will help you choose.",
+    h: "Food safety",
+    p: "For hygiene and food-safety reasons, fresh baked goods are non-returnable and non-refundable under any circumstances.",
   },
   {
-    h: "How to reach us",
-    p: "WhatsApp us at +91 75698 31560 or email ccrispocookies@gmail.com with your order ID. We respond personally — no bots, no ticket queues.",
+    h: "Have a question?",
+    p: "If you are unsure before ordering, WhatsApp us at +91 75698 31560 or email ccrispocookies@gmail.com and we will help you choose the right box before you pay.",
   },
 ];
 
@@ -35,12 +35,12 @@ export default function RefundsPage() {
     <div className="bg-cocoa min-h-screen">
       <section className="py-14 sm:py-16 text-center">
         <div className="container-tight">
-          <p className="eyebrow">No Worries</p>
+          <p className="eyebrow">Please Note</p>
           <h1 className="font-heading text-4xl sm:text-section text-cream font-bold mt-3">
-            Refunds & Returns
+            No Refunds &amp; Returns
           </h1>
           <p className="text-muted mt-3 max-w-xl mx-auto">
-            Fresh food, honest policy. If we get it wrong, we fix it.
+            All sales are final — no returns, no refunds, no exchanges.
           </p>
         </div>
       </section>

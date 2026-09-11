@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils";
 import { StoreProduct, cheapestVariant, discountOf, formatINR } from "@/lib/storefront";
 import { getActivePromotion, unitPriceWithDiscount } from "@/lib/promotion";
 import { ActivePromotion } from "@/lib/pricing-math";
-import WishlistButton from "@/components/wishlist-button";
 
 interface ProductCardProps {
   product: StoreProduct;
@@ -115,10 +114,6 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           )}
         </div>
       </Link>
-
-      <div className="absolute top-2.5 right-2.5 z-10">
-        <WishlistButton slug={product.slug} name={product.name} />
-      </div>
 
       <div className="p-3 sm:p-4 flex flex-col flex-1 gap-1.5 min-w-0">
         <Link href={`/shop/${product.slug}`}>

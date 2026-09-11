@@ -697,6 +697,11 @@ export default function CheckoutPage() {
             </button>
 
             <p className="text-muted text-xs text-center mt-3">🔒 100% Secure Payment</p>
+
+            <p className="text-faded text-[11px] text-center mt-2">
+              All sales are final — no returns, no refunds. Please review your
+              order before paying.
+            </p>
           </div>
         </div>
       </div>

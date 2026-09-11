@@ -11,7 +11,7 @@ A full-featured ecommerce storefront and admin panel for **Crispo Cookies**, bui
 - **Auth:** NextAuth (JWT session, CredentialsProvider)
 - **Payments:** Razorpay (order creation + HMAC signature verification)
 - **Media:** Cloudinary (product image upload)
-- **State:** Zustand (cart + wishlist with localStorage persistence)
+- **State:** Zustand (cart with localStorage persistence)
 - **Charts:** Recharts (admin dashboard)
 - **Toasts:** React Hot Toast
 
@@ -126,8 +126,7 @@ src/
 │   ├── Settings.ts
 │   └── Contact.ts
 ├── store/                 # Zustand stores
-│   ├── useCartStore.ts
-│   └── useWishlistStore.ts
+│   └── useCartStore.ts
 └── middleware.ts          # Admin route protection
 ```
 

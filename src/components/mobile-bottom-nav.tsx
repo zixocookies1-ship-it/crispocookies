@@ -3,15 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Store, Heart, ShoppingBag, Headphones } from "lucide-react";
+import { Home, Store, ShoppingBag, Headphones } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
-import { useWishlistStore } from "@/store/useWishlistStore";
 import { cn } from "@/lib/utils";
 
 const items = [
   { label: "Home", href: "/", icon: Home, exact: true },
   { label: "Shop", href: "/shop", icon: Store },
-  { label: "Wishlist", href: "/wishlist", icon: Heart },
   { label: "Cart", href: "/cart", icon: ShoppingBag },
   { label: "Support", href: "/contact", icon: Headphones },
 ];
@@ -20,9 +18,7 @@ export default function MobileBottomNav() {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const rawCartCount = useCartStore((s) => s.getCount());
-  const rawWishCount = useWishlistStore((s) => s.slugs.length);
   const cartCount = mounted ? rawCartCount : 0;
-  const wishCount = mounted ? rawWishCount : 0;
 
   useEffect(() => setMounted(true), []);
 
@@ -32,18 +28,13 @@ export default function MobileBottomNav() {
       className="md:hidden fixed inset-x-0 bottom-0 z-40 bg-[#1E160F]/95 backdrop-blur-md border-t border-gold/15 shadow-[0_-6px_24px_-12px_rgba(0,0,0,0.7)]"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="grid grid-cols-5 h-16">
+      <div className="grid grid-cols-4 h-16">
         {items.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
             : pathname === item.href || pathname.startsWith(item.href + "/");
           const Icon = item.icon;
-          const badge =
-            item.href === "/cart"
-              ? cartCount
-              : item.href === "/wishlist"
-                ? wishCount
-                : 0;
+          const badge = item.href === "/cart" ? cartCount : 0;
 
           return (
             <Link

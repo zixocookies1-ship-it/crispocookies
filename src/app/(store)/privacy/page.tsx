@@ -18,7 +18,7 @@ const sections = [
   },
   {
     h: "Cookies & site data",
-    p: "Our website stores a small amount of data in your browser (such as your cart and wishlist) so the shop works smoothly. No advertising trackers are used.",
+    p: "Our website stores a small amount of data in your browser (such as your cart) so the shop works smoothly. No advertising trackers are used.",
   },
   {
     h: "Data security",

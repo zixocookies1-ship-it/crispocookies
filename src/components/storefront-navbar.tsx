@@ -7,13 +7,11 @@ import { usePathname } from "next/navigation";
 import {
   Search,
   ShoppingBag,
-  Heart,
   Menu,
   X,
   Home,
 } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
-import { useWishlistStore } from "@/store/useWishlistStore";
 import { cn } from "@/lib/utils";
 import StorefrontSearch from "@/components/storefront-search";
 
@@ -42,9 +40,7 @@ export default function StorefrontNavbar() {
   const [scrolled, setScrolled] = useState(false);
 
   const rawCartCount = useCartStore((s) => s.getCount());
-  const rawWishCount = useWishlistStore((s) => s.slugs.length);
   const cartCount = mounted ? rawCartCount : 0;
-  const wishCount = mounted ? rawWishCount : 0;
 
   useEffect(() => setMounted(true), []);
 
@@ -116,18 +112,6 @@ export default function StorefrontNavbar() {
             >
               <Search size={20} strokeWidth={1.5} />
             </button>
-            <Link
-              href="/wishlist"
-              aria-label="Wishlist"
-              className="relative text-lavender/80 hover:text-gold-soft transition-colors p-2.5"
-            >
-              <Heart size={20} strokeWidth={1.5} />
-              {wishCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-gold text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
-                  {wishCount > 9 ? "9+" : wishCount}
-                </span>
-              )}
-            </Link>
             <Link
               href="/cart"
               aria-label="Shopping cart"

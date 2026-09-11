@@ -107,7 +107,7 @@ export default function AboutPage() {
           <div className="order-2 md:order-1">
             <p className="eyebrow mb-4">Our Promise</p>
             <h2 className="font-heading text-4xl text-cream font-bold mb-4">
-              Baked to Impress. Baked With Purpose.
+              Baked with 100% Oats. Made With Purpose.
             </h2>
             <p className="text-muted leading-relaxed">
               We believe that great cookies start with great ingredients.

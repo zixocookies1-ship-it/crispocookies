@@ -21,6 +21,10 @@ const sections = [
     p: "Our cookies and brownies contain no preservatives. For best taste, store them in an airtight container in a cool, dry place and consume within the best-before period mentioned on the pack.",
   },
   {
+    h: "No returns & no refunds",
+    p: "All sales are final. Because our products are fresh baked-to-order food items, we do not accept returns, exchanges or refunds for any reason. Please review your order and delivery details carefully before paying.",
+  },
+  {
     h: "Fair use",
     p: "Product photos, descriptions and branding on this website belong to Crispo Cookies and may not be copied or reused without permission. Please use the website lawfully and do not place fraudulent orders.",
   },

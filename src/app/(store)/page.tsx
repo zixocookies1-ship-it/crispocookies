@@ -16,7 +16,7 @@ import {
   ArrowRight,
   RefreshCw,
 } from "lucide-react";
-import { fetchProducts, StoreProduct, WHATSAPP_LINK } from "@/lib/storefront";
+import { fetchProducts, StoreProduct } from "@/lib/storefront";
 import { getActivePromotion } from "@/lib/promotion";
 import { ActivePromotion } from "@/lib/pricing-math";
 import { ProductCardSkeleton } from "@/components/skeleton";
@@ -194,7 +194,7 @@ export default function StoreHomePage() {
             </span>
 
             <h1 className="font-heading font-bold leading-[1.06] text-[2.6rem] sm:text-[3.4rem] lg:text-7xl mb-7">
-              <span className="block text-lavender">Baked to Impress.</span>
+              <span className="block text-lavender">Baked with 100% Oats.</span>
               <span className="block text-gradient-gold">Made to Crave.</span>
             </h1>
 
@@ -219,14 +219,6 @@ export default function StoreHomePage() {
               >
                 Explore Cookies
               </Link>
-              <a
-                href={WHATSAPP_LINK}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="crispo-btn-wa w-full sm:flex-1 px-6 py-3.5 text-[10px] sm:text-[11px]"
-              >
-                Order on WhatsApp
-              </a>
             </div>
 
             <a
@@ -517,8 +509,8 @@ export default function StoreHomePage() {
             <div className="order-1 lg:order-2">
               <p className="eyebrow mb-4">About Crispo</p>
               <h2 className="font-heading text-4xl lg:text-section text-cream font-bold mb-5">
-                Baked to Impress.{" "}
-                <span className="text-gradient-gold">Baked With Purpose.</span>
+                Baked with 100% Oats.{" "}
+                <span className="text-gradient-gold">Made With Purpose.</span>
               </h2>
               <p className="text-muted text-lg leading-relaxed mb-4">
                 Crispo was born from a simple passion for healthy snacking.

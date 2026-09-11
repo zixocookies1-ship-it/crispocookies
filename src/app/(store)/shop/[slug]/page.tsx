@@ -17,7 +17,6 @@ import { useCartStore } from "@/store/useCartStore";
 import { getActivePromotion, unitPriceWithDiscount } from "@/lib/promotion";
 import { ActivePromotion } from "@/lib/pricing-math";
 import { toast } from "sonner";
-import WishlistButton from "@/components/wishlist-button";
 import ProductCard from "@/components/product-card";
 import BenefitsSection from "@/components/benefits-section";
 
@@ -255,10 +254,7 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              <div className="absolute top-3 right-3">
-                <WishlistButton slug={product.slug} name={product.name} className="w-11 h-11" />
               </div>
-            </div>
 
             {images.length > 1 && (
               <div className="flex gap-3 mt-4 overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">

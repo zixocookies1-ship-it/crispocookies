@@ -109,7 +109,7 @@ export interface FetchProductsOptions {
   search?: string;
 }
 
-// Short-lived in-memory cache: Home, Shop, Cookies, Brownies, Wishlist and
+// Short-lived in-memory cache: Home, Shop, Cookies, Brownies and
 // Search all request the same product list — serve repeat navigations from
 // memory instead of refetching identical payloads.
 const PRODUCT_CACHE_TTL_MS = 60_000;
