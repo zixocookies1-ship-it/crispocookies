@@ -32,11 +32,11 @@ const sections = [
 
 export default function PrivacyPage() {
   return (
-    <div className="bg-cream-dark min-h-screen">
+    <div className="bg-cocoa min-h-screen">
       <section className="py-14 sm:py-16 text-center">
         <div className="container-tight">
           <p className="eyebrow">Our Promise</p>
-          <h1 className="font-heading text-4xl sm:text-section text-royal font-bold mt-3">
+          <h1 className="font-heading text-4xl sm:text-section text-cream font-bold mt-3">
             Privacy Policy
           </h1>
           <p className="text-muted mt-3 max-w-xl mx-auto">
@@ -50,14 +50,14 @@ export default function PrivacyPage() {
             key={s.h}
             className="surface-card rounded-2xl p-6 sm:p-8"
           >
-            <h2 className="font-heading text-xl font-semibold text-royal mb-2">
+            <h2 className="font-heading text-xl font-semibold text-cream mb-2">
               {s.h}
             </h2>
             <p className="text-muted leading-relaxed">{s.p}</p>
           </article>
         ))}
         <div className="text-center pt-4">
-          <Link href="/contact" className="btn-primary">
+          <Link href="/contact" className="crispo-btn-gold">
             Contact Us
           </Link>
         </div>

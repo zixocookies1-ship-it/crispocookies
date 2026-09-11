@@ -81,12 +81,12 @@ export default function ShopPage() {
   }, [products, activeCategory, sortBy, query]);
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen bg-cocoa">
       {/* Hero */}
-      <section className="bg-gradient-to-b from-white to-cream border-b border-royal/5 py-10 sm:py-14 text-center">
+      <section className="bg-gradient-to-b from-chocolate to-cocoa border-b border-gold/12 py-10 sm:py-14 text-center">
         <div className="container-tight">
           <p className="eyebrow mb-3">Our Collection</p>
-          <h1 className="font-heading text-4xl sm:text-5xl font-bold text-royal">
+          <h1 className="font-heading text-4xl sm:text-5xl font-bold text-cream">
             Shop All
           </h1>
           <p className="text-muted mt-3 max-w-xl mx-auto">
@@ -99,15 +99,15 @@ export default function ShopPage() {
         {/* Filter & Sort Bar */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div className="w-full sm:w-auto flex items-center gap-2 min-w-0">
-            <SlidersHorizontal size={16} className="text-royal shrink-0" />
+            <SlidersHorizontal size={16} className="text-gold-soft shrink-0" />
             <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-1 px-1 w-full sm:w-auto">
               <button
                 onClick={() => setActiveCategory("All")}
                 className={cn(
                   "shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide transition-all",
                   activeCategory === "All"
-                    ? "bg-royal text-white"
-                    : "bg-white text-plum border border-royal/10 hover:border-royal/30"
+                    ? "crispo-btn-gold"
+                    : "bg-chocolate text-cream/70 border border-gold/15 hover:border-gold/40"
                 )}
               >
                 All
@@ -119,8 +119,8 @@ export default function ShopPage() {
                   className={cn(
                     "shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide transition-all",
                     activeCategory === cat
-                      ? "bg-royal text-white"
-                      : "bg-white text-plum border border-royal/10 hover:border-royal/30"
+                      ? "crispo-btn-gold"
+                      : "bg-chocolate text-cream/70 border border-gold/15 hover:border-gold/40"
                   )}
                 >
                   {cat}
@@ -137,14 +137,14 @@ export default function ShopPage() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search…"
                 aria-label="Search products"
-                className="w-full bg-white border border-royal/10 rounded-full pl-9 pr-4 py-2 text-sm text-royal placeholder:text-muted/70 outline-none focus:border-royal focus:ring-2 focus:ring-royal/10"
+                className="w-full bg-chocolate border border-gold/20 rounded-full pl-9 pr-4 py-2 text-sm text-cream placeholder:text-faded/60 outline-none focus:border-gold focus:ring-2 focus:ring-gold/30"
               />
             </div>
 
             <div className="relative shrink-0">
               <button
                 onClick={() => setSortOpen(!sortOpen)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-royal/10 text-sm font-semibold text-royal hover:border-royal/30 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-chocolate border border-gold/20 text-sm font-semibold text-cream hover:border-gold/40 transition-colors"
                 aria-haspopup="listbox"
                 aria-expanded={sortOpen}
               >
@@ -154,7 +154,7 @@ export default function ShopPage() {
               {sortOpen && (
                 <div
                   role="listbox"
-                  className="absolute right-0 top-full mt-2 bg-white rounded-2xl shadow-lift border border-royal/10 z-20 w-52 overflow-hidden"
+                  className="absolute right-0 top-full mt-2 bg-chocolate rounded-2xl shadow-lift border border-gold/20 z-20 w-52 overflow-hidden"
                 >
                   {sortOptions.map((opt) => (
                     <button
@@ -166,8 +166,8 @@ export default function ShopPage() {
                         setSortOpen(false);
                       }}
                       className={cn(
-                        "block w-full text-left px-4 py-3 text-sm hover:bg-royal/5 transition-colors",
-                        sortBy === opt ? "text-royal font-bold" : "text-plum/70"
+                        "block w-full text-left px-4 py-3 text-sm hover:bg-gold/10 transition-colors",
+                        sortBy === opt ? "text-gold-soft font-bold" : "text-cream/70"
                       )}
                     >
                       {opt}
@@ -190,11 +190,11 @@ export default function ShopPage() {
         {!loading && error && (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🍪</div>
-            <h3 className="font-heading text-xl text-royal mb-2">
+            <h3 className="font-heading text-xl text-cream mb-2">
               We couldn&apos;t load the products
             </h3>
             <p className="text-muted mb-6">Please check your connection and try again.</p>
-            <button onClick={() => setAttempt((a) => a + 1)} className="btn-royal">
+            <button onClick={() => setAttempt((a) => a + 1)} className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-gold-soft/60 text-gold-soft font-semibold px-6 py-3 text-sm transition-colors hover:bg-gold/10">
               <RefreshCw size={16} />
               Retry
             </button>
@@ -204,14 +204,14 @@ export default function ShopPage() {
         {!loading && !error && filtered.length === 0 && (
           <div className="text-center py-20">
             <PackageSearch className="w-12 h-12 mx-auto text-muted mb-4" />
-            <h3 className="font-heading text-xl text-royal mb-2">No products found</h3>
+            <h3 className="font-heading text-xl text-cream mb-2">No products found</h3>
             <p className="text-muted mb-6">Try adjusting your filters or search.</p>
             <button
               onClick={() => {
                 setActiveCategory("All");
                 setQuery("");
               }}
-              className="btn-royal"
+              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-gold-soft/60 text-gold-soft font-semibold px-6 py-3 text-sm transition-colors hover:bg-gold/10"
             >
               Show All
             </button>

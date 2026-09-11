@@ -98,16 +98,16 @@ export default function ProductDetailPage() {
 
   if (loading) {
     return (
-      <div className="bg-cream min-h-screen">
+      <div className="bg-cocoa min-h-screen">
         <div className="container-tight py-8 grid grid-cols-1 lg:grid-cols-2 gap-10">
-          <div className="aspect-square rounded-3xl bg-[#F4EFE8] animate-pulse" />
+          <div className="aspect-square rounded-3xl bg-chocolate animate-pulse" />
           <div className="space-y-4">
-            <div className="h-4 w-24 bg-[#F4EFE8] rounded-full animate-pulse" />
-            <div className="h-8 w-3/4 bg-[#F4EFE8] rounded animate-pulse" />
-            <div className="h-5 w-full bg-[#F4EFE8] rounded animate-pulse" />
-            <div className="h-5 w-2/3 bg-[#F4EFE8] rounded animate-pulse" />
-            <div className="h-12 w-full bg-[#F4EFE8] rounded-full animate-pulse mt-8" />
-            <div className="h-12 w-full bg-[#F4EFE8] rounded-full animate-pulse" />
+            <div className="h-4 w-24 bg-chocolate rounded-full animate-pulse" />
+            <div className="h-8 w-3/4 bg-chocolate rounded animate-pulse" />
+            <div className="h-5 w-full bg-chocolate rounded animate-pulse" />
+            <div className="h-5 w-2/3 bg-chocolate rounded animate-pulse" />
+            <div className="h-12 w-full bg-chocolate rounded-full animate-pulse mt-8" />
+            <div className="h-12 w-full bg-chocolate rounded-full animate-pulse" />
           </div>
         </div>
       </div>
@@ -116,12 +116,12 @@ export default function ProductDetailPage() {
 
   if (notFound || !product) {
     return (
-      <div className="bg-cream min-h-screen flex items-center justify-center">
+      <div className="bg-cocoa min-h-screen flex items-center justify-center">
         <div className="text-center px-6 py-20">
           <div className="text-6xl mb-4">🍪</div>
-          <h1 className="font-heading text-3xl font-bold text-royal mb-2">Product unavailable</h1>
+          <h1 className="font-heading text-3xl font-bold text-cream mb-2">Product unavailable</h1>
           <p className="text-muted mb-8">This product may be out of stock or no longer available.</p>
-          <Link href="/shop" className="btn-primary">
+          <Link href="/shop" className="crispo-btn-gold px-8 py-3.5 text-sm">
             Continue Shopping
           </Link>
         </div>
@@ -131,11 +131,11 @@ export default function ProductDetailPage() {
 
   if (error) {
     return (
-      <div className="bg-cream min-h-screen flex items-center justify-center">
+      <div className="bg-cocoa min-h-screen flex items-center justify-center">
         <div className="text-center px-6 py-20">
-          <h1 className="font-heading text-2xl font-bold text-royal mb-2">Something went wrong</h1>
+          <h1 className="font-heading text-2xl font-bold text-cream mb-2">Something went wrong</h1>
           <p className="text-muted mb-8">We couldn&apos;t load this product.</p>
-          <button onClick={() => setAttempt((a) => a + 1)} className="btn-royal">
+          <button onClick={() => setAttempt((a) => a + 1)} className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-gold-soft/60 text-gold-soft font-semibold px-6 py-3 text-sm transition-colors hover:bg-gold/10">
             <RefreshCw size={16} />
             Retry
           </button>
@@ -202,14 +202,14 @@ export default function ProductDetailPage() {
   const hasIngredients = product.ingredients.length > 0;
 
   return (
-    <div className="bg-cream min-h-screen">
+    <div className="bg-cocoa min-h-screen">
       <div className="container-tight pt-4">
         <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-[13px] text-muted">
-          <Link href="/" className="hover:text-royal transition-colors">Home</Link>
+          <Link href="/" className="hover:text-lavender transition-colors">Home</Link>
           <span>/</span>
-          <Link href="/shop" className="hover:text-royal transition-colors">Shop</Link>
+          <Link href="/shop" className="hover:text-lavender transition-colors">Shop</Link>
           <span>/</span>
-          <span className="text-royal font-medium truncate max-w-[45vw]">{product.name}</span>
+          <span className="text-cream font-medium truncate max-w-[45vw]">{product.name}</span>
         </nav>
       </div>
 
@@ -217,7 +217,7 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14">
           {/* Gallery */}
           <div>
-            <div className="relative aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-cream via-beige to-cream border border-royal/5 shadow-soft">
+            <div className="relative aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-chocolate via-cacao to-chocolate border border-gold/12 shadow-soft">
               {images.length > 0 && !imgFailed ? (
                 <Image
                   src={images[activeImage % images.length]}
@@ -271,8 +271,8 @@ export default function ProductDetailPage() {
                     }}
                     aria-label={`View image ${i + 1}`}
                     className={cn(
-                      "relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-beige border-2 transition-all shrink-0",
-                      activeImage === i ? "border-royal" : "border-transparent opacity-80 hover:opacity-100"
+                      "relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-chocolate border-2 transition-all shrink-0",
+                      activeImage === i ? "border-gold ring-2 ring-gold" : "border-transparent opacity-80 hover:opacity-100"
                     )}
                   >
                     <Image
@@ -296,7 +296,7 @@ export default function ProductDetailPage() {
               </span>
             )}
 
-            <h1 className="font-heading text-3xl sm:text-4xl font-bold text-royal leading-tight mb-3">
+            <h1 className="font-heading text-3xl sm:text-4xl font-bold text-cream leading-tight mb-3">
               {product.name}
             </h1>
 
@@ -315,14 +315,14 @@ export default function ProductDetailPage() {
             )}
 
             <div className="flex items-center gap-3 mb-2 flex-wrap">
-              <span className="font-heading text-4xl font-bold text-royal">
+              <span className="font-heading text-4xl font-bold text-gold-soft">
                 {promoActive
                   ? formatINR(promoPricing!.final)
                   : formatINR(variant?.price ?? 0)}
               </span>
               {promoActive ? (
                 <>
-                  <span className="text-muted text-lg line-through">
+                  <span className="text-faded text-lg line-through">
                     {formatINR(promoPricing!.original)}
                   </span>
                   <span className="bg-[#E11D48] text-white text-xs font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full">
@@ -333,7 +333,7 @@ export default function ProductDetailPage() {
                 variant?.mrp &&
                 variant.mrp > variant.price && (
                   <>
-                    <span className="text-muted text-lg line-through">
+                    <span className="text-faded text-lg line-through">
                       {formatINR(variant.mrp)}
                     </span>
                     {discount > 0 && (
@@ -345,15 +345,15 @@ export default function ProductDetailPage() {
             </div>
 
             {promoActive && (
-              <div className="flex items-center gap-2 mb-6 bg-[#E11D48]/5 border border-[#E11D48]/20 rounded-xl px-4 py-2.5 text-sm text-[#B3123C] font-semibold w-fit">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#E11D48] animate-pulse" aria-hidden="true" />
+              <div className="flex items-center gap-2 mb-6 bg-red/10 border border-red/25 rounded-xl px-4 py-2.5 text-sm text-red font-semibold w-fit">
+                <span className="w-1.5 h-1.5 rounded-full bg-red animate-pulse" aria-hidden="true" />
                 Launch Offer — {promotion!.discountValue}% OFF applied at checkout
               </div>
             )}
 
             {product.variants.length > 1 && (
               <div className="mb-6">
-                <p className="text-sm font-semibold text-royal mb-3">Select Weight</p>
+                <p className="text-sm font-semibold text-cream mb-3">Select Weight</p>
                 <div className="flex flex-wrap gap-2.5">
                   {product.variants.map((v, i) => {
                     const selected = i === selectedVariant;
@@ -367,10 +367,10 @@ export default function ProductDetailPage() {
                         className={cn(
                           "px-5 py-2.5 rounded-full text-sm font-semibold border-2 transition-all",
                           selected
-                            ? "bg-royal border-royal text-white"
+                            ? "bg-gold border-gold text-[#2B1803]"
                             : soldOut
-                              ? "border-royal/10 text-muted line-through opacity-60"
-                              : "border-royal/25 text-royal hover:border-royal"
+                              ? "border-gold/15 text-faded line-through opacity-60"
+                              : "border-gold/30 text-cream hover:border-gold-soft"
                         )}
                       >
                         {v.weight}
@@ -384,24 +384,24 @@ export default function ProductDetailPage() {
 
             <div className="mb-6 flex items-center gap-5">
               <div>
-                <p className="text-sm font-semibold text-royal mb-2.5">Quantity</p>
-                <div className="flex items-center gap-3 w-fit bg-white border border-royal/15 rounded-full px-3 py-1.5">
+                <p className="text-sm font-semibold text-cream mb-2.5">Quantity</p>
+                <div className="flex items-center gap-3 w-fit bg-chocolate border border-gold/20 rounded-full px-3 py-1.5">
                   <button
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                     disabled={quantity <= 1}
                     aria-label="Decrease quantity"
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-royal hover:bg-royal/5 transition-colors disabled:opacity-30"
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-gold-soft hover:bg-gold/10 transition-colors disabled:opacity-30"
                   >
                     <Minus size={16} />
                   </button>
-                  <span className="w-8 text-center font-bold text-lg text-royal tabular-nums">
+                  <span className="w-8 text-center font-bold text-lg text-cream tabular-nums">
                     {quantity}
                   </span>
                   <button
                     onClick={() => setQuantity((q) => Math.min(stock, q + 1))}
                     disabled={outOfStock || quantity >= stock}
                     aria-label="Increase quantity"
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-royal hover:bg-royal/5 transition-colors disabled:opacity-30"
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-gold-soft hover:bg-gold/10 transition-colors disabled:opacity-30"
                   >
                     <Plus size={16} />
                   </button>
@@ -420,30 +420,30 @@ export default function ProductDetailPage() {
               <button
                 onClick={handleAddToCart}
                 disabled={outOfStock}
-                className="btn-primary w-full py-4 disabled:bg-[#EEE6DA] disabled:text-muted disabled:shadow-none"
+                className="crispo-btn-gold w-full py-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
               >
                 {outOfStock ? "Out of Stock" : "Add to Cart"}
               </button>
               <button
                 onClick={handleBuyNow}
                 disabled={outOfStock}
-                className="btn-royal w-full py-4 disabled:opacity-40"
+                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-gold-soft/60 text-gold-soft font-semibold px-6 py-4 text-sm transition-colors hover:bg-gold/10 w-full disabled:opacity-40"
               >
                 Buy It Now
               </button>
             </div>
 
-            <div className="space-y-3 rounded-2xl bg-white border border-royal/5 p-5">
+            <div className="space-y-3 rounded-2xl bg-chocolate border border-gold/12 p-5">
               <div className="flex items-center gap-3 text-muted text-sm">
-                <Truck className="w-4 h-4 text-royal shrink-0" />
+                <Truck className="w-4 h-4 text-gold-soft shrink-0" />
                 <span>Free delivery on orders above ₹499</span>
               </div>
               <div className="flex items-center gap-3 text-muted text-sm">
-                <Package className="w-4 h-4 text-royal shrink-0" />
+                <Package className="w-4 h-4 text-gold-soft shrink-0" />
                 <span>Baked fresh &amp; delivered in 2–3 days</span>
               </div>
               <div className="flex items-center gap-3 text-muted text-sm">
-                <Shield className="w-4 h-4 text-royal shrink-0" />
+                <Shield className="w-4 h-4 text-gold-soft shrink-0" />
                 <span>100% ZERO MAIDHA · Pure oats, no preservatives</span>
               </div>
             </div>
@@ -456,15 +456,15 @@ export default function ProductDetailPage() {
       {/* Description / Ingredients */}
       <section className="container-tight py-10">
         <div className="max-w-3xl">
-          <div className="flex gap-8 border-b border-royal/10">
+          <div className="flex gap-8 border-b border-gold/12">
             {product.fullDescription && (
               <button
                 onClick={() => setActiveTab("description")}
                 className={cn(
                   "pb-3 text-sm font-bold transition-all capitalize",
                   activeTab === "description"
-                    ? "text-royal border-b-2 border-royal"
-                    : "text-muted hover:text-royal"
+                    ? "text-gold-soft border-b-2 border-gold-soft"
+                    : "text-muted hover:text-lavender"
                 )}
               >
                 Description
@@ -476,8 +476,8 @@ export default function ProductDetailPage() {
                 className={cn(
                   "pb-3 text-sm font-bold transition-all capitalize",
                   activeTab === "ingredients" && hasIngredients
-                    ? "text-royal border-b-2 border-royal"
-                    : "text-muted hover:text-royal"
+                    ? "text-gold-soft border-b-2 border-gold-soft"
+                    : "text-muted hover:text-lavender"
                 )}
               >
                 Ingredients
@@ -485,7 +485,7 @@ export default function ProductDetailPage() {
             )}
           </div>
 
-          <div className="bg-white rounded-2xl border border-royal/5 p-5 sm:p-8 mt-5">
+          <div className="bg-chocolate rounded-2xl border border-gold/12 p-5 sm:p-8 mt-5">
             {activeTab === "description" && product.fullDescription ? (
               <p className="text-muted leading-relaxed whitespace-pre-line">
                 {product.fullDescription}
@@ -493,7 +493,7 @@ export default function ProductDetailPage() {
             ) : hasIngredients ? (
               <div className="flex flex-wrap gap-2.5">
                 {product.ingredients.map((ing) => (
-                  <span key={ing} className="bg-cream px-4 py-2 rounded-full text-sm text-royal font-medium">
+                  <span key={ing} className="bg-cacao border border-gold/15 px-4 py-2 rounded-full text-sm text-cream font-medium">
                     {ing}
                   </span>
                 ))}
@@ -506,7 +506,7 @@ export default function ProductDetailPage() {
       {/* Related */}
       {related.length > 0 && (
         <section className="container-tight py-12 pb-24">
-          <h2 className="font-heading text-2xl font-bold text-royal mb-8">You May Also Like</h2>
+          <h2 className="font-heading text-2xl font-bold text-cream mb-8">You May Also Like</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5">
             {related.map((p) => (
               <ProductCard key={p.id} product={p} />

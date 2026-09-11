@@ -183,7 +183,7 @@ export default function CheckoutPage() {
 
   if (!mounted) {
     return (
-      <div className="bg-cream min-h-screen flex items-center justify-center">
+      <div className="bg-cocoa min-h-screen flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
       </div>
     );
@@ -342,7 +342,7 @@ export default function CheckoutPage() {
           email: form.email,
           contact: form.phone,
         },
-        theme: { color: "#1B1B4B" },
+        theme: { color: "#C99528" },
       };
 
       const rzp = new window.Razorpay(options);
@@ -371,9 +371,9 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="bg-cream-dark min-h-screen flex items-center justify-center">
+      <div className="bg-cocoa min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-royal font-heading text-xl mb-4">Your cart is empty</p>
+          <p className="text-cream font-heading text-xl mb-4">Your cart is empty</p>
           <a href="/shop" className="btn-gold">Start Shopping</a>
         </div>
       </div>
@@ -381,9 +381,9 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="bg-cream-dark min-h-screen">
+    <div className="bg-cocoa min-h-screen">
       <div className="container-tight py-8">
-        <h1 className="font-heading text-4xl text-royal font-bold">
+        <h1 className="font-heading text-4xl text-cream font-bold">
           Checkout
         </h1>
       </div>
@@ -391,13 +391,13 @@ export default function CheckoutPage() {
       <div className="container-tight pb-16 grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* Left: Form */}
         <div className="lg:col-span-3">
-          <h2 className="font-heading text-xl font-semibold text-royal mb-6">
+          <h2 className="font-heading text-xl font-semibold text-cream mb-6">
             Delivery Details
           </h2>
-          <div className="bg-surface rounded-2xl shadow-soft p-6 sm:p-8">
+          <div className="bg-chocolate rounded-2xl shadow-soft p-6 sm:p-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-royal mb-1">Full Name</label>
+                <label className="block text-sm font-medium text-cream mb-1">Full Name</label>
                 <input
                   name="fullName"
                   value={form.fullName}
@@ -409,7 +409,7 @@ export default function CheckoutPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-royal mb-1">Phone</label>
+                <label className="block text-sm font-medium text-cream mb-1">Phone</label>
                 <input
                   name="phone"
                   type="tel"
@@ -424,7 +424,7 @@ export default function CheckoutPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-royal mb-1">Email</label>
+                <label className="block text-sm font-medium text-cream mb-1">Email</label>
                 <input
                   name="email"
                   type="email"
@@ -437,7 +437,7 @@ export default function CheckoutPage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-royal mb-1">Address Line 1</label>
+                <label className="block text-sm font-medium text-cream mb-1">Address Line 1</label>
                 <input
                   name="addressLine1"
                   value={form.addressLine1}
@@ -449,7 +449,7 @@ export default function CheckoutPage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-royal mb-1">Address Line 2 (Optional)</label>
+                <label className="block text-sm font-medium text-cream mb-1">Address Line 2 (Optional)</label>
                 <input
                   name="addressLine2"
                   value={form.addressLine2}
@@ -460,7 +460,7 @@ export default function CheckoutPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-royal mb-1">City</label>
+                <label className="block text-sm font-medium text-cream mb-1">City</label>
                 <input
                   name="city"
                   value={form.city}
@@ -472,7 +472,7 @@ export default function CheckoutPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-royal mb-1">State</label>
+                <label className="block text-sm font-medium text-cream mb-1">State</label>
                 <select
                   name="state"
                   value={form.state}
@@ -515,7 +515,7 @@ export default function CheckoutPage() {
                 </select>
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-royal mb-1">Pincode</label>
+                <label className="block text-sm font-medium text-cream mb-1">Pincode</label>
                 <input
                   name="pincode"
                   value={form.pincode}
@@ -534,8 +534,8 @@ export default function CheckoutPage() {
 
         {/* Right: Summary */}
         <div className="lg:col-span-2">
-          <div className="bg-surface rounded-2xl shadow-soft p-6 sticky top-24">
-            <h2 className="font-heading text-lg font-semibold text-royal mb-6">
+          <div className="bg-chocolate rounded-2xl shadow-soft p-6 sticky top-24">
+            <h2 className="font-heading text-lg font-semibold text-cream mb-6">
               Order Summary
             </h2>
 
@@ -545,11 +545,11 @@ export default function CheckoutPage() {
                   key={line.key}
                   className="flex gap-3 items-start"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cream to-gold/10 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-chocolate to-gold/10 flex items-center justify-center shrink-0">
                     <span className="text-lg select-none">🍪</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-royal text-sm font-medium truncate">{line.item.name}</p>
+                    <p className="text-cream text-sm font-medium truncate">{line.item.name}</p>
                     <p className="text-muted text-xs">{line.item.variant.weight} × {line.item.qty}</p>
                     {line.discount > 0 && (
                       <p className="text-muted text-[11px] line-through">
@@ -557,14 +557,14 @@ export default function CheckoutPage() {
                       </p>
                     )}
                   </div>
-                  <span className="text-royal font-medium text-sm whitespace-nowrap">
+                  <span className="text-cream font-medium text-sm whitespace-nowrap">
                     {formatPrice(line.lineTotal)}
                   </span>
                 </div>
               ))}
             </div>
 
-            <div className="border-t border-royal/10 pt-3 space-y-2 mb-4">
+            <div className="border-t border-gold/20 pt-3 space-y-2 mb-4">
               {previewOffer > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted">Launch Offer ({promotion?.discountValue}% off)</span>
@@ -575,25 +575,25 @@ export default function CheckoutPage() {
               )}
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Subtotal</span>
-                <span className="text-royal font-medium">{formatPrice(displaySubtotal)}</span>
+                <span className="text-cream font-medium">{formatPrice(displaySubtotal)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Delivery</span>
-                <span className={displayDelivery === 0 ? "text-green font-medium" : "text-royal font-medium"}>
+                <span className={displayDelivery === 0 ? "text-green font-medium" : "text-cream font-medium"}>
                   {displayDelivery === 0 ? "Free" : formatPrice(displayDelivery)}
                 </span>
               </div>
             </div>
 
             {/* Coupon */}
-            <div className="border-t border-royal/10 pt-4 mb-4">
+            <div className="border-t border-gold/20 pt-4 mb-4">
               {coupon ? (
                 <div className="bg-[#16A34A]/8 border border-[#16A34A]/25 rounded-xl p-3.5">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <Ticket size={16} className="text-[#16A34A] shrink-0" />
                       <div>
-                        <p className="text-sm font-bold text-royal font-mono">
+                        <p className="text-sm font-bold text-cream font-mono">
                           {coupon.code}{" "}
                           <span className="text-[#16A34A] font-semibold">✓</span>
                         </p>
@@ -644,7 +644,7 @@ export default function CheckoutPage() {
                     <button
                       onClick={handleApply}
                       disabled={applying}
-                      className="btn-navy py-2 px-4 text-sm shrink-0 disabled:opacity-60"
+                      className="crispo-btn-gold px-4 py-2 text-sm shrink-0 disabled:opacity-60"
                     >
                       {applying ? "Applying..." : "Apply"}
                     </button>
@@ -656,7 +656,7 @@ export default function CheckoutPage() {
               )}
             </div>
 
-            <div className="border-t border-royal/10 my-4" />
+            <div className="border-t border-gold/20 my-4" />
 
             <div className="space-y-2 mb-6">
               {displayCoupon > 0 && (
@@ -668,8 +668,8 @@ export default function CheckoutPage() {
                 </div>
               )}
               <div className="flex justify-between items-baseline">
-                <span className="font-heading text-lg font-bold text-royal">Total</span>
-                <span className="font-heading text-xl font-bold text-royal">
+                <span className="font-heading text-lg font-bold text-cream">Total</span>
+                <span className="font-heading text-xl font-bold text-cream">
                   {formatPrice(displayTotal)}
                 </span>
               </div>
@@ -678,7 +678,7 @@ export default function CheckoutPage() {
             <button
               onClick={handlePayment}
               disabled={loading}
-              className="btn-primary w-full py-4 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="crispo-btn-gold w-full py-4 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>

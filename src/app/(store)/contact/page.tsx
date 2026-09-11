@@ -67,12 +67,12 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="bg-cream-dark min-h-screen">
+    <div className="bg-cocoa min-h-screen">
       {/* Hero Section */}
       <section className="py-12 sm:py-16 text-center">
         <div className="container-tight">
           <p className="eyebrow">Get In Touch</p>
-          <h1 className="font-heading text-4xl sm:text-section text-royal font-bold mt-3">
+          <h1 className="font-heading text-4xl sm:text-section text-cream font-bold mt-3">
             Let&apos;s Talk Cookies
           </h1>
           <p className="text-muted mt-3 max-w-xl mx-auto text-lg">
@@ -87,12 +87,12 @@ export default function ContactPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* LEFT — Enquiry Form */}
           <div className="surface-card rounded-3xl p-8">
-            <h2 className="font-heading text-xl font-semibold text-royal mb-6">
+            <h2 className="font-heading text-xl font-semibold text-cream mb-6">
               Send an Enquiry
             </h2>
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-royal mb-1">
+                <label className="block text-sm font-medium text-cream mb-1">
                   Name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -107,7 +107,7 @@ export default function ContactPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-royal mb-1">
+                <label className="block text-sm font-medium text-cream mb-1">
                   Phone Number <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -122,7 +122,7 @@ export default function ContactPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-royal mb-1">
+                <label className="block text-sm font-medium text-cream mb-1">
                   Email <span className="text-muted text-xs">(optional)</span>
                 </label>
                 <input
@@ -136,7 +136,7 @@ export default function ContactPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-royal mb-1">
+                <label className="block text-sm font-medium text-cream mb-1">
                   Product Interested In
                 </label>
                 <select
@@ -155,7 +155,7 @@ export default function ContactPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-royal mb-1">
+                <label className="block text-sm font-medium text-cream mb-1">
                   Message
                 </label>
                 <textarea
@@ -171,7 +171,7 @@ export default function ContactPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed"
+                className="crispo-btn-gold w-full disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
@@ -191,7 +191,7 @@ export default function ContactPage() {
           {/* RIGHT — Contact Info */}
           <div className="flex flex-col gap-4">
             <div className="surface-card rounded-3xl p-7 sm:p-8">
-              <h2 className="font-heading text-xl font-semibold text-royal mb-6">
+              <h2 className="font-heading text-xl font-semibold text-cream mb-6">
                 Contact Information
               </h2>
               <div className="space-y-5">
@@ -233,7 +233,7 @@ export default function ContactPage() {
                   },
                 ].map((row) => (
                   <div key={row.label} className="flex items-start gap-4 group">
-                    <div className="w-11 h-11 rounded-2xl bg-gold/10 flex items-center justify-center shrink-0 group-hover:bg-gold/20 transition-colors">
+                    <div className="w-11 h-11 rounded-2xl bg-gold/12 flex items-center justify-center shrink-0 group-hover:bg-gold/20 ring-1 ring-gold/30 transition-colors">
                       {row.icon}
                     </div>
                     <div className="min-w-0">
@@ -245,12 +245,12 @@ export default function ContactPage() {
                           href={row.href}
                           target={row.href.startsWith("http") ? "_blank" : undefined}
                           rel={row.href.startsWith("http") ? "noopener noreferrer" : undefined}
-                          className="font-heading font-semibold text-royal hover:text-gold transition-colors break-all"
+                          className="font-heading font-semibold text-cream hover:text-gold-soft transition-colors break-all"
                         >
                           {row.primary}
                         </a>
                       ) : (
-                        <p className="font-heading font-semibold text-royal">
+                        <p className="font-heading font-semibold text-cream">
                           {row.primary}
                         </p>
                       )}
@@ -265,16 +265,16 @@ export default function ContactPage() {
               href="https://wa.me/917569831560"
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-3xl p-7 bg-royal text-cream shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-4"
+              className="crispo-gold-card rounded-3xl p-7 shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-4"
             >
-              <span className="w-12 h-12 rounded-2xl bg-gold/20 flex items-center justify-center shrink-0">
-                <MessageCircle size={22} className="text-gold-soft" />
+              <span className="w-12 h-12 rounded-2xl bg-[#2B1803]/15 flex items-center justify-center shrink-0 ring-1 ring-[#2B1803]/25">
+                <MessageCircle size={22} className="text-[#2B1803]" />
               </span>
               <span>
-                <span className="block text-[11px] font-bold tracking-[0.18em] uppercase text-cream/60">
+                <span className="block text-[11px] font-bold tracking-[0.18em] uppercase text-[#2B1803]/75">
                   Fastest Response
                 </span>
-                <span className="block font-heading font-semibold text-lg">
+                <span className="block font-heading font-semibold text-[#2B1803] text-lg">
                   Chat on WhatsApp
                 </span>
               </span>

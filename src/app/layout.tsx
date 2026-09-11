@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Manrope } from "next/font/google";
+import { Playfair_Display, Manrope } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 
-const cormorant = Cormorant_Garamond({
+const playfair = Playfair_Display({
   subsets: ["latin"],
   style: ["normal", "italic"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-cormorant",
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-playfair",
   display: "swap",
 });
 
@@ -31,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body
-        className={`${cormorant.variable} ${manrope.variable} font-body antialiased`}
+        className={`${playfair.variable} ${manrope.variable} font-body antialiased`}
       >
         {children}
         <Toaster
@@ -39,9 +39,9 @@ export default function RootLayout({
           richColors
           toastOptions={{
             style: {
-              background: "#FFFCF8",
-              color: "#1B1B4B",
-              border: "1px solid #C4972A",
+              background: "#2A2116",
+              color: "#F7F2EA",
+              border: "1px solid #C99528",
               fontWeight: 500,
             },
           }}

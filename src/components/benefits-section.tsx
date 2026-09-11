@@ -28,7 +28,7 @@ const benefits = [
 
 export default function BenefitsSection() {
   return (
-    <section aria-label="Why shop with us" className="bg-white border-y border-royal/5">
+    <section aria-label="Why shop with us" className="bg-espresso border-y border-gold/10">
       <div className="container-tight py-6">
         <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 lg:grid lg:grid-cols-4 lg:gap-6 lg:mx-0 lg:px-0">
           {benefits.map((item) => {
@@ -36,11 +36,11 @@ export default function BenefitsSection() {
             const content = (
               <>
                 <span className="flex items-center gap-3 min-w-0 flex-1">
-                  <span className="w-11 h-11 rounded-full bg-royal/5 text-royal flex items-center justify-center shrink-0">
+                  <span className="w-11 h-11 rounded-full bg-gold/12 text-gold-soft ring-1 ring-gold/30 flex items-center justify-center shrink-0">
                     <Icon size={22} strokeWidth={1.75} />
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-sm font-bold text-royal truncate">
+                    <span className="block text-sm font-bold text-cream truncate">
                       {item.title}
                     </span>
                     <span className="block text-xs text-muted mt-0.5 truncate">
@@ -51,14 +51,14 @@ export default function BenefitsSection() {
               </>
             );
             const cls =
-              "shrink-0 w-[240px] lg:w-auto bg-cream rounded-2xl px-4 py-3 flex items-center gap-3";
+              "shrink-0 w-[240px] lg:w-auto bg-chocolate border border-gold/12 rounded-2xl px-4 py-3 flex items-center gap-3";
             return item.href ? (
               <Link
                 key={item.title}
                 href={item.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={cls + " hover:shadow-soft transition-shadow"}
+                className={cls + " hover:border-gold/35 hover:shadow-soft transition-all"}
               >
                 {content}
               </Link>

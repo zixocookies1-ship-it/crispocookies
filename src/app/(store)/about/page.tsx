@@ -37,9 +37,9 @@ export default function AboutPage() {
   return (
     <>
       {/* Hero */}
-      <section className="bg-royal py-24 relative overflow-hidden">
+      <section className="bg-gradient-to-b from-chocolate to-cocoa py-24 relative overflow-hidden">
         <div className="absolute top-20 right-[10%] w-72 h-72 rounded-full bg-gold/10 blur-3xl" />
-        <div className="absolute bottom-20 left-[5%] w-96 h-96 rounded-full bg-plum/10 blur-3xl" />
+        <div className="absolute bottom-20 left-[5%] w-96 h-96 rounded-full bg-lavender/10 blur-3xl" />
         <div className="container-tight text-center relative z-10">
           <p className="eyebrow text-gold-soft mb-4">Our Story</p>
           <h1 className="font-heading text-5xl lg:text-display text-cream font-bold mb-4">
@@ -82,7 +82,7 @@ export default function AboutPage() {
           </div>
           <div>
             <p className="eyebrow mb-4">How It All Started</p>
-            <h2 className="font-heading text-4xl text-royal font-bold mb-4">
+            <h2 className="font-heading text-4xl text-cream font-bold mb-4">
               Crafted with Purpose
             </h2>
             <p className="text-muted leading-relaxed mb-4">
@@ -106,7 +106,7 @@ export default function AboutPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div className="order-2 md:order-1">
             <p className="eyebrow mb-4">Our Promise</p>
-            <h2 className="font-heading text-4xl text-royal font-bold mb-4">
+            <h2 className="font-heading text-4xl text-cream font-bold mb-4">
               Baked to Impress. Baked With Purpose.
             </h2>
             <p className="text-muted leading-relaxed">
@@ -121,7 +121,7 @@ export default function AboutPage() {
               bring a little more joy to your day.
             </p>
           </div>
-          <div className="order-1 md:order-2 rounded-3xl aspect-[4/3] overflow-hidden shadow-lift bg-cream relative">
+          <div className="order-1 md:order-2 rounded-3xl aspect-[4/3] overflow-hidden shadow-lift bg-cacao relative">
             <Image
               src="/logo.jpeg"
               alt="Crispo Cookies"
@@ -134,7 +134,7 @@ export default function AboutPage() {
       </section>
 
       {/* Our Values */}
-      <section className="bg-[#F0EBE0] py-20">
+      <section className="bg-espresso py-20">
         <div className="container-tight">
           <p className="eyebrow text-center mb-3">Our Values</p>
           <h2 className="section-heading text-center mb-12">
@@ -144,12 +144,12 @@ export default function AboutPage() {
             {values.map((v) => (
               <div
                 key={v.label}
-                className="bg-white rounded-3xl p-8 text-center border border-royal/5 shadow-soft hover:shadow-lift transition-shadow duration-300"
+                className="bg-cacao rounded-3xl p-8 text-center border border-gold/12 shadow-soft hover:shadow-lift transition-shadow duration-300"
               >
-                <div className="w-16 h-16 bg-gold/10 rounded-full flex items-center justify-center mx-auto mb-5">
-                  <v.icon size={28} className="text-gold" />
+                <div className="w-16 h-16 bg-gold/12 rounded-full flex items-center justify-center mx-auto mb-5 ring-1 ring-gold/30">
+                  <v.icon size={28} className="text-gold-soft" />
                 </div>
-                <h3 className="font-heading text-xl font-semibold text-royal mb-3">
+                <h3 className="font-heading text-xl font-semibold text-cream mb-3">
                   {v.label}
                 </h3>
                 <p className="text-muted text-sm leading-relaxed">
@@ -164,14 +164,14 @@ export default function AboutPage() {
       {/* Founder */}
       <section className="container-tight py-20">
         <p className="eyebrow text-center mb-3">Meet Our Founder</p>
-        <h2 className="font-heading text-4xl text-royal font-bold text-center mb-12">
+        <h2 className="font-heading text-4xl text-cream font-bold text-center mb-12">
           The Hands Behind Crispo
         </h2>
         <div className="max-w-2xl mx-auto surface-card rounded-[2rem] p-10 flex flex-col items-center text-center">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-gold to-royal flex items-center justify-center text-4xl mb-5">
+          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-gold to-gold-deep flex items-center justify-center text-4xl mb-5">
             👨‍🍳
           </div>
-          <h3 className="font-heading text-2xl font-bold text-royal">Rahul</h3>
+          <h3 className="font-heading text-2xl font-bold text-cream">Rahul</h3>
           <p className="text-gold text-sm font-semibold">
             Founder & Head Baker
           </p>
@@ -189,7 +189,7 @@ export default function AboutPage() {
       {/* CTA */}
       <section className="pb-20">
         <div className="container-tight">
-          <div className="rounded-[2.5rem] p-8 sm:p-14 text-center bg-gradient-to-br from-royal to-plum relative overflow-hidden shadow-lift">
+          <div className="crispo-gold-card rounded-[2.5rem] p-8 sm:p-14 text-center relative overflow-hidden shadow-lift">
             <div className="absolute top-10 right-[15%] w-56 h-56 rounded-full bg-gold/10 blur-3xl" />
             <div className="relative z-10">
               <h2 className="font-heading text-4xl lg:text-section text-cream font-bold mb-4">
@@ -199,7 +199,7 @@ export default function AboutPage() {
                 Explore our 100% ZERO MAIDHA cookies and brownies.
               </p>
               <div className="flex flex-wrap justify-center gap-4">
-                <Link href="/cookies" className="btn-primary">
+                <Link href="/cookies" className="crispo-btn-gold px-8 py-3 text-xs">
                   Shop Cookies
                 </Link>
               </div>

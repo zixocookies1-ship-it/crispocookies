@@ -29,7 +29,7 @@ export default function MobileBottomNav() {
   return (
     <nav
       aria-label="Mobile navigation"
-      className="md:hidden fixed inset-x-0 bottom-0 z-40 bg-white/95 backdrop-blur-md border-t border-royal/10 shadow-[0_-6px_24px_-12px_rgba(27,27,75,0.25)]"
+      className="md:hidden fixed inset-x-0 bottom-0 z-40 bg-[#1E160F]/95 backdrop-blur-md border-t border-gold/15 shadow-[0_-6px_24px_-12px_rgba(0,0,0,0.7)]"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className="grid grid-cols-5 h-16">
@@ -52,11 +52,11 @@ export default function MobileBottomNav() {
               aria-current={isActive ? "page" : undefined}
               className={cn(
                 "relative flex flex-col items-center justify-center gap-1 py-1.5 transition-colors",
-                isActive ? "text-royal" : "text-muted hover:text-royal"
+                isActive ? "text-gold-soft" : "text-lavender/60 hover:text-lavender"
               )}
             >
               {badge > 0 && (
-                <span className="absolute top-1.5 right-1/2 translate-x-[14px] min-w-4 h-4 px-1 bg-royal text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                <span className="absolute top-1.5 right-1/2 translate-x-[14px] min-w-4 h-4 px-1 bg-gold text-[#1E160F] text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
                   {badge > 99 ? "99+" : badge}
                 </span>
               )}
@@ -65,7 +65,7 @@ export default function MobileBottomNav() {
                 {item.label}
               </span>
               {isActive && (
-                <span className="absolute top-0 inset-x-4 h-0.5 bg-royal rounded-full" />
+                <span className="absolute top-0 inset-x-4 h-0.5 bg-gold rounded-full" />
               )}
             </Link>
           );

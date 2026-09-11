@@ -149,7 +149,7 @@ export default function CartPage() {
 
   if (!mounted) {
     return (
-      <div className="bg-cream min-h-screen flex items-center justify-center">
+      <div className="bg-cocoa min-h-screen flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
       </div>
     );
@@ -157,16 +157,16 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="bg-cream min-h-screen">
+      <div className="bg-cocoa min-h-screen">
         <div className="container-tight py-20 text-center">
           <span className="text-6xl block mb-4">🛒</span>
-          <h1 className="font-heading text-2xl text-royal font-bold mb-2">
+          <h1 className="font-heading text-2xl text-cream font-bold mb-2">
             Your cart is empty
           </h1>
           <p className="text-muted mb-6">
             Looks like you haven&apos;t added any cookies yet.
           </p>
-          <Link href="/shop" className="btn-primary">
+          <Link href="/shop" className="crispo-btn-gold">
             Start Shopping
           </Link>
         </div>
@@ -175,9 +175,9 @@ export default function CartPage() {
   }
 
   return (
-    <div className="bg-cream min-h-screen">
+    <div className="bg-cocoa min-h-screen">
       <div className="container-tight pt-8 pb-2">
-        <h1 className="font-heading text-3xl sm:text-4xl font-bold text-royal">
+        <h1 className="font-heading text-3xl sm:text-4xl font-bold text-cream">
           Shopping Cart
           <span className="text-muted font-body text-lg font-medium ml-3">
             ({items.length} item{items.length !== 1 ? "s" : ""})
@@ -191,15 +191,15 @@ export default function CartPage() {
           {linePricing.map((line) => (
             <div
               key={line.key}
-              className="bg-white rounded-2xl border border-royal/5 shadow-soft p-3.5 sm:p-5 flex gap-3.5 sm:gap-5"
+              className="bg-cacao rounded-2xl border border-gold/12 shadow-soft p-3.5 sm:p-5 flex gap-3.5 sm:gap-5"
             >
-              <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-cream to-beige flex items-center justify-center shrink-0 overflow-hidden">
+              <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-chocolate to-cacao flex items-center justify-center shrink-0 overflow-hidden">
                 <CartImage src={line.item.image} name={line.item.name} emoji="🍪" />
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-heading font-semibold text-royal line-clamp-1">
+                  <h3 className="font-heading font-semibold text-cream line-clamp-1">
                     {line.item.name}
                   </h3>
                   <button
@@ -221,11 +221,11 @@ export default function CartPage() {
                       }
                       disabled={line.item.qty <= 1}
                       aria-label="Decrease quantity"
-                      className="w-9 h-9 rounded-full border border-royal/20 flex items-center justify-center hover:border-royal transition-colors disabled:opacity-30"
+                      className="w-9 h-9 rounded-full border border-gold/20 flex items-center justify-center hover:border-gold/40 transition-colors disabled:opacity-30"
                     >
                       <Minus size={14} />
                     </button>
-                    <span className="w-8 text-center font-bold text-royal tabular-nums">
+                    <span className="w-8 text-center font-bold text-cream tabular-nums">
                       {line.item.qty}
                     </span>
                     <button
@@ -233,7 +233,7 @@ export default function CartPage() {
                         updateQty(line.item.productId, line.item.variant.weight, line.item.qty + 1)
                       }
                       aria-label="Increase quantity"
-                      className="w-9 h-9 rounded-full border border-royal/20 flex items-center justify-center hover:border-royal transition-colors"
+                      className="w-9 h-9 rounded-full border border-gold/20 flex items-center justify-center hover:border-gold/40 transition-colors"
                     >
                       <Plus size={14} />
                     </button>
@@ -250,7 +250,7 @@ export default function CartPage() {
                         )}
                       </p>
                     )}
-                    <span className="font-bold text-royal text-base sm:text-lg">
+                    <span className="font-bold text-cream text-base sm:text-lg">
                       {formatPrice(line.lineTotal)}
                     </span>
                   </div>
@@ -262,8 +262,8 @@ export default function CartPage() {
 
         {/* Order Summary */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl border border-royal/5 shadow-soft p-6 sticky top-20 lg:top-24">
-            <h2 className="font-heading text-lg font-semibold text-royal mb-4">
+          <div className="bg-cacao rounded-2xl border border-gold/12 shadow-soft p-6 sticky top-20 lg:top-24">
+            <h2 className="font-heading text-lg font-semibold text-cream mb-4">
               Order Summary
             </h2>
 
@@ -271,13 +271,13 @@ export default function CartPage() {
               <div className="mb-5">
                 <div className="flex justify-between text-xs mb-1.5">
                   <span className="text-muted">Free delivery progress</span>
-                  <span className="text-royal font-semibold">
+                  <span className="text-cream font-semibold">
                     Add {formatPrice(freeDeliveryDiff)} more
                   </span>
                 </div>
-                <div className="h-2 rounded-full bg-royal/10 overflow-hidden">
+                <div className="h-2 rounded-full bg-gold/12 overflow-hidden">
                   <div
-                    className="h-full bg-royal rounded-full transition-all"
+                    className="h-full bg-gold rounded-full transition-all"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -295,25 +295,25 @@ export default function CartPage() {
               )}
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Subtotal</span>
-                <span className="text-royal font-medium">{formatPrice(subtotal)}</span>
+                <span className="text-cream font-medium">{formatPrice(subtotal)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Delivery</span>
-                <span className={delivery === 0 ? "text-green font-bold" : "text-royal font-medium"}>
+                <span className={delivery === 0 ? "text-green font-bold" : "text-cream font-medium"}>
                   {delivery === 0 ? "Free" : formatPrice(delivery)}
                 </span>
               </div>
             </div>
 
             {/* Coupon */}
-            <div className="mt-5 border-t border-royal/10 pt-4">
+            <div className="mt-5 border-t border-gold/20 pt-4">
               {coupon ? (
                 <div className="bg-[#16A34A]/8 border border-[#16A34A]/25 rounded-xl p-3.5">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <Ticket size={16} className="text-[#16A34A] shrink-0" />
                       <div>
-                        <p className="text-sm font-bold text-royal font-mono">
+                        <p className="text-sm font-bold text-cream font-mono">
                           {coupon.code}{" "}
                           <span className="text-[#16A34A] font-semibold">✓</span>
                         </p>
@@ -358,7 +358,7 @@ export default function CartPage() {
                     <button
                       onClick={handleApply}
                       disabled={applying}
-                      className="btn-navy py-2 px-4 text-sm shrink-0 disabled:opacity-60"
+                      className="crispo-btn-gold px-4 py-2 text-sm shrink-0 disabled:opacity-60"
                     >
                       {applying ? "Applying..." : "Apply"}
                     </button>
@@ -367,7 +367,7 @@ export default function CartPage() {
               )}
             </div>
 
-            <div className="border-t border-royal/10 my-4" />
+            <div className="border-t border-gold/20 my-4" />
 
             <div className="space-y-2 mb-6">
               {couponAmount > 0 && (
@@ -379,21 +379,21 @@ export default function CartPage() {
                 </div>
               )}
               <div className="flex justify-between items-baseline">
-                <span className="font-heading text-lg font-bold text-royal">Total</span>
-                <span className="font-heading text-2xl font-bold text-royal">
+                <span className="font-heading text-lg font-bold text-cream">Total</span>
+                <span className="font-heading text-2xl font-bold text-cream">
                   {formatPrice(total)}
                 </span>
               </div>
             </div>
 
-            <Link href="/checkout" className="btn-primary w-full py-4">
+            <Link href="/checkout" className="crispo-btn-gold w-full py-4">
               <ShoppingBag size={18} />
               Proceed to Checkout
             </Link>
 
             <Link
               href="/shop"
-              className="text-center block text-muted text-sm font-medium mt-4 hover:text-royal"
+              className="text-center block text-muted text-sm font-medium mt-4 hover:text-cream"
             >
               ← Continue Shopping
             </Link>

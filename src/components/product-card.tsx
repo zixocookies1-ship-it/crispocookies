@@ -73,11 +73,11 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   };
 
   return (
-    <div className="relative flex flex-col h-full bg-white rounded-2xl border border-[#EFE7DB] shadow-soft hover:shadow-lift transition-all duration-300 overflow-hidden group">
+    <div className="relative flex flex-col h-full bg-cacao rounded-2xl border border-gold/12 shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all duration-300 overflow-hidden group">
       <Link
         href={`/shop/${product.slug}`}
         aria-label={product.name}
-        className="relative block aspect-square overflow-hidden bg-gradient-to-br from-cream via-beige to-cream"
+        className="relative block aspect-square overflow-hidden bg-gradient-to-br from-chocolate via-cacao to-chocolate"
       >
         {showImage ? (
           <Image
@@ -101,7 +101,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
 
         <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5 items-start">
           {product.badge && (
-            <span className="bg-gold/90 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
+            <span className="bg-gold text-[#2B1803] text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
               {product.badge}
             </span>
           )}
@@ -122,7 +122,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
 
       <div className="p-3 sm:p-4 flex flex-col flex-1 gap-1.5 min-w-0">
         <Link href={`/shop/${product.slug}`}>
-          <h3 className="font-body text-sm sm:text-[15px] font-bold text-royal leading-snug line-clamp-2 min-h-[2.5em] group-hover:text-royal-light transition-colors">
+          <h3 className="font-body text-sm sm:text-[15px] font-bold text-cream leading-snug line-clamp-2 min-h-[2.5em] group-hover:text-lavender transition-colors">
             {product.name}
           </h3>
         </Link>
@@ -135,14 +135,14 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
         )}
 
         <div className="mt-auto pt-1.5 flex items-baseline gap-1.5 flex-wrap">
-          <span className="text-base sm:text-lg font-extrabold text-royal">
+          <span className="text-base sm:text-lg font-extrabold text-gold-soft">
             {promoActive ? formatINR(promoPricing.final) : formatINR(price)}
           </span>
           {promoActive ? (
-            <span className="text-xs text-muted line-through">{formatINR(price)}</span>
+            <span className="text-xs text-faded line-through">{formatINR(price)}</span>
           ) : (
             mrp > price && (
-              <span className="text-xs text-muted line-through">{formatINR(mrp)}</span>
+              <span className="text-xs text-faded line-through">{formatINR(mrp)}</span>
             )
           )}
           {promoActive ? (
@@ -161,8 +161,8 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           className={cn(
             "mt-2 w-full rounded-full py-2.5 text-xs font-bold uppercase tracking-wide transition-all duration-300 flex items-center justify-center gap-1.5",
             outOfStock
-              ? "bg-[#EEE6DA] text-muted cursor-not-allowed"
-              : "bg-royal text-white hover:bg-royal-light active:scale-[0.98]"
+              ? "bg-chocolate text-faded cursor-not-allowed"
+              : "crispo-btn-gold"
           )}
         >
           <Plus size={14} strokeWidth={2.5} />

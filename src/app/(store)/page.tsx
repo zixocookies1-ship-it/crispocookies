@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import {
+  Leaf,
   Wheat,
   Heart,
   Gem,
@@ -15,7 +16,7 @@ import {
   ArrowRight,
   RefreshCw,
 } from "lucide-react";
-import { fetchProducts, StoreProduct } from "@/lib/storefront";
+import { fetchProducts, StoreProduct, WHATSAPP_LINK } from "@/lib/storefront";
 import { getActivePromotion } from "@/lib/promotion";
 import { ActivePromotion } from "@/lib/pricing-math";
 import { ProductCardSkeleton } from "@/components/skeleton";
@@ -50,6 +51,14 @@ const whyFeatures = [
 const HERO_BANNERS = [
   { src: "/hero-2.mp4", label: "The Bake" },
   { src: "/hero-1.mp4", label: "Our Story" },
+];
+
+const STORY_BADGES = [
+  "100% ZERO MAIDHA",
+  "MADE WITH OATS",
+  "PREMIUM INGREDIENTS",
+  "HANDCRAFTED",
+  "MADE WITH LOVE",
 ];
 
 export default function StoreHomePage() {
@@ -114,147 +123,199 @@ export default function StoreHomePage() {
 
   return (
     <>
-      {/* ─── SECTION 1: HERO ─── */}
-      <section className="hero-backdrop" aria-label="Hero">
-        <div className="gold-hero">
-          {/* Full-bleed video banner background — hero-2, then hero-1 */}
-          <div className="absolute inset-0 z-0">
-            {HERO_BANNERS.map((banner, i) => (
-              <video
-                key={banner.src}
-                ref={(el) => {
-                  bannerRefs.current[i] = el;
-                }}
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1500 ${
-                  activeBanner === i ? "opacity-100" : "opacity-0"
-                }`}
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload={i === 0 ? "auto" : "metadata"}
-                aria-hidden="true"
-              >
-                <source src={banner.src} type="video/mp4" />
-              </video>
-            ))}
-            <div
-              className="absolute inset-0 bg-gradient-to-b from-plum/70 via-royal/30 to-royal/60"
-              aria-hidden="true"
-            />
-            <div
-              className="absolute inset-0 bg-gradient-to-t from-espresso/60 via-transparent to-transparent"
-              aria-hidden="true"
-            />
-          </div>
-
-          <div className="container-wide relative z-10 py-24 lg:py-32 px-4 sm:px-6">
-            <div className="max-w-3xl mx-auto text-center">
-              {promotion && (
-                <p className="mb-5">
-                  <span
-                    className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-gold/60 bg-gold/10 text-gold-soft text-xs font-bold tracking-[0.2em] uppercase"
-                  >
-                    <span
-                      className="w-2 h-2 rounded-full bg-gold animate-pulse"
-                      aria-hidden="true"
-                    />
-                    Launch Offer — {promotion.discountValue}% OFF
-                  </span>
-                </p>
+      {/* ─── BANNER CAROUSEL ─── */}
+      <section className="crispo-banner" aria-label="Featured banner">
+        {HERO_BANNERS.map((banner, i) => (
+          <video
+            key={banner.src}
+            ref={(el) => {
+              bannerRefs.current[i] = el;
+            }}
+            className={cn(
+              "crispo-banner__media transition-opacity duration-[900ms]",
+              activeBanner === i ? "opacity-100" : "opacity-0"
+            )}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload={i === 0 ? "auto" : "metadata"}
+            aria-hidden="true"
+          >
+            <source src={banner.src} type="video/mp4" />
+          </video>
+        ))}
+        <div
+          className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-cocoa/40"
+          aria-hidden="true"
+        />
+        <div className="crispo-banner__dots" role="tablist" aria-label="Banner slides">
+          {HERO_BANNERS.map((banner, i) => (
+            <button
+              key={banner.src}
+              role="tab"
+              aria-selected={activeBanner === i}
+              aria-label={`Show ${banner.label} banner`}
+              onClick={() => setActiveBanner(i)}
+              className={cn(
+                "crispo-banner__dot",
+                activeBanner === i && "is-active"
               )}
-              <p className="eyebrow mb-4 text-gold-soft">Baked to Perfection</p>
-              <h1 className="font-heading text-5xl sm:text-6xl lg:text-display text-cream font-bold leading-[1.05] mb-5">
-                Baked to Impress.
-              </h1>
-              <p className="text-cream/85 text-lg mb-3">
-                Made with love for every bite.
-              </p>
-              <p className="text-gold-soft font-medium text-base mb-8">
-                A Little Crisp. A Lot of Love.
-              </p>
-              <div className="flex flex-wrap items-center justify-center gap-4">
-                <Link href="/cookies" className="btn-primary">
-                  Explore Cookies
-                </Link>
-                <Link
-                  href="/about"
-                  className="inline-flex items-center justify-center font-body font-semibold px-8 py-3.5 rounded-full border-2 border-cream/40 text-cream hover:bg-cream hover:text-plum transition-all duration-300 text-sm tracking-wider uppercase"
-                >
-                  Our Story
-                </Link>
-              </div>
-            </div>
-          </div>
+            />
+          ))}
+        </div>
+      </section>
 
-          {/* Banner indicators */}
-          <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
-            {HERO_BANNERS.map((banner, i) => (
-              <button
-                key={banner.src}
-                onClick={() => setActiveBanner(i)}
-                aria-label={`Show ${banner.label} banner`}
-                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
-                  activeBanner === i
-                    ? "bg-gold scale-125"
-                    : "bg-cream/40 hover:bg-cream/70"
-                }`}
-              />
-            ))}
+      {/* ─── HERO CONTENT ─── */}
+      <section
+        className="relative overflow-hidden bg-gradient-to-b from-espresso via-cocoa to-cocoa py-14 lg:py-24"
+        aria-label="Hero"
+      >
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(80% 60% at 50% 0%, rgba(224,179,74,0.08), transparent 70%)",
+          }}
+          aria-hidden="true"
+        />
+        <div className="relative container-wide px-5 sm:px-6">
+          <div className="max-w-3xl mx-auto text-center flex flex-col items-center">
+            {promotion && (
+              <span className="mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gold/15 text-gold-soft text-[10px] font-bold tracking-[0.2em] uppercase">
+                <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" aria-hidden="true" />
+                Launch Offer — {promotion.discountValue}% OFF
+              </span>
+            )}
+
+            <span className="crispo-pill mb-6 inline-flex items-center gap-2 rounded-full px-5 py-2 text-[10px] sm:text-[11px] font-bold uppercase">
+              100% ZERO MAIDHA
+            </span>
+
+            <h1 className="font-heading font-bold leading-[1.06] text-[2.6rem] sm:text-[3.4rem] lg:text-7xl mb-7">
+              <span className="block text-lavender">Baked to Impress.</span>
+              <span className="block text-gradient-gold">Made to Crave.</span>
+            </h1>
+
+            <Leaf
+              size={22}
+              strokeWidth={1.25}
+              className="crispo-leaf mb-7 -rotate-[24deg]"
+              aria-hidden="true"
+            />
+
+            <div className="crispo-gold-card w-[92%] max-w-[560px] rounded-3xl px-7 py-6 sm:px-9 sm:py-7 mb-9">
+              <p className="text-[15px] sm:text-[17px] font-semibold leading-relaxed text-[#2B1803]">
+                Premium oat-based cookies &amp; brownies, handcrafted with love.
+                Delivered fresh, baked to perfection.
+              </p>
+            </div>
+
+            <div className="flex w-full max-w-[520px] flex-col sm:flex-row items-stretch justify-center gap-3 sm:gap-4 mb-7">
+              <Link
+                href="/cookies"
+                className="crispo-btn-gold w-full sm:flex-1 px-6 py-3.5 text-[10px] sm:text-[11px]"
+              >
+                Explore Cookies
+              </Link>
+              <a
+                href={WHATSAPP_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="crispo-btn-wa w-full sm:flex-1 px-6 py-3.5 text-[10px] sm:text-[11px]"
+              >
+                Order on WhatsApp
+              </a>
+            </div>
+
+            <a
+              href="tel:+917569831560"
+              className="inline-flex items-center gap-2.5 text-cremel/90 hover:text-gold-soft transition-colors"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-full border border-gold/30 bg-gold/10">
+                <Phone size={15} className="text-gold-soft" />
+              </span>
+              <span className="font-body text-sm sm:text-base font-semibold tracking-wide">
+                +91 75698 31560
+              </span>
+            </a>
           </div>
         </div>
       </section>
 
       <BenefitsSection />
 
-      {/* ─── SECTION 2: OUR STORY ─── */}
-      <section className="py-12 lg:py-20 bg-cream" aria-label="Our Story">
-        <div className="container-tight max-w-4xl mx-auto text-center">
-          <p className="eyebrow mb-4">Our Story</p>
-          <h2 className="font-heading text-4xl lg:text-section text-royal font-bold mb-6">
-            A Little Crisp. A Lot of Love.
-          </h2>
-          <p className="text-muted text-lg leading-relaxed max-w-3xl mx-auto mb-10">
-            At CRISPO COOKIES, every bite is made to bring together great taste,
-            quality ingredients and wholesome goodness. From indulgent chocolate
-            cookies to fruity and nutritious creations, our cookies are crafted
-            with care and baked to make every moment a little sweeter.
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            {[
-              "100% ZERO MAIDHA",
-              "MADE WITH OATS",
-              "PREMIUM INGREDIENTS",
-              "HANDCRAFTED",
-              "MADE WITH LOVE",
-            ].map((badge) => (
-              <span
-                key={badge}
-                className="px-5 py-2.5 rounded-full border border-gold/30 bg-gold/10 text-plum text-xs font-bold tracking-widest uppercase"
-              >
-                {badge}
-              </span>
-            ))}
+      {/* ─── OUR STORY ─── */}
+      <section className="py-16 lg:py-24 bg-espresso" aria-label="Our Story">
+        <div className="container-tight max-w-6xl">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-14 items-center">
+            <div className="text-center lg:text-left flex flex-col items-center lg:items-start">
+              <p className="eyebrow mb-4 text-left">Our Story</p>
+              <h2 className="font-heading text-4xl lg:text-5xl font-bold leading-[1.12] mb-6">
+                <span className="block text-cream">A Little Crisp.</span>
+                <span className="block text-gradient-gold">A Lot of Love.</span>
+              </h2>
+              <p className="text-muted text-lg leading-relaxed max-w-xl mb-8">
+                At CRISPO COOKIES, every bite is made to bring together great
+                taste, quality ingredients and wholesome goodness. From
+                indulgent chocolate cookies to fruity and nutritious creations,
+                our cookies are crafted with care and baked to make every
+                moment a little sweeter.
+              </p>
+              <div className="flex flex-wrap justify-center lg:justify-start gap-2.5 mb-9">
+                {STORY_BADGES.map((badge) => (
+                  <span
+                    key={badge}
+                    className="crispo-badge rounded-full px-4 py-2 text-[10px] font-bold uppercase"
+                  >
+                    {badge}
+                  </span>
+                ))}
+              </div>
+              <div className="flex flex-wrap items-center gap-5">
+                <Link href="/about" className="crispo-btn-gold px-8 py-3 text-[11px]">
+                  Explore Our Story
+                </Link>
+                <Link
+                  href="/shop"
+                  className="inline-flex items-center gap-1.5 text-sm font-bold tracking-[0.14em] uppercase text-gold-soft hover:text-lavender transition-colors"
+                >
+                  Shop the Range
+                  <ArrowRight size={15} />
+                </Link>
+              </div>
+            </div>
+
+            <div className="flex justify-center lg:justify-end">
+              <div className="w-full max-w-md aspect-[4/3] rounded-3xl overflow-hidden shadow-lift ring-1 ring-gold/20 relative">
+                <Image
+                  src="/our story.jpg"
+                  alt="Crispo Cookies — handcrafted oat-based treats"
+                  fill
+                  sizes="(max-width: 1024px) 90vw, 40vw"
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-cocoa/45 to-transparent pointer-events-none" />
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ─── SECTION 3: THE COLLECTION ─── */}
-      <section className="py-12 lg:py-20 bg-cream-dark" aria-label="The Collection">
+      {/* ─── THE COLLECTION ─── */}
+      <section className="py-16 lg:py-24 bg-cocoa" aria-label="The Collection">
         <div className="container-tight">
           <div className="text-center mb-10">
             <p className="eyebrow mb-4">The Collection</p>
-            <h2 className="font-heading text-4xl lg:text-section text-royal font-bold mb-3">
-              Crispo Cookies
-            </h2>
-            <p className="text-muted text-lg">
+            <h2 className="section-heading mb-3">Crispo Cookies</h2>
+            <p className="section-subheading max-w-2xl mx-auto">
               Switch between cookies and brownies — every box is{" "}
-              <span className="text-royal font-semibold">100% ZERO MAIDHA</span>.
+              <span className="text-gold-soft font-semibold">100% ZERO MAIDHA</span>.
             </p>
           </div>
 
           <div className="flex justify-center mb-10">
-            <div className="inline-flex p-1.5 rounded-full bg-white border border-royal/10 shadow-soft">
+            <div className="inline-flex p-1.5 rounded-full bg-chocolate border border-gold/15 shadow-soft">
               {(["cookies", "brownies"] as const).map((tab) => (
                 <button
                   key={tab}
@@ -262,8 +323,8 @@ export default function StoreHomePage() {
                   className={cn(
                     "px-6 sm:px-8 py-2.5 rounded-full text-sm font-bold tracking-wider uppercase transition-all duration-300 cursor-pointer",
                     activeCollection === tab
-                      ? "bg-royal text-cream shadow-lift"
-                      : "text-plum/60 hover:text-plum"
+                      ? "crispo-btn-gold text-[12px]"
+                      : "text-cream/55 hover:text-cream"
                   )}
                 >
                   {tab}
@@ -282,8 +343,8 @@ export default function StoreHomePage() {
 
           {!loading && error && (
             <div className="text-center py-16">
-              <h3 className="font-heading text-xl text-royal mb-2">We couldn&apos;t load the products</h3>
-              <button onClick={() => setAttempt((a) => a + 1)} className="btn-royal mt-4">
+              <h3 className="font-heading text-xl text-cream mb-2">We couldn&apos;t load the products</h3>
+              <button onClick={() => setAttempt((a) => a + 1)} className="btn-primary mt-4">
                 <RefreshCw size={16} />
                 Retry
               </button>
@@ -305,20 +366,20 @@ export default function StoreHomePage() {
           )}
 
           <div className="text-center mt-10">
-            <Link href="/shop" className="btn-primary">
+            <Link href="/shop" className="crispo-btn-gold px-9 py-3.5 text-xs">
               Shop All Products
-              <ArrowRight size={16} />
+              <ArrowRight size={15} />
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ─── SECTION 4: SHOP BY CATEGORY ─── */}
-      <section className="py-12 lg:py-20 bg-cream" aria-label="Shop by Category">
+      {/* ─── SHOP BY CATEGORY ─── */}
+      <section className="py-16 lg:py-24 bg-espresso" aria-label="Shop by Category">
         <div className="container-tight">
           <div className="text-center mb-10">
             <p className="eyebrow mb-4">From Our Oven</p>
-            <h2 className="font-heading text-4xl lg:text-section text-royal font-bold">
+            <h2 className="section-heading">
               Baked fresh, straight from our oven.
             </h2>
           </div>
@@ -342,16 +403,16 @@ export default function StoreHomePage() {
               <Link
                 key={card.label}
                 href={card.href}
-                className="group rounded-3xl overflow-hidden shadow-soft hover:shadow-lift hover:-translate-y-1 transition-all duration-300 relative bg-gradient-to-br from-gold/10 via-cream to-royal/5 flex flex-col items-center justify-center text-center p-8"
+                className="group rounded-3xl overflow-hidden shadow-soft hover:shadow-lift hover:-translate-y-1 transition-all duration-300 relative bg-gradient-to-br from-chocolate via-cacao to-chocolate ring-1 ring-gold/15 hover:ring-gold/40 flex flex-col items-center justify-center text-center p-8 sm:p-10"
               >
                 <span className="text-6xl select-none mb-3 group-hover:scale-110 transition-transform duration-300" aria-hidden="true">
                   {card.emoji}
                 </span>
-                <h3 className="font-heading text-xl font-semibold text-royal">
+                <h3 className="font-heading text-xl font-semibold text-cream">
                   {card.label}
                 </h3>
-                <p className="text-muted text-sm mt-1 mb-4">{card.sub}</p>
-                <span className="inline-flex items-center gap-2 text-sm font-bold tracking-wider uppercase text-gold group-hover:text-royal transition-colors">
+                <p className="text-muted text-sm mt-1.5 mb-5">{card.sub}</p>
+                <span className="inline-flex items-center gap-2 text-sm font-bold tracking-wider uppercase text-gold-soft group-hover:text-lavender transition-colors">
                   {card.cta}
                   <ArrowRight size={15} />
                 </span>
@@ -361,15 +422,15 @@ export default function StoreHomePage() {
         </div>
       </section>
 
-      {/* ─── SECTION 5: CHOOSE YOUR CRAVE ─── */}
-      <section className="py-12 lg:py-20 bg-cream" aria-label="Choose Your Crave">
+      {/* ─── CHOOSE YOUR CRAVE ─── */}
+      <section className="py-16 lg:py-24 bg-cocoa" aria-label="Choose Your Crave">
         <div className="container-tight">
           <div className="text-center mb-10">
             <p className="eyebrow mb-4">Choose Your Crave</p>
-            <h2 className="font-heading text-4xl lg:text-section text-royal font-bold mb-4">
+            <h2 className="section-heading mb-4">
               Five moods. One box away.
             </h2>
-            <p className="text-muted text-lg max-w-2xl mx-auto">
+            <p className="section-subheading max-w-2xl mx-auto">
               Match your moment with oat-based cookies and brownies. No
               compromise on taste.
             </p>
@@ -384,25 +445,23 @@ export default function StoreHomePage() {
             ].map((mood) => (
               <div
                 key={mood.label}
-                className="bg-white rounded-3xl p-6 text-center border border-royal/5 shadow-soft hover:shadow-lift transition-shadow duration-300"
+                className="bg-cacao rounded-3xl p-6 text-center border border-gold/12 shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all duration-300"
               >
                 <span className="text-5xl block mb-3 select-none">
                   {mood.emoji}
                 </span>
-                <h3 className="font-heading text-lg font-semibold text-royal">
+                <h3 className="font-heading text-lg font-semibold text-cream">
                   {mood.label}
                 </h3>
+                <span className="mt-2 block h-1 w-8 mx-auto rounded-full bg-gradient-to-r from-gold to-gold-light" />
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ─── SECTION 6: WHY CRISPO ─── */}
-      <section
-        className="py-12 lg:py-20 bg-cream-dark"
-        aria-label="Why Crispo"
-      >
+      {/* ─── WHY CRISPO ─── */}
+      <section className="py-16 lg:py-24 bg-espresso" aria-label="Why Crispo">
         <div className="container-tight">
           <h2 className="section-heading text-center mb-10">Why Crispo?</h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
@@ -411,12 +470,12 @@ export default function StoreHomePage() {
               return (
                 <div
                   key={feature.title}
-                  className="bg-white rounded-2xl p-6 text-center border border-royal/5 shadow-soft"
+                  className="bg-cacao rounded-2xl p-6 text-center border border-gold/12 shadow-soft hover:shadow-lift transition-shadow duration-300"
                 >
-                  <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-gold/10 flex items-center justify-center">
-                    <Icon size={26} className="text-gold" />
+                  <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-gold/12 ring-1 ring-gold/30 flex items-center justify-center">
+                    <Icon size={26} className="text-gold-soft" />
                   </div>
-                  <h3 className="font-heading text-base font-semibold text-royal mb-2">
+                  <h3 className="font-heading text-base font-semibold text-cream mb-2">
                     {feature.title}
                   </h3>
                   <p className="text-muted text-sm leading-relaxed">
@@ -429,12 +488,12 @@ export default function StoreHomePage() {
         </div>
       </section>
 
-      {/* ─── SECTION 7: ABOUT CRISPO ─── */}
-      <section className="py-12 lg:py-20 bg-cream" aria-label="About Crispo">
+      {/* ─── ABOUT CRISPO ─── */}
+      <section className="py-16 lg:py-24 bg-cocoa" aria-label="About Crispo">
         <div className="container-tight">
           <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center">
             <div className="flex justify-center order-2 lg:order-1">
-              <div className="w-full max-w-md aspect-square rounded-3xl overflow-hidden shadow-lift relative">
+              <div className="w-full max-w-md aspect-square rounded-3xl overflow-hidden shadow-lift ring-1 ring-gold/20 relative">
                 <Image
                   src="/our story.jpg"
                   alt="Crispo Cookies — about us"
@@ -442,13 +501,14 @@ export default function StoreHomePage() {
                   sizes="(max-width: 1024px) 90vw, 40vw"
                   className="object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-plum/30 to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-cocoa/35 to-transparent pointer-events-none" />
               </div>
             </div>
             <div className="order-1 lg:order-2">
               <p className="eyebrow mb-4">About Crispo</p>
-              <h2 className="font-heading text-4xl lg:text-section text-royal font-bold mb-5">
-                Baked to Impress. Baked With Purpose.
+              <h2 className="font-heading text-4xl lg:text-section text-cream font-bold mb-5">
+                Baked to Impress.{" "}
+                <span className="text-gradient-gold">Baked With Purpose.</span>
               </h2>
               <p className="text-muted text-lg leading-relaxed mb-4">
                 Crispo was born from a simple passion for healthy snacking.
@@ -458,7 +518,7 @@ export default function StoreHomePage() {
               </p>
               <p className="text-muted text-lg leading-relaxed mb-6">
                 Every bite reflects our commitment:{" "}
-                <span className="text-royal font-semibold">
+                <span className="text-gold-soft font-semibold">
                   100% ZERO MAIDHA
                 </span>
                 , premium oats, and zero preservatives. We bake with love so
@@ -470,30 +530,28 @@ export default function StoreHomePage() {
                   "No preservatives, ever",
                   "Handcrafted in Nellore, Andhra Pradesh",
                 ].map((point) => (
-                  <li key={point} className="flex items-center gap-3 text-royal">
+                  <li key={point} className="flex items-center gap-3 text-cream">
                     <span className="text-gold font-bold">✓</span>
                     <span className="font-medium">{point}</span>
                   </li>
                 ))}
               </ul>
-              <Link href="/about" className="btn-primary">
+              <Link href="/about" className="crispo-btn-gold px-9 py-3.5 text-xs">
                 Our Story
-                <ArrowRight size={16} />
+                <ArrowRight size={15} />
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ─── SECTION 8: FOLLOW US ─── */}
-      <section className="py-12 lg:py-20 bg-cream-dark" aria-label="Follow Us">
+      {/* ─── FOLLOW US ─── */}
+      <section className="py-16 lg:py-24 bg-espresso" aria-label="Follow Us">
         <div className="container-tight">
           <div className="text-center mb-12">
             <p className="eyebrow mb-4">Stay Connected</p>
-            <h2 className="font-heading text-4xl lg:text-section text-royal font-bold mb-4">
-              Follow Us
-            </h2>
-            <p className="text-muted text-lg max-w-2xl mx-auto">
+            <h2 className="section-heading mb-4">Follow Us</h2>
+            <p className="section-subheading max-w-2xl mx-auto">
               Behind-the-scenes bakes, drool-worthy close-ups, and the latest
               Crispo drops — straight to your feed.
             </p>
@@ -503,19 +561,19 @@ export default function StoreHomePage() {
               href={SOCIAL_LINKS.instagram}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-white rounded-[2rem] p-8 sm:p-10 flex flex-col items-center text-center border border-royal/5 shadow-soft hover:shadow-lift hover:-translate-y-1 transition-all duration-300 group"
+              className="bg-cacao rounded-[2rem] p-8 sm:p-10 flex flex-col items-center text-center border border-gold/12 shadow-soft hover:shadow-lift hover:-translate-y-1 transition-all duration-300 group"
             >
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gold to-royal flex items-center justify-center mb-5">
-                <InstagramIcon className="w-8 h-8 text-cream" />
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gold to-amber flex items-center justify-center mb-5 shadow-gold">
+                <InstagramIcon className="w-8 h-8 text-white" />
               </div>
-              <h3 className="font-heading text-2xl font-bold text-royal mb-1">
+              <h3 className="font-heading text-2xl font-bold text-cream mb-1">
                 Instagram
               </h3>
-              <p className="text-gold font-semibold mb-3">@rahul.bites</p>
+              <p className="text-gold-soft font-semibold mb-3">@rahul.bites</p>
               <p className="text-muted text-sm">
                 Daily bakes, reels, and behind-the-scenes.
               </p>
-              <span className="mt-6 inline-flex items-center gap-2 text-royal font-semibold text-sm tracking-wider uppercase group-hover:text-gold transition-colors">
+              <span className="mt-6 inline-flex items-center gap-2 text-gold-soft font-semibold text-sm tracking-wider uppercase group-hover:text-lavender transition-colors">
                 Follow @rahul.bites
                 <ArrowRight size={15} />
               </span>
@@ -524,19 +582,19 @@ export default function StoreHomePage() {
               href={SOCIAL_LINKS.youtube}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-white rounded-[2rem] p-8 sm:p-10 flex flex-col items-center text-center border border-royal/5 shadow-soft hover:shadow-lift hover:-translate-y-1 transition-all duration-300 group"
+              className="bg-cacao rounded-[2rem] p-8 sm:p-10 flex flex-col items-center text-center border border-gold/12 shadow-soft hover:shadow-lift hover:-translate-y-1 transition-all duration-300 group"
             >
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-plum to-royal flex items-center justify-center mb-5">
-                <YoutubeIcon className="w-8 h-8 text-cream" />
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-lavender to-rose flex items-center justify-center mb-5 shadow-[0_16px_32px_-16px_rgba(231,169,232,0.5)]">
+                <YoutubeIcon className="w-8 h-8 text-cocoa" />
               </div>
-              <h3 className="font-heading text-2xl font-bold text-royal mb-1">
+              <h3 className="font-heading text-2xl font-bold text-cream mb-1">
                 YouTube
               </h3>
-              <p className="text-gold font-semibold mb-3">@Rahul-Bites</p>
+              <p className="text-gold-soft font-semibold mb-3">@Rahul-Bites</p>
               <p className="text-muted text-sm">
                 Full baking videos and crispy content.
               </p>
-              <span className="mt-6 inline-flex items-center gap-2 text-royal font-semibold text-sm tracking-wider uppercase group-hover:text-gold transition-colors">
+              <span className="mt-6 inline-flex items-center gap-2 text-gold-soft font-semibold text-sm tracking-wider uppercase group-hover:text-lavender transition-colors">
                 Subscribe @Rahul-Bites
                 <ArrowRight size={15} />
               </span>
@@ -545,15 +603,15 @@ export default function StoreHomePage() {
         </div>
       </section>
 
-      {/* ─── SECTION 9: CONTACT ─── */}
-      <section className="py-12 lg:py-20 bg-cream" aria-label="Contact Crispo">
+      {/* ─── CONTACT ─── */}
+      <section className="py-16 lg:py-24 bg-cocoa" aria-label="Contact Crispo">
         <div className="container-tight">
           <div className="text-center mb-12">
             <p className="eyebrow mb-4">Get In Touch</p>
-            <h2 className="font-heading text-4xl lg:text-section text-royal font-bold mb-4">
+            <h2 className="section-heading mb-4">
               Let&apos;s Talk Cookies
             </h2>
-            <p className="text-muted text-lg max-w-2xl mx-auto">
+            <p className="section-subheading max-w-2xl mx-auto">
               Questions, bulk orders, or custom gifts? We&apos;d love to hear
               from you.
             </p>
@@ -561,64 +619,64 @@ export default function StoreHomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-5xl mx-auto">
             <a
               href="mailto:ccrispocookies@gmail.com"
-              className="group bg-white rounded-3xl p-7 text-left border border-royal/5 shadow-soft hover:shadow-lift hover:-translate-y-1 hover:border-gold/30 transition-all duration-300"
+              className="group bg-cacao rounded-3xl p-7 text-left border border-gold/12 shadow-soft hover:shadow-lift hover:-translate-y-1 hover:border-gold/35 transition-all duration-300"
             >
-              <div className="w-12 h-12 mb-4 rounded-2xl bg-gold/10 flex items-center justify-center group-hover:bg-gold/20 transition-colors">
-                <Mail size={22} className="text-gold" />
+              <div className="w-12 h-12 mb-4 rounded-2xl bg-gold/12 flex items-center justify-center group-hover:bg-gold/22 ring-1 ring-gold/30 transition-colors">
+                <Mail size={22} className="text-gold-soft" />
               </div>
-              <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-muted mb-1.5">
+              <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-lavender/70 mb-1.5">
                 Email
               </p>
-              <p className="font-heading text-base font-semibold text-royal break-all leading-snug">
+              <p className="font-heading text-base font-semibold text-cream break-all leading-snug">
                 ccrispocookies@gmail.com
               </p>
-              <p className="text-muted text-xs mt-2">Replies within a day</p>
+              <p className="text-faded text-xs mt-2">Replies within a day</p>
             </a>
             <a
               href="tel:+917569831560"
-              className="group bg-white rounded-3xl p-7 text-left border border-royal/5 shadow-soft hover:shadow-lift hover:-translate-y-1 hover:border-gold/30 transition-all duration-300"
+              className="group bg-cacao rounded-3xl p-7 text-left border border-gold/12 shadow-soft hover:shadow-lift hover:-translate-y-1 hover:border-gold/35 transition-all duration-300"
             >
-              <div className="w-12 h-12 mb-4 rounded-2xl bg-gold/10 flex items-center justify-center group-hover:bg-gold/20 transition-colors">
-                <Phone size={22} className="text-gold" />
+              <div className="w-12 h-12 mb-4 rounded-2xl bg-gold/12 flex items-center justify-center group-hover:bg-gold/22 ring-1 ring-gold/30 transition-colors">
+                <Phone size={22} className="text-gold-soft" />
               </div>
-              <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-muted mb-1.5">
+              <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-lavender/70 mb-1.5">
                 Phone
               </p>
-              <p className="font-heading text-base font-semibold text-royal leading-snug">
+              <p className="font-heading text-base font-semibold text-cream leading-snug">
                 +91 75698 31560
               </p>
-              <p className="text-muted text-xs mt-2">Mon–Sat, 9am–8pm IST</p>
+              <p className="text-faded text-xs mt-2">Mon–Sat, 9am–8pm IST</p>
             </a>
-            <div className="group bg-white rounded-3xl p-7 text-left border border-royal/5 shadow-soft hover:shadow-lift hover:-translate-y-1 hover:border-gold/30 transition-all duration-300">
-              <div className="w-12 h-12 mb-4 rounded-2xl bg-gold/10 flex items-center justify-center group-hover:bg-gold/20 transition-colors">
-                <MapPin size={22} className="text-gold" />
+            <div className="group bg-cacao rounded-3xl p-7 text-left border border-gold/12 shadow-soft hover:shadow-lift hover:-translate-y-1 hover:border-gold/35 transition-all duration-300">
+              <div className="w-12 h-12 mb-4 rounded-2xl bg-gold/12 flex items-center justify-center group-hover:bg-gold/22 ring-1 ring-gold/30 transition-colors">
+                <MapPin size={22} className="text-gold-soft" />
               </div>
-              <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-muted mb-1.5">
+              <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-lavender/70 mb-1.5">
                 Location
               </p>
-              <p className="font-heading text-base font-semibold text-royal leading-snug">
+              <p className="font-heading text-base font-semibold text-cream leading-snug">
                 Nellore, Andhra Pradesh
               </p>
-              <p className="text-muted text-xs mt-2">Baked fresh & shipped across India</p>
+              <p className="text-faded text-xs mt-2">Baked fresh &amp; shipped across India</p>
             </div>
             <Link
               href="/contact"
-              className="group bg-royal rounded-3xl p-7 text-left shadow-soft hover:shadow-lift hover:-translate-y-1 transition-all duration-300"
+              className="group crispo-gold-card rounded-3xl p-7 text-left shadow-soft hover:shadow-gold hover:-translate-y-1 transition-all duration-300"
             >
-              <div className="w-12 h-12 mb-4 rounded-2xl bg-gold/20 flex items-center justify-center group-hover:bg-gold/30 transition-colors">
-                <ArrowRight size={22} className="text-gold-soft" />
+              <div className="w-12 h-12 mb-4 rounded-2xl bg-[#2B1803]/15 flex items-center justify-center ring-1 ring-[#2B1803]/25 group-hover:bg-[#2B1803]/25 transition-colors">
+                <ArrowRight size={22} className="text-[#2B1803]" />
               </div>
-              <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-cream/60 mb-1.5">
+              <p className="text-[11px] font-bold tracking-[0.18em] uppercase text-[#2B1803]/75 mb-1.5">
                 Bulk Orders
               </p>
-              <p className="font-heading text-base font-semibold text-cream leading-snug">
-                Gifting & events
+              <p className="font-heading text-base font-semibold text-[#2B1803] leading-snug">
+                Gifting &amp; events
               </p>
-              <p className="text-cream/60 text-xs mt-2">Send an enquiry in a minute</p>
+              <p className="text-[#2B1803]/65 text-xs mt-2">Send an enquiry in a minute</p>
             </Link>
           </div>
           <div className="max-w-md mx-auto mt-10">
-            <Link href="/shop" className="btn-primary w-full">
+            <Link href="/shop" className="crispo-btn-gold w-full px-8 py-3.5 text-xs">
               Order Now
             </Link>
           </div>

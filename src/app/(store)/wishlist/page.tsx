@@ -41,18 +41,18 @@ export default function WishlistPage() {
 
   if (!mounted) {
     return (
-      <div className="bg-cream min-h-screen flex items-center justify-center">
+      <div className="bg-cocoa min-h-screen flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="bg-cream min-h-screen">
-      <section className="bg-gradient-to-b from-white to-cream border-b border-royal/5 py-10 sm:py-14 text-center">
+    <div className="bg-cocoa min-h-screen">
+      <section className="bg-gradient-to-b from-chocolate to-cocoa border-b border-gold/12 py-10 sm:py-14 text-center">
         <div className="container-tight">
           <p className="eyebrow mb-3">Saved For Later</p>
-          <h1 className="font-heading text-4xl sm:text-5xl font-bold text-royal">
+          <h1 className="font-heading text-4xl sm:text-5xl font-bold text-cream">
             My Wishlist
           </h1>
         </div>
@@ -62,13 +62,13 @@ export default function WishlistPage() {
         {slugs.length === 0 && !loading ? (
           <div className="text-center py-20">
             <Heart className="w-12 h-12 mx-auto text-muted mb-4" strokeWidth={1.5} />
-            <h3 className="font-heading text-xl text-royal mb-2">
+            <h3 className="font-heading text-xl text-cream mb-2">
               Your wishlist is empty
             </h3>
             <p className="text-muted mb-6">
               Tap the ♡ on any product to save it here.
             </p>
-            <Link href="/shop" className="btn-primary">
+            <Link href="/shop" className="crispo-btn-gold px-8 py-3.5 text-sm">
               Browse Products
             </Link>
           </div>
@@ -88,9 +88,9 @@ export default function WishlistPage() {
 
             {!loading && error && (
               <div className="text-center py-20">
-                <h3 className="font-heading text-xl text-royal mb-2">Something went wrong</h3>
+                <h3 className="font-heading text-xl text-cream mb-2">Something went wrong</h3>
                 <p className="text-muted mb-6">We couldn&apos;t load your wishlist.</p>
-                <button onClick={() => setAttempt((a) => a + 1)} className="btn-royal">
+                <button onClick={() => setAttempt((a) => a + 1)} className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-gold-soft/60 text-gold-soft font-semibold px-6 py-3 text-sm transition-colors hover:bg-gold/10">
                   <RefreshCw size={16} />
                   Retry
                 </button>
@@ -100,11 +100,11 @@ export default function WishlistPage() {
             {!loading && !error && wishlist.length === 0 && (
               <div className="text-center py-20">
                 <PackageSearch className="w-12 h-12 mx-auto text-muted mb-4" />
-                <h3 className="font-heading text-xl text-royal mb-2">
+                <h3 className="font-heading text-xl text-cream mb-2">
                   Saved items are no longer available
                 </h3>
                 <p className="text-muted mb-6">They may have been removed or sold out.</p>
-                <Link href="/shop" className="btn-royal">
+                <Link href="/shop" className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-gold-soft/60 text-gold-soft font-semibold px-6 py-3 text-sm transition-colors hover:bg-gold/10">
                   Browse Products
                 </Link>
               </div>
