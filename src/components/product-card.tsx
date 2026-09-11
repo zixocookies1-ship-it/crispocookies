@@ -47,7 +47,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   const outOfStock = !variant || variant.stock <= 0;
   const multiVariant = product.variants.length > 1;
 
-  const promoPricing = unitPriceWithDiscount(price, promotion);
+  const promoPricing = unitPriceWithDiscount(price, promotion, mrp);
   const promoActive = !!promotion && promoPricing.discount > 0;
   const showPromoChip = promoActive && !outOfStock;
 
@@ -65,7 +65,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
     addItem({
       productId: product.id,
       name: product.name,
-      variant: { weight: variant.weight, price: variant.price },
+      variant: { weight: variant.weight, price: variant.price, mrp },
       image: image || product.emoji,
     });
     toast.success(`${product.name} added to cart`);
@@ -134,7 +134,7 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
             {promoActive ? formatINR(promoPricing.final) : formatINR(price)}
           </span>
           {promoActive ? (
-            <span className="text-xs text-faded line-through">{formatINR(price)}</span>
+            <span className="text-xs text-faded line-through">{formatINR(promoPricing.base)}</span>
           ) : (
             mrp > price && (
               <span className="text-xs text-faded line-through">{formatINR(mrp)}</span>

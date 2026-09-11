@@ -15,14 +15,24 @@ export interface ActivePromotion {
 }
 
 /**
- * discount = round(unitPrice * percent / 100)
- * final    = unitPrice - discount
+ * discount = round(base * percent / 100)
+ * final    = round(base - discount)
+ *
+ * The percentage is always calculated off the reference price (usually the
+ * MRP, e.g. ₹399), never the discounted selling price. When no reference is
+ * given the unit price itself is used as the base.
  */
-export function applyDiscount(unitPrice: number, discountPercent: number) {
+export function applyDiscount(
+  unitPrice: number,
+  discountPercent: number,
+  referencePrice?: number
+) {
   const pct = Math.min(100, Math.max(0, discountPercent || 0));
-  const discount = Math.round((unitPrice * pct) / 100);
-  const final = Math.max(0, unitPrice - discount);
-  return { discount, final };
+  const base =
+    referencePrice && referencePrice > unitPrice ? referencePrice : unitPrice;
+  const discount = Math.round((base * pct) / 100);
+  const final = Math.max(0, Math.round(base - discount));
+  return { discount, final, base };
 }
 
 export interface PricedLine {
@@ -38,10 +48,11 @@ export interface PricedLine {
 export function priceLine(
   unitPrice: number,
   qty: number,
-  promo: ActivePromotion | null
+  promo: ActivePromotion | null,
+  referencePrice?: number
 ): PricedLine {
   const { discount, final } = promo
-    ? applyDiscount(unitPrice, promo.discountValue)
+    ? applyDiscount(unitPrice, promo.discountValue, referencePrice)
     : { discount: 0, final: unitPrice };
   return {
     unitPrice,
@@ -111,7 +122,11 @@ export function computeOrderTotals(
   const charge = overrides?.charge ?? DELIVERY_CHARGE;
   const originalSubtotal = lines.reduce((s, l) => s + l.unitPrice * l.qty, 0);
   const discount = lines.reduce((s, l) => s + l.lineDiscount, 0);
-  const finalSubtotal = Math.max(0, originalSubtotal - discount);
+  // Each line already carries its promo-discounted unit final (the percentage
+  // is calculated off the MRP). Sum the per-line totals for the payable
+  // product amount rather than subtracting the discount from the catalog
+  // subtotal, which can exceed it when the discount base is the MRP.
+  const finalSubtotal = lines.reduce((s, l) => s + l.lineTotal, 0);
   const couponDiscount = Math.min(
     Math.max(0, Math.round(overrides?.couponDiscount ?? 0)),
     finalSubtotal
@@ -132,8 +147,8 @@ export function computeOrderTotals(
 
 /** Build PricedLine[] from raw unit-price/qty pairs. */
 export function priceLines(
-  lines: Array<{ unitPrice: number; qty: number }>,
+  lines: Array<{ unitPrice: number; qty: number; referencePrice?: number }>,
   promo: ActivePromotion | null
 ): PricedLine[] {
-  return lines.map((l) => priceLine(l.unitPrice, l.qty, promo));
+  return lines.map((l) => priceLine(l.unitPrice, l.qty, promo, l.referencePrice));
 }

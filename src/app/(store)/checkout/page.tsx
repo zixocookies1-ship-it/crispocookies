@@ -111,7 +111,11 @@ export default function CheckoutPage() {
   }, []);
 
   const linePricing = items.map((item) => {
-    const pricing = unitPriceWithDiscount(item.variant.price, promotion);
+    const pricing = unitPriceWithDiscount(
+      item.variant.price,
+      promotion,
+      item.variant.mrp
+    );
     return {
       key: `${item.productId}-${item.variant.weight}`,
       item,
@@ -124,7 +128,7 @@ export default function CheckoutPage() {
 
   // Client-side preview only — create-order/verify-payment recompute these
   // authoritative totals on the server before any money moves.
-  const previewSubtotal = linePricing.reduce((s, l) => s + l.originalLineTotal, 0);
+  const previewSubtotal = linePricing.reduce((s, l) => s + l.base * l.item.qty, 0);
   const previewOffer = linePricing.reduce((s, l) => s + l.lineDiscount, 0);
   const previewBeforeCoupon = Math.max(0, previewSubtotal - previewOffer);
   const previewCouponAmount = Math.min(

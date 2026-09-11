@@ -7,7 +7,7 @@ export interface CartItem {
   productId: string;
   name: string;
   image: string;
-  variant: { weight: string; price: number };
+  variant: { weight: string; price: number; mrp?: number };
   qty: number;
 }
 

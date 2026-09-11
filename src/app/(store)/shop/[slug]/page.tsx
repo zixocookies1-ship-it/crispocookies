@@ -150,7 +150,9 @@ export default function ProductDetailPage() {
   const outOfStock = stock <= 0;
   const lowStock = stock > 0 && stock <= 10;
 
-  const promoPricing = variant ? unitPriceWithDiscount(variant.price, promotion) : null;
+  const promoPricing = variant
+    ? unitPriceWithDiscount(variant.price, promotion, variant.mrp)
+    : null;
   const promoActive = !!promotion && !!promoPricing && promoPricing.discount > 0;
 
   const highlights = product.tags
@@ -170,7 +172,11 @@ export default function ProductDetailPage() {
       addItem({
         productId: product.id,
         name: product.name,
-        variant: { weight: variant.weight, price: variant.price },
+        variant: {
+          weight: variant.weight,
+          price: variant.price,
+          mrp: variant.mrp,
+        },
         image: images[0] || product.emoji,
       });
     }
@@ -186,7 +192,11 @@ export default function ProductDetailPage() {
       addItem({
         productId: product.id,
         name: product.name,
-        variant: { weight: variant.weight, price: variant.price },
+        variant: {
+          weight: variant.weight,
+          price: variant.price,
+          mrp: variant.mrp,
+        },
         image: images[0] || product.emoji,
       });
     }
@@ -319,7 +329,7 @@ export default function ProductDetailPage() {
               {promoActive ? (
                 <>
                   <span className="text-faded text-lg line-through">
-                    {formatINR(promoPricing!.original)}
+                    {formatINR(promoPricing!.base)}
                   </span>
                   <span className="bg-[#E11D48] text-white text-xs font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full">
                     {promotion!.discountValue}% OFF

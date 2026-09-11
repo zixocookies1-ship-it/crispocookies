@@ -38,6 +38,8 @@ export interface ResolvedLine {
   qty: number;
   /** Catalog unit price (from the database). */
   unitPrice: number;
+  /** MRP / reference price (from the database). */
+  mrp?: number;
   categoryId: string | null;
 }
 
@@ -130,6 +132,11 @@ export async function calculateOrderTotals(opts: {
     if (unitPrice <= 0)
       throw new CouponError("Product price is invalid", 400);
 
+    const mrp =
+      typeof variant.mrp === "number" && Number.isFinite(variant.mrp)
+        ? variant.mrp
+        : undefined;
+
     resolved.push({
       productId: String(product._id),
       name: product.name,
@@ -137,6 +144,7 @@ export async function calculateOrderTotals(opts: {
       variant: item.variant,
       qty: item.qty,
       unitPrice,
+      mrp,
       categoryId: product.category ? String(product.category) : null,
     });
     eligibilityLines.push({
@@ -149,7 +157,11 @@ export async function calculateOrderTotals(opts: {
 
   const promotion = await getActivePromotion();
   const pricedLines: PricedLine[] = priceLines(
-    resolved.map((l) => ({ unitPrice: l.unitPrice, qty: l.qty })),
+    resolved.map((l) => ({
+      unitPrice: l.unitPrice,
+      qty: l.qty,
+      referencePrice: l.mrp,
+    })),
     promotion
   );
 

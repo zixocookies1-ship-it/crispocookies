@@ -63,7 +63,11 @@ export default function CartPage() {
   }, []);
 
   const linePricing = items.map((item) => {
-    const pricing = unitPriceWithDiscount(item.variant.price, promotion);
+    const pricing = unitPriceWithDiscount(
+      item.variant.price,
+      promotion,
+      item.variant.mrp
+    );
     return {
       key: `${item.productId}-${item.variant.weight}`,
       item,
@@ -74,7 +78,7 @@ export default function CartPage() {
     };
   });
 
-  const subtotal = linePricing.reduce((s, l) => s + l.originalLineTotal, 0);
+  const subtotal = linePricing.reduce((s, l) => s + l.base * l.item.qty, 0);
   const promoDiscount = linePricing.reduce((s, l) => s + l.lineDiscount, 0);
   const beforeCoupon = Math.max(0, subtotal - promoDiscount);
   const couponAmount = Math.min(coupon?.discountAmount ?? 0, beforeCoupon);
@@ -240,7 +244,7 @@ export default function CartPage() {
                   <div className="text-right">
                     {line.discount > 0 && (
                       <p className="text-[11px] text-muted">
-                        {formatPrice(line.original)} × {line.item.qty}
+                        {formatPrice(line.base)} × {line.item.qty}
                         {line.lineDiscount > 0 && (
                           <span className="text-[#16A34A] font-semibold ml-1">
                             −{formatPrice(line.lineDiscount)}
@@ -281,6 +285,10 @@ export default function CartPage() {
               </div>
 
             <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted">Subtotal</span>
+                <span className="text-cream font-medium">{formatPrice(subtotal)}</span>
+              </div>
               {promoDiscount > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted">Launch Offer ({promotion?.discountValue}% off)</span>
@@ -289,10 +297,6 @@ export default function CartPage() {
                   </span>
                 </div>
               )}
-              <div className="flex justify-between text-sm">
-                <span className="text-muted">Subtotal</span>
-                <span className="text-cream font-medium">{formatPrice(subtotal)}</span>
-              </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Delivery</span>
                 <span className="text-cream font-medium">

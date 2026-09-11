@@ -52,10 +52,23 @@ export async function getActivePromotion(): Promise<ActivePromotion | null> {
 /** Convenience for components: discounted price pair for a unit price. */
 export function unitPriceWithDiscount(
   unitPrice: number,
-  promotion: ActivePromotion | null
-): { original: number; discount: number; final: number } {
-  const { discount, final } = promotion
-    ? applyDiscount(unitPrice, promotion.discountValue)
-    : { discount: 0, final: unitPrice };
-  return { original: unitPrice, discount, final };
+  promotion: ActivePromotion | null,
+  referencePrice?: number
+): {
+  original: number;
+  base: number;
+  discount: number;
+  final: number;
+} {
+  const { discount, final, base } = promotion
+    ? applyDiscount(unitPrice, promotion.discountValue, referencePrice)
+    : {
+        discount: 0,
+        final: unitPrice,
+        base:
+          referencePrice && referencePrice > unitPrice
+            ? referencePrice
+            : unitPrice,
+      };
+  return { original: unitPrice, base, discount, final };
 }
