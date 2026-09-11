@@ -17,15 +17,32 @@ export async function GET(
 
     await connectDB();
 
-    const order = await Order.findById(params.id).lean();
+const order = await Order.findById(params.id).lean();
 
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
+    // Map stored items (name/qty/price) to the shape the admin UI consumes.
+    const items = (order.items || []).map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (item: any) => ({
+        productName: item.name || "Product",
+        image: item.image || "",
+        variant: item.variant || "",
+        quantity: item.qty ?? 0,
+        price: item.price ?? 0,
+      })
+    );
+
     return NextResponse.json({
       ...order,
-      status: order.orderStatus,
+      items,
+      status:
+        typeof order.orderStatus === "string"
+          ? order.orderStatus.charAt(0).toUpperCase() +
+            order.orderStatus.slice(1)
+          : order.orderStatus,
     });
   } catch (error) {
     console.error("GET /api/admin/orders/[id] error:", error);

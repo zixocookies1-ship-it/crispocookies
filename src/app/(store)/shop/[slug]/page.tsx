@@ -14,6 +14,8 @@ import {
   discountOf,
 } from "@/lib/storefront";
 import { useCartStore } from "@/store/useCartStore";
+import { getActivePromotion, unitPriceWithDiscount } from "@/lib/promotion";
+import { ActivePromotion } from "@/lib/pricing-math";
 import { toast } from "sonner";
 import WishlistButton from "@/components/wishlist-button";
 import ProductCard from "@/components/product-card";
@@ -45,6 +47,19 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<"description" | "ingredients">("description");
   const [imgFailed, setImgFailed] = useState(false);
+  const [promotion, setPromotion] = useState<ActivePromotion | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getActivePromotion()
+      .then((promo) => {
+        if (!cancelled) setPromotion(promo);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -136,6 +151,9 @@ export default function ProductDetailPage() {
   const outOfStock = stock <= 0;
   const lowStock = stock > 0 && stock <= 10;
 
+  const promoPricing = variant ? unitPriceWithDiscount(variant.price, promotion) : null;
+  const promoActive = !!promotion && !!promoPricing && promoPricing.discount > 0;
+
   const highlights = product.tags
     .map((t) => highlightLabel[t])
     .filter(Boolean) as string[];
@@ -226,8 +244,14 @@ export default function ProductDetailPage() {
                     {product.badge}
                   </span>
                 )}
-                {discount > 0 && (
-                  <span className="discount-chip px-2.5 py-1">{discount}% OFF</span>
+                {promoActive ? (
+                  <span className="bg-[#E11D48] text-white text-[11px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full">
+                    {promotion!.discountValue}% OFF
+                  </span>
+                ) : (
+                  discount > 0 && (
+                    <span className="discount-chip px-2.5 py-1">{discount}% OFF</span>
+                  )
                 )}
               </div>
 
@@ -290,21 +314,42 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3 mb-2 flex-wrap">
               <span className="font-heading text-4xl font-bold text-royal">
-                {formatINR(variant?.price ?? 0)}
+                {promoActive
+                  ? formatINR(promoPricing!.final)
+                  : formatINR(variant?.price ?? 0)}
               </span>
-              {variant?.mrp && variant.mrp > variant.price && (
+              {promoActive ? (
                 <>
                   <span className="text-muted text-lg line-through">
-                    {formatINR(variant.mrp)}
+                    {formatINR(promoPricing!.original)}
                   </span>
-                  {discount > 0 && (
-                    <span className="discount-chip px-2.5 py-1">{discount}% OFF</span>
-                  )}
+                  <span className="bg-[#E11D48] text-white text-xs font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full">
+                    {promotion!.discountValue}% OFF
+                  </span>
                 </>
+              ) : (
+                variant?.mrp &&
+                variant.mrp > variant.price && (
+                  <>
+                    <span className="text-muted text-lg line-through">
+                      {formatINR(variant.mrp)}
+                    </span>
+                    {discount > 0 && (
+                      <span className="discount-chip px-2.5 py-1">{discount}% OFF</span>
+                    )}
+                  </>
+                )
               )}
             </div>
+
+            {promoActive && (
+              <div className="flex items-center gap-2 mb-6 bg-[#E11D48]/5 border border-[#E11D48]/20 rounded-xl px-4 py-2.5 text-sm text-[#B3123C] font-semibold w-fit">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#E11D48] animate-pulse" aria-hidden="true" />
+                Launch Offer — {promotion!.discountValue}% OFF applied at checkout
+              </div>
+            )}
 
             {product.variants.length > 1 && (
               <div className="mb-6">

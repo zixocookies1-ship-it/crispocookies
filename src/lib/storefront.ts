@@ -43,6 +43,7 @@ const emojiBySlug: Record<string, string> = {
   "dry-seed-cookies": "🌱",
   "all-mix-cookies": "🥣",
   "kaju-cookie": "🥜",
+  "double-chocolate-brownie": "🍫",
   "double-chocolate-oats-brownie": "🍫",
   "kaju-oats-brownie": "🥜",
 };

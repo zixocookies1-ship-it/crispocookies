@@ -27,6 +27,13 @@ interface OrderData {
   };
   items: OrderItem[];
   subtotal: number;
+  subtotalBeforeDiscount?: number;
+  discount?: number;
+  promotion?: {
+    name: string;
+    discountType: string;
+    discountValue: number;
+  };
   deliveryCharge: number;
   total: number;
   paymentStatus: string;
@@ -128,12 +135,16 @@ export default function OrderDetailPage() {
   };
 
   const paymentBadge = (status: string) => {
+    const normalized =
+      status.length > 0
+        ? status.charAt(0).toUpperCase() + status.slice(1)
+        : status;
     const styles: Record<string, string> = {
       Paid: "badge-green",
       Failed: "badge-red",
       Pending: "badge-amber",
     };
-    return styles[status] || "badge-grey";
+    return styles[normalized] || "badge-grey";
   };
 
   return (
@@ -260,6 +271,19 @@ export default function OrderDetailPage() {
             <span className="text-[#5A5A7A]">Subtotal</span>
             <span className="text-[#1B1B4B]">{formatPrice(order.subtotal)}</span>
           </div>
+          {order.discount && order.discount > 0 ? (
+            <div className="flex justify-between">
+              <span className="text-[#5A5A7A]">
+                Discount
+                {order.promotion?.name
+                  ? ` (${order.promotion.name})`
+                  : ""}
+              </span>
+              <span className="text-[#16A34A] font-medium">
+                - {formatPrice(order.discount)}
+              </span>
+            </div>
+          ) : null}
           <div className="flex justify-between">
             <span className="text-[#5A5A7A]">Delivery</span>
             <span className="text-[#1B1B4B]">

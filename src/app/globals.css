@@ -452,7 +452,9 @@ h1, h2, h3, h4, h5, h6 {
   overflow: hidden;
   border-radius: calc(clamp(1.5rem, 3.5vw, 2.75rem) - clamp(0.5rem, 1.8vw, 1.35rem));
   background: var(--royal);
-  min-height: calc(100svh - clamp(1.5rem, 5vw, 3.5rem) - clamp(1rem, 3.6vw, 2.7rem));
+  /* Content-driven: the section grows with the headline + full video below.
+     The old fixed screen-height forced the background video to be cropped. */
+  min-height: clamp(560px, 92svh, 820px);
   display: flex;
   align-items: center;
 }

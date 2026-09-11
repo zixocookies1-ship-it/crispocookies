@@ -23,6 +23,16 @@ export interface IOrder extends Document {
   };
   items: IOrderItem[];
   subtotal: number;
+  /** Original (pre-discount) product subtotal. */
+  subtotalBeforeDiscount: number;
+  /** Launch-offer discount applied to this order (0 when none). */
+  discount: number;
+  /** Snapshot of the promotion that produced the discount. */
+  promotion?: {
+    name: string;
+    discountType: string;
+    discountValue: number;
+  };
   deliveryCharge: number;
   total: number;
   razorpayOrderId: string;
@@ -56,6 +66,13 @@ const OrderSchema = new Schema<IOrder>({
     },
   ],
   subtotal: { type: Number, required: true },
+  subtotalBeforeDiscount: { type: Number, default: 0 },
+  discount: { type: Number, default: 0 },
+  promotion: {
+    name: { type: String },
+    discountType: { type: String },
+    discountValue: { type: Number },
+  },
   deliveryCharge: { type: Number, default: 0 },
   total: { type: Number, required: true },
   razorpayOrderId: { type: String, default: "" },

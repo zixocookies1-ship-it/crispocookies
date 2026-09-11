@@ -3,6 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getRazorpay } from "@/lib/razorpay";
 import { connectDB } from "@/lib/mongodb";
 import Product from "@/models/Product";
+import {
+  getActivePromotion,
+  priceLines,
+  computeOrderTotals,
+} from "@/lib/pricing";
 
 interface CartItem {
   productId: string;
@@ -10,8 +15,6 @@ interface CartItem {
   qty: number;
 }
 
-const FREE_DELIVERY_THRESHOLD = 499;
-const DELIVERY_CHARGE = 49;
 const MAX_ITEMS_PER_ORDER = 50;
 const MAX_QTY_PER_ITEM = 50;
 const MAX_ORDER_AMOUNT_PAISE = 10000000;
@@ -117,7 +120,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let subtotal = 0;
   const resolvedItems: Array<{
     productId: string;
     name: string;
@@ -126,6 +128,7 @@ export async function POST(request: NextRequest) {
     qty: number;
     price: number;
   }> = [];
+  const rawLines: Array<{ unitPrice: number; qty: number }> = [];
 
   for (const item of items) {
     let product;
@@ -169,8 +172,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const price = variant.price;
-    subtotal += price * item.qty;
+    rawLines.push({ unitPrice: variant.price, qty: item.qty });
 
     resolvedItems.push({
       productId: String(product._id),
@@ -178,12 +180,21 @@ export async function POST(request: NextRequest) {
       image: product.images?.[0] || "",
       variant: item.variant,
       qty: item.qty,
-      price,
+      price: variant.price, // replaced with discounted unit price below
     });
   }
 
-  const deliveryCharge = subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_CHARGE;
-  const total = subtotal + deliveryCharge;
+  const promotion = await getActivePromotion();
+  const pricedLines = priceLines(rawLines, promotion);
+  const totals = computeOrderTotals(pricedLines);
+
+  resolvedItems.forEach((item, i) => {
+    item.price = pricedLines[i].unitFinal;
+  });
+
+  const subtotal = totals.finalSubtotal;
+  const deliveryCharge = totals.deliveryCharge;
+  const total = totals.total;
   const amountInPaise = Math.round(total * 100);
 
   if (
@@ -248,6 +259,8 @@ export async function POST(request: NextRequest) {
     currency: order.currency,
     keyId: process.env.RAZORPAY_KEY_ID,
     subtotal,
+    subtotalBeforeDiscount: totals.originalSubtotal,
+    discount: totals.discount,
     deliveryCharge,
     total,
     items: resolvedItems,

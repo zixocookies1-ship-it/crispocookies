@@ -6,6 +6,8 @@ import Image from "next/image";
 import { Minus, Plus, X, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { formatPrice } from "@/lib/helpers";
+import { getActivePromotion, unitPriceWithDiscount } from "@/lib/promotion";
+import { ActivePromotion } from "@/lib/pricing-math";
 
 function CartImage({ src, name, emoji }: { src: string; name: string; emoji: string }) {
   const isUrl = src.startsWith("http");
@@ -32,13 +34,39 @@ export default function CartPage() {
   const items = useCartStore((s) => s.items);
   const updateQty = useCartStore((s) => s.updateQty);
   const removeItem = useCartStore((s) => s.removeItem);
-  const getTotal = useCartStore((s) => s.getTotal);
 
   useEffect(() => setMounted(true), []);
 
-  const subtotal = getTotal();
+  const [promotion, setPromotion] = useState<ActivePromotion | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getActivePromotion()
+      .then((promo) => {
+        if (!cancelled) setPromotion(promo);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const linePricing = items.map((item) => {
+    const pricing = unitPriceWithDiscount(item.variant.price, promotion);
+    return {
+      key: `${item.productId}-${item.variant.weight}`,
+      item,
+      ...pricing,
+      lineTotal: pricing.final * item.qty,
+      originalLineTotal: pricing.original * item.qty,
+      lineDiscount: pricing.discount * item.qty,
+    };
+  });
+
+  const subtotal = linePricing.reduce((s, l) => s + l.originalLineTotal, 0);
+  const promoDiscount = linePricing.reduce((s, l) => s + l.lineDiscount, 0);
   const delivery = subtotal >= 499 ? 0 : 49;
-  const total = subtotal + delivery;
+  const total = subtotal - promoDiscount + delivery;
   const freeDeliveryDiff = 499 - subtotal;
   const progress = Math.min(100, Math.round((subtotal / 499) * 100));
 
@@ -83,49 +111,49 @@ export default function CartPage() {
       <div className="container-tight pb-16 grid grid-cols-1 lg:grid-cols-5 gap-8 mt-6">
         {/* Cart Items */}
         <div className="lg:col-span-3 space-y-4">
-          {items.map((item) => (
+          {linePricing.map((line) => (
             <div
-              key={`${item.productId}-${item.variant.weight}`}
+              key={line.key}
               className="bg-white rounded-2xl border border-royal/5 shadow-soft p-3.5 sm:p-5 flex gap-3.5 sm:gap-5"
             >
               <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-cream to-beige flex items-center justify-center shrink-0 overflow-hidden">
-                <CartImage src={item.image} name={item.name} emoji="🍪" />
+                <CartImage src={line.item.image} name={line.item.name} emoji="🍪" />
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="font-heading font-semibold text-royal line-clamp-1">
-                    {item.name}
+                    {line.item.name}
                   </h3>
                   <button
-                    onClick={() => removeItem(item.productId, item.variant.weight)}
-                    aria-label={`Remove ${item.name}`}
+                    onClick={() => removeItem(line.item.productId, line.item.variant.weight)}
+                    aria-label={`Remove ${line.item.name}`}
                     className="text-muted hover:text-red transition-colors p-1 -mt-1 -mr-1 shrink-0"
                   >
                     <X size={18} />
                   </button>
                 </div>
 
-                <p className="text-muted text-xs mt-0.5">Weight: {item.variant.weight}</p>
+                <p className="text-muted text-xs mt-0.5">Weight: {line.item.variant.weight}</p>
 
                 <div className="flex items-center justify-between mt-3 gap-3 flex-wrap">
                   <div className="flex items-center gap-3 shrink-0">
                     <button
                       onClick={() =>
-                        updateQty(item.productId, item.variant.weight, item.qty - 1)
+                        updateQty(line.item.productId, line.item.variant.weight, line.item.qty - 1)
                       }
-                      disabled={item.qty <= 1}
+                      disabled={line.item.qty <= 1}
                       aria-label="Decrease quantity"
                       className="w-9 h-9 rounded-full border border-royal/20 flex items-center justify-center hover:border-royal transition-colors disabled:opacity-30"
                     >
                       <Minus size={14} />
                     </button>
                     <span className="w-8 text-center font-bold text-royal tabular-nums">
-                      {item.qty}
+                      {line.item.qty}
                     </span>
                     <button
                       onClick={() =>
-                        updateQty(item.productId, item.variant.weight, item.qty + 1)
+                        updateQty(line.item.productId, line.item.variant.weight, line.item.qty + 1)
                       }
                       aria-label="Increase quantity"
                       className="w-9 h-9 rounded-full border border-royal/20 flex items-center justify-center hover:border-royal transition-colors"
@@ -134,9 +162,21 @@ export default function CartPage() {
                     </button>
                   </div>
 
-                  <span className="font-bold text-royal text-base sm:text-lg">
-                    {formatPrice(item.variant.price * item.qty)}
-                  </span>
+                  <div className="text-right">
+                    {line.discount > 0 && (
+                      <p className="text-[11px] text-muted">
+                        {formatPrice(line.original)} × {line.item.qty}
+                        {line.lineDiscount > 0 && (
+                          <span className="text-[#16A34A] font-semibold ml-1">
+                            −{formatPrice(line.lineDiscount)}
+                          </span>
+                        )}
+                      </p>
+                    )}
+                    <span className="font-bold text-royal text-base sm:text-lg">
+                      {formatPrice(line.lineTotal)}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -168,6 +208,14 @@ export default function CartPage() {
             )}
 
             <div className="space-y-3">
+              {promoDiscount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted">Launch Offer ({promotion?.discountValue}% off)</span>
+                  <span className="text-[#16A34A] font-semibold">
+                    −{formatPrice(promoDiscount)}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Subtotal</span>
                 <span className="text-royal font-medium">{formatPrice(subtotal)}</span>

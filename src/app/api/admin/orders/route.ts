@@ -65,8 +65,15 @@ export async function GET(request: NextRequest) {
       phone: o.phone,
       totalItems: Array.isArray(o.items) ? o.items.reduce((sum: number, i: { qty?: number }) => sum + (i.qty ?? 0), 0) : 0,
       total: o.total,
-      paymentStatus: o.paymentStatus,
-      status: o.orderStatus,
+      paymentStatus:
+        typeof o.paymentStatus === "string"
+          ? o.paymentStatus.charAt(0).toUpperCase() +
+            o.paymentStatus.slice(1)
+          : o.paymentStatus,
+      status:
+        typeof o.orderStatus === "string"
+          ? o.orderStatus.charAt(0).toUpperCase() + o.orderStatus.slice(1)
+          : o.orderStatus,
       createdAt: o.createdAt,
     }));
 

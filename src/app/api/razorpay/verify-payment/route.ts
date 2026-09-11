@@ -8,9 +8,11 @@ import Notification from "@/models/Notification";
 import Product from "@/models/Product";
 import { getRazorpay } from "@/lib/razorpay";
 import { generateOrderId } from "@/lib/helpers";
-
-const FREE_DELIVERY_THRESHOLD = 499;
-const DELIVERY_CHARGE = 49;
+import {
+  getActivePromotion,
+  priceLines,
+  computeOrderTotals,
+} from "@/lib/pricing";
 
 interface Address {
   line1: string;
@@ -107,7 +109,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, orderId: existing.orderId });
   }
 
-  let subtotal = 0;
   const resolvedItems: Array<{
     productId: string;
     name: string;
@@ -116,6 +117,7 @@ export async function POST(request: NextRequest) {
     qty: number;
     price: number;
   }> = [];
+  const rawLines: Array<{ unitPrice: number; qty: number }> = [];
 
   for (const item of items as Array<{
     productId?: string;
@@ -150,19 +152,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    subtotal += variant.price * item.qty;
+    rawLines.push({ unitPrice: variant.price, qty: item.qty });
     resolvedItems.push({
       productId: String(product._id),
       name: product.name,
       image: item?.image || product.images?.[0] || "",
       variant: String(item?.variant),
       qty: item.qty,
-      price: variant.price,
+      price: variant.price, // replaced with discounted unit price below
     });
   }
 
-  const deliveryCharge = subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_CHARGE;
-  const total = subtotal + deliveryCharge;
+  const promotion = await getActivePromotion();
+  const pricedLines = priceLines(rawLines, promotion);
+  const totals = computeOrderTotals(pricedLines);
+
+  resolvedItems.forEach((item, i) => {
+    // Items store the discounted unit price the customer actually paid.
+    item.price = pricedLines[i].unitFinal;
+  });
+
+  const subtotal = totals.finalSubtotal;
+  const deliveryCharge = totals.deliveryCharge;
+  const total = totals.total;
 
   let razorpayOrder;
   try {
@@ -218,6 +230,15 @@ export async function POST(request: NextRequest) {
     },
     items: resolvedItems,
     subtotal,
+    subtotalBeforeDiscount: totals.originalSubtotal,
+    discount: totals.discount,
+    promotion: promotion
+      ? {
+          name: promotion.name,
+          discountType: promotion.discountType,
+          discountValue: promotion.discountValue,
+        }
+      : undefined,
     deliveryCharge,
     total,
     razorpayOrderId: razorpay_order_id,

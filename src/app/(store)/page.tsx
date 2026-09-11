@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -16,8 +16,11 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { fetchProducts, StoreProduct } from "@/lib/storefront";
+import { getActivePromotion } from "@/lib/promotion";
+import { ActivePromotion } from "@/lib/pricing-math";
 import { ProductCardSkeleton } from "@/components/skeleton";
 import ProductCard from "@/components/product-card";
+import HeroVideo from "@/components/hero-video";
 import BenefitsSection from "@/components/benefits-section";
 import { InstagramIcon, YoutubeIcon, SOCIAL_LINKS } from "@/components/social-icons";
 
@@ -50,8 +53,7 @@ export default function StoreHomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [activeVideo, setActiveVideo] = useState(0);
-  const videoRefs = useRef<(HTMLVideoElement | null)[]>([null, null]);
+  const [promotion, setPromotion] = useState<ActivePromotion | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,18 +75,16 @@ export default function StoreHomePage() {
   }, [attempt]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveVideo((prev) => (prev + 1) % 2);
-    }, 8000);
-    return () => clearInterval(interval);
+    let cancelled = false;
+    getActivePromotion()
+      .then((promo) => {
+        if (!cancelled) setPromotion(promo);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, []);
-
-  useEffect(() => {
-    const current = videoRefs.current[activeVideo];
-    if (current) {
-      current.play().catch(() => {});
-    }
-  }, [activeVideo]);
 
   const collectionProducts =
     activeCollection === "cookies"
@@ -102,37 +102,21 @@ export default function StoreHomePage() {
           <span className="gold-corner gold-corner-br" aria-hidden="true" />
 
           <div className="gold-hero">
-            {/* Full video background — cycles every 8s */}
-            <div className="absolute inset-0 z-0">
-              {[0, 1].map((i) => (
-                <video
-                  key={i}
-                  ref={(el) => { videoRefs.current[i] = el; }}
-                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1500 ${
-                    activeVideo === i ? "opacity-100" : "opacity-0"
-                  }`}
-                  muted
-                  loop
-                  playsInline
-                  preload={i === 0 ? "auto" : "metadata"}
-                  poster="/logo.jpeg"
-                  aria-hidden="true"
-                >
-                  <source src={`/hero-${i + 1}.mp4`} type="video/mp4" />
-                </video>
-              ))}
-              <div
-                className="absolute inset-0 bg-gradient-to-r from-espresso/70 via-plum/40 to-transparent"
-                aria-hidden="true"
-              />
-              <div
-                className="absolute inset-0 bg-gradient-to-t from-cream via-transparent to-plum/20"
-                aria-hidden="true"
-              />
-            </div>
-
-            <div className="container-wide relative z-10 py-20 lg:py-0">
-              <div className="max-w-2xl mx-auto text-center lg:text-left lg:mx-0">
+            <div className="container-wide relative z-10 py-10 lg:py-16 px-4 sm:px-6">
+              <div className="max-w-3xl mx-auto text-center">
+                {promotion && (
+                  <p className="mb-5">
+                    <span
+                      className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-gold/60 bg-gold/10 text-gold-soft text-xs font-bold tracking-[0.2em] uppercase"
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full bg-gold animate-pulse"
+                        aria-hidden="true"
+                      />
+                      Launch Offer — {promotion.discountValue}% OFF
+                    </span>
+                  </p>
+                )}
                 <p className="eyebrow mb-4 text-gold-soft">Baked to Perfection</p>
                 <h1 className="font-heading text-5xl sm:text-6xl lg:text-display text-cream font-bold leading-[1.05] mb-5">
                   Baked to Impress.
@@ -143,7 +127,7 @@ export default function StoreHomePage() {
                 <p className="text-gold-soft font-medium text-base mb-8">
                   A Little Crisp. A Lot of Love.
                 </p>
-                <div className="flex flex-wrap items-center gap-4 justify-center lg:justify-start">
+                <div className="flex flex-wrap items-center justify-center gap-4">
                   <Link href="/cookies" className="btn-primary">
                     Explore Cookies
                   </Link>
@@ -154,6 +138,10 @@ export default function StoreHomePage() {
                     Our Story
                   </Link>
                 </div>
+              </div>
+
+              <div className="mt-10 lg:mt-14 max-w-4xl mx-auto">
+                <HeroVideo />
               </div>
             </div>
           </div>
@@ -253,7 +241,7 @@ export default function StoreHomePage() {
 
           {!loading && !error && collectionProducts.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
-              {collectionProducts.slice(0, 4).map((product) => (
+              {collectionProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>

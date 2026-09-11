@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,8 @@ import { useCartStore } from "@/store/useCartStore";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { StoreProduct, cheapestVariant, discountOf, formatINR } from "@/lib/storefront";
+import { getActivePromotion, unitPriceWithDiscount } from "@/lib/promotion";
+import { ActivePromotion } from "@/lib/pricing-math";
 import WishlistButton from "@/components/wishlist-button";
 
 interface ProductCardProps {
@@ -20,6 +22,19 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
   const [imgFailed, setImgFailed] = useState(false);
+  const [promotion, setPromotion] = useState<ActivePromotion | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getActivePromotion()
+      .then((promo) => {
+        if (!cancelled) setPromotion(promo);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const hasImages = product.images.length > 0;
   const showImage = hasImages && !imgFailed;
@@ -32,6 +47,10 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   const discount = variant ? discountOf(variant) : 0;
   const outOfStock = !variant || variant.stock <= 0;
   const multiVariant = product.variants.length > 1;
+
+  const promoPricing = unitPriceWithDiscount(price, promotion);
+  const promoActive = !!promotion && promoPricing.discount > 0;
+  const showPromoChip = promoActive && !outOfStock;
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -86,7 +105,12 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
               {product.badge}
             </span>
           )}
-          {discount > 0 && multiVariant && (
+          {showPromoChip && (
+            <span className="bg-[#E11D48] text-white text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full">
+              {promotion.discountValue}% OFF
+            </span>
+          )}
+          {!showPromoChip && discount > 0 && multiVariant && (
             <span className="discount-chip">{discount}% OFF</span>
           )}
         </div>
@@ -112,13 +136,22 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
 
         <div className="mt-auto pt-1.5 flex items-baseline gap-1.5 flex-wrap">
           <span className="text-base sm:text-lg font-extrabold text-royal">
-            {formatINR(price)}
+            {promoActive ? formatINR(promoPricing.final) : formatINR(price)}
           </span>
-          {mrp > price && (
-            <span className="text-xs text-muted line-through">{formatINR(mrp)}</span>
+          {promoActive ? (
+            <span className="text-xs text-muted line-through">{formatINR(price)}</span>
+          ) : (
+            mrp > price && (
+              <span className="text-xs text-muted line-through">{formatINR(mrp)}</span>
+            )
           )}
-          {discount > 0 && !multiVariant && (
-            <span className="discount-chip">{discount}% OFF</span>
+          {promoActive ? (
+            <span className="bg-[#E11D48] text-white text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full">
+              {promotion.discountValue}% OFF
+            </span>
+          ) : (
+            discount > 0 &&
+            !multiVariant && <span className="discount-chip">{discount}% OFF</span>
           )}
         </div>
 

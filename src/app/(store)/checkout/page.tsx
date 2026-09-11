@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useCartStore } from "@/store/useCartStore";
 import { formatPrice } from "@/lib/helpers";
+import { getActivePromotion, unitPriceWithDiscount } from "@/lib/promotion";
+import { ActivePromotion } from "@/lib/pricing-math";
 
 interface FormData {
   fullName: string;
@@ -63,18 +65,45 @@ function loadRazorpayScript(): Promise<boolean> {
 export default function CheckoutPage() {
   const router = useRouter();
   const items = useCartStore((s) => s.items);
-  const getTotal = useCartStore((s) => s.getTotal);
   const clearCart = useCartStore((s) => s.clearCart);
   const [form, setForm] = useState<FormData>(initialForm);
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [promotion, setPromotion] = useState<ActivePromotion | null>(null);
   const processingRef = useRef(false);
 
   useEffect(() => setMounted(true), []);
 
-  const subtotal = getTotal();
+  useEffect(() => {
+    let cancelled = false;
+    getActivePromotion()
+      .then((promo) => {
+        if (!cancelled) setPromotion(promo);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const linePricing = items.map((item) => {
+    const pricing = unitPriceWithDiscount(item.variant.price, promotion);
+    return {
+      key: `${item.productId}-${item.variant.weight}`,
+      item,
+      ...pricing,
+      lineTotal: pricing.final * item.qty,
+      originalLineTotal: pricing.original * item.qty,
+      lineDiscount: pricing.discount * item.qty,
+    };
+  });
+
+  // Client-side preview only — create-order/verify-payment recompute these
+  // authoritative totals on the server before any money moves.
+  const subtotal = linePricing.reduce((s, l) => s + l.originalLineTotal, 0);
+  const promoDiscount = linePricing.reduce((s, l) => s + l.lineDiscount, 0);
   const delivery = subtotal >= 499 ? 0 : 49;
-  const total = subtotal + delivery;
+  const total = subtotal - promoDiscount + delivery;
 
   if (!mounted) {
     return (
@@ -366,26 +395,39 @@ export default function CheckoutPage() {
             </h2>
 
             <div className="max-h-60 overflow-y-auto space-y-3 mb-4 pr-1">
-              {items.map((item) => (
+              {linePricing.map((line) => (
                 <div
-                   key={`${item.productId}-${item.variant.weight}`}
+                  key={line.key}
                   className="flex gap-3 items-start"
                 >
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cream to-gold/10 flex items-center justify-center shrink-0">
                     <span className="text-lg select-none">🍪</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-royal text-sm font-medium truncate">{item.name}</p>
-                     <p className="text-muted text-xs">{item.variant.weight} × {item.qty}</p>
+                    <p className="text-royal text-sm font-medium truncate">{line.item.name}</p>
+                    <p className="text-muted text-xs">{line.item.variant.weight} × {line.item.qty}</p>
+                    {line.discount > 0 && (
+                      <p className="text-muted text-[11px] line-through">
+                        {formatPrice(line.original)} each
+                      </p>
+                    )}
                   </div>
                   <span className="text-royal font-medium text-sm whitespace-nowrap">
-                     {formatPrice(item.variant.price * item.qty)}
+                    {formatPrice(line.lineTotal)}
                   </span>
                 </div>
               ))}
             </div>
 
             <div className="border-t border-royal/10 pt-3 space-y-2 mb-4">
+              {promoDiscount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted">Launch Offer ({promotion?.discountValue}% off)</span>
+                  <span className="text-[#16A34A] font-semibold">
+                    −{formatPrice(promoDiscount)}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Subtotal</span>
                 <span className="text-royal font-medium">{formatPrice(subtotal)}</span>
