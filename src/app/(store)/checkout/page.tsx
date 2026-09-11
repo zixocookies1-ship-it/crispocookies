@@ -3,10 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Ticket } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { formatPrice } from "@/lib/helpers";
 import { getActivePromotion, unitPriceWithDiscount } from "@/lib/promotion";
 import { ActivePromotion } from "@/lib/pricing-math";
+import {
+  validateCouponOnServer,
+  toAppliedCoupon,
+  cartItemsForValidation,
+} from "@/lib/coupon-client";
 
 interface FormData {
   fullName: string;
@@ -29,6 +35,15 @@ const initialForm: FormData = {
   state: "",
   pincode: "",
 };
+
+interface ServerTotals {
+  subtotal: number;
+  subtotalBeforeDiscount: number;
+  discount: number;
+  couponDiscount: number;
+  deliveryCharge: number;
+  total: number;
+}
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -66,11 +81,20 @@ export default function CheckoutPage() {
   const router = useRouter();
   const items = useCartStore((s) => s.items);
   const clearCart = useCartStore((s) => s.clearCart);
+  const coupon = useCartStore((s) => s.coupon);
+  const setCoupon = useCartStore((s) => s.setCoupon);
+  const removeCoupon = useCartStore((s) => s.removeCoupon);
   const [form, setForm] = useState<FormData>(initialForm);
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [promotion, setPromotion] = useState<ActivePromotion | null>(null);
+  const [couponInput, setCouponInput] = useState("");
+  const [applying, setApplying] = useState(false);
+  const [revalidating, setRevalidating] = useState(false);
+  const [server, setServer] = useState<ServerTotals | null>(null);
   const processingRef = useRef(false);
+  const formRef = useRef(form);
+  formRef.current = form;
 
   useEffect(() => setMounted(true), []);
 
@@ -100,10 +124,62 @@ export default function CheckoutPage() {
 
   // Client-side preview only — create-order/verify-payment recompute these
   // authoritative totals on the server before any money moves.
-  const subtotal = linePricing.reduce((s, l) => s + l.originalLineTotal, 0);
-  const promoDiscount = linePricing.reduce((s, l) => s + l.lineDiscount, 0);
-  const delivery = subtotal >= 499 ? 0 : 49;
-  const total = subtotal - promoDiscount + delivery;
+  const previewSubtotal = linePricing.reduce((s, l) => s + l.originalLineTotal, 0);
+  const previewOffer = linePricing.reduce((s, l) => s + l.lineDiscount, 0);
+  const previewBeforeCoupon = Math.max(0, previewSubtotal - previewOffer);
+  const previewCouponAmount = Math.min(
+    coupon?.discountAmount ?? 0,
+    previewBeforeCoupon
+  );
+  const previewDelivery = previewSubtotal >= 499 ? 0 : 49;
+  const previewTotal = previewBeforeCoupon - previewCouponAmount + previewDelivery;
+
+  // Storefront identity for coupon-safe customer checks (guest checkout uses
+  // the email/phone the customer has typed; empty is fine — the server enforces
+  // customer limits authoritatively at payment time).
+  const tellServerCustomer = () => ({
+    email: formRef.current.email.trim(),
+    phone: formRef.current.phone.trim(),
+  });
+
+  // Revalidate the applied coupon whenever the cart changes, so a coupon that
+  // no longer qualifies is removed automatically.
+  const itemsKey = JSON.stringify(
+    items.map((i) => [i.productId, i.variant.weight, i.qty])
+  );
+  useEffect(() => {
+    if (!mounted) return;
+    const applied = useCartStore.getState().coupon;
+    if (!applied) return;
+    let cancelled = false;
+    setRevalidating(true);
+    const { email, phone } = tellServerCustomer();
+    validateCouponOnServer({
+      code: applied.code,
+      items: cartItemsForValidation(items),
+      email,
+      phone,
+    })
+      .then((res) => {
+        if (cancelled) return;
+        if (res.valid) {
+          const next = toAppliedCoupon(res);
+          if (next) setCoupon(next);
+          else removeCoupon();
+        } else {
+          removeCoupon();
+          toast(res.error || "Coupon removed because it is no longer valid.");
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setRevalidating(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemsKey, mounted]);
 
   if (!mounted) {
     return (
@@ -130,6 +206,39 @@ export default function CheckoutPage() {
     return true;
   };
 
+  const handleApply = async () => {
+    const code = couponInput.trim();
+    if (!code) {
+      toast.error("Please enter a coupon code.");
+      return;
+    }
+    if (applying) return;
+    setApplying(true);
+    try {
+      const res = await validateCouponOnServer({
+        code,
+        items: cartItemsForValidation(items),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+      });
+      if (res.valid) {
+        const applied = toAppliedCoupon(res);
+        if (applied) {
+          setCoupon(applied);
+          setCouponInput("");
+          setServer(null);
+          toast.success(
+            `Coupon ${applied.code} applied — you save ${formatPrice(applied.discountAmount)}!`
+          );
+        }
+      } else {
+        toast.error(res.error || "Invalid coupon code.");
+      }
+    } finally {
+      setApplying(false);
+    }
+  };
+
   const handlePayment = async () => {
     if (processingRef.current) return;
     if (!validate()) return;
@@ -152,14 +261,38 @@ export default function CheckoutPage() {
             variant: item.variant.weight,
             qty: item.qty,
           })),
+          couponCode: coupon?.code || undefined,
+          email: form.email.trim(),
+          phone: form.phone.trim(),
         }),
       });
 
       if (!orderRes.ok) {
         const errData = await orderRes.json().catch(() => ({}));
-        throw new Error(errData.error || "Failed to create order");
+        const message = errData.error || "Failed to create order";
+        if (errData.error && coupon) {
+          removeCoupon();
+        }
+        throw new Error(message);
       }
       const orderData = await orderRes.json();
+
+      // Authoritative totals from the server replace the client preview.
+      setServer({
+        subtotal: orderData.subtotal,
+        subtotalBeforeDiscount: orderData.subtotalBeforeDiscount,
+        discount: orderData.discount,
+        couponDiscount: orderData.couponDiscount || 0,
+        deliveryCharge: orderData.deliveryCharge,
+        total: orderData.total,
+      });
+      if (orderData.coupon && coupon) {
+        setCoupon({
+          ...coupon,
+          discountAmount: orderData.couponDiscount || 0,
+          eligibleSubtotal: orderData.eligibleSubtotal || 0,
+        });
+      }
 
       const options = {
         key: orderData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
@@ -192,6 +325,7 @@ export default function CheckoutPage() {
                 subtotal: orderData.subtotal,
                 deliveryCharge: orderData.deliveryCharge,
                 total: orderData.total,
+                couponCode: coupon?.code || undefined,
               }),
             });
 
@@ -216,13 +350,24 @@ export default function CheckoutPage() {
         toast.error("Payment failed. Please try again.");
       });
       rzp.open();
-    } catch {
-      toast.error("Payment could not be initialized. Please try again.");
+    } catch (err) {
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : "Payment could not be initialized. Please try again.";
+      toast.error(message);
     } finally {
       processingRef.current = false;
       setLoading(false);
     }
   };
+
+  const displayCoupon = server ? server.couponDiscount : previewCouponAmount;
+  const displayDelivery = server ? server.deliveryCharge : previewDelivery;
+  const displaySubtotal = server
+    ? server.subtotal
+    : previewBeforeCoupon - previewCouponAmount;
+  const displayTotal = server ? server.total : previewTotal;
 
   if (items.length === 0) {
     return (
@@ -420,31 +565,114 @@ export default function CheckoutPage() {
             </div>
 
             <div className="border-t border-royal/10 pt-3 space-y-2 mb-4">
-              {promoDiscount > 0 && (
+              {previewOffer > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted">Launch Offer ({promotion?.discountValue}% off)</span>
                   <span className="text-[#16A34A] font-semibold">
-                    −{formatPrice(promoDiscount)}
+                    −{formatPrice(previewOffer)}
                   </span>
                 </div>
               )}
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Subtotal</span>
-                <span className="text-royal font-medium">{formatPrice(subtotal)}</span>
+                <span className="text-royal font-medium">{formatPrice(displaySubtotal)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Delivery</span>
-                <span className={delivery === 0 ? "text-green font-medium" : "text-royal font-medium"}>
-                  {delivery === 0 ? "Free" : formatPrice(delivery)}
+                <span className={displayDelivery === 0 ? "text-green font-medium" : "text-royal font-medium"}>
+                  {displayDelivery === 0 ? "Free" : formatPrice(displayDelivery)}
                 </span>
               </div>
             </div>
 
+            {/* Coupon */}
+            <div className="border-t border-royal/10 pt-4 mb-4">
+              {coupon ? (
+                <div className="bg-[#16A34A]/8 border border-[#16A34A]/25 rounded-xl p-3.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Ticket size={16} className="text-[#16A34A] shrink-0" />
+                      <div>
+                        <p className="text-sm font-bold text-royal font-mono">
+                          {coupon.code}{" "}
+                          <span className="text-[#16A34A] font-semibold">✓</span>
+                        </p>
+                        <p className="text-xs text-muted">
+                          {coupon.discountType === "percentage"
+                            ? `${coupon.discountValue}% off`
+                            : `INR ${coupon.discountValue} off`}
+                          {displayCoupon > 0 && (
+                            <span className="text-[#16A34A] font-semibold">
+                              {" "}
+                              — you save {formatPrice(displayCoupon)}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        removeCoupon();
+                        setServer(null);
+                        toast("Coupon removed.");
+                      }}
+                      className="text-xs text-muted hover:text-red font-medium shrink-0"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  {revalidating && (
+                    <p className="text-[11px] text-muted mt-2">
+                      Rechecking coupon…
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-muted flex items-center gap-1.5 mb-2 font-medium">
+                    <Ticket size={15} /> Have a coupon?
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => e.key === "Enter" && handleApply()}
+                      placeholder="Enter coupon code"
+                      className="input-field flex-1 font-mono uppercase text-sm"
+                      maxLength={32}
+                    />
+                    <button
+                      onClick={handleApply}
+                      disabled={applying}
+                      className="btn-navy py-2 px-4 text-sm shrink-0 disabled:opacity-60"
+                    >
+                      {applying ? "Applying..." : "Apply"}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-muted mt-2">
+                    Try WELCOME10 or SAVE100 (demo codes for testing).
+                  </p>
+                </>
+              )}
+            </div>
+
             <div className="border-t border-royal/10 my-4" />
 
-            <div className="flex justify-between items-baseline mb-6">
-              <span className="font-heading text-lg font-bold text-royal">Total</span>
-              <span className="font-heading text-xl font-bold text-royal">{formatPrice(total)}</span>
+            <div className="space-y-2 mb-6">
+              {displayCoupon > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted">Coupon ({coupon?.code})</span>
+                  <span className="text-[#16A34A] font-semibold">
+                    −{formatPrice(displayCoupon)}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between items-baseline">
+                <span className="font-heading text-lg font-bold text-royal">Total</span>
+                <span className="font-heading text-xl font-bold text-royal">
+                  {formatPrice(displayTotal)}
+                </span>
+              </div>
             </div>
 
             <button

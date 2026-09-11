@@ -2,12 +2,8 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getRazorpay } from "@/lib/razorpay";
 import { connectDB } from "@/lib/mongodb";
-import Product from "@/models/Product";
-import {
-  getActivePromotion,
-  priceLines,
-  computeOrderTotals,
-} from "@/lib/pricing";
+import { calculateOrderTotals } from "@/lib/order-totals";
+import { CouponError } from "@/lib/coupons";
 
 interface CartItem {
   productId: string;
@@ -15,8 +11,6 @@ interface CartItem {
   qty: number;
 }
 
-const MAX_ITEMS_PER_ORDER = 50;
-const MAX_QTY_PER_ITEM = 50;
 const MAX_ORDER_AMOUNT_PAISE = 10000000;
 
 function sanitizeRazorpayError(error: unknown) {
@@ -39,10 +33,20 @@ function sanitizeRazorpayError(error: unknown) {
 }
 
 export async function POST(request: NextRequest) {
-  let payload: { items?: CartItem[] };
+  let payload: {
+    items?: CartItem[];
+    couponCode?: string;
+    email?: string;
+    phone?: string;
+  };
 
   try {
-    payload = (await request.json()) as { items?: CartItem[] };
+    payload = (await request.json()) as {
+      items?: CartItem[];
+      couponCode?: string;
+      email?: string;
+      phone?: string;
+    };
   } catch {
     return NextResponse.json(
       { success: false, error: "Invalid JSON request body" },
@@ -59,45 +63,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (items.length > MAX_ITEMS_PER_ORDER) {
-    return NextResponse.json(
-      { success: false, error: "Too many items in order" },
-      { status: 400 }
-    );
-  }
-
-  for (const item of items) {
-    if (
-      typeof item?.productId !== "string" ||
-      !item.productId ||
-      typeof item?.variant !== "string" ||
-      !item.variant ||
-      !Number.isInteger(item.qty) ||
-      item.qty <= 0 ||
-      item.qty > MAX_QTY_PER_ITEM
-    ) {
-      return NextResponse.json(
-        { success: false, error: "Invalid item data" },
-        { status: 400 }
-      );
-    }
-  }
-
   const keyIdSet = !!process.env.RAZORPAY_KEY_ID;
   const secretSet = !!process.env.RAZORPAY_KEY_SECRET;
-  const keyIdPrefix = process.env.RAZORPAY_KEY_ID?.substring(0, 7) || "NOT SET";
+  const keyIdPrefix =
+    process.env.RAZORPAY_KEY_ID?.substring(0, 7) || "NOT SET";
 
   console.log("[create-order] request received", {
     itemCount: items.length,
+    hasCoupon: !!payload?.couponCode,
     keyIdSet,
     secretSet,
   });
 
   if (!keyIdSet || !secretSet) {
-    console.error("[create-order] Razorpay keys not configured on the server", {
-      keyIdSet,
-      secretSet,
-    });
+    console.error(
+      "[create-order] Razorpay keys not configured on the server",
+      { keyIdSet, secretSet }
+    );
     return NextResponse.json(
       {
         success: false,
@@ -115,82 +97,51 @@ export async function POST(request: NextRequest) {
       message: error instanceof Error ? error.message : String(error),
     });
     return NextResponse.json(
-      { success: false, error: "Payment service temporarily unavailable" },
+      {
+        success: false,
+        error: "Payment service temporarily unavailable",
+      },
       { status: 500 }
     );
   }
 
-  const resolvedItems: Array<{
-    productId: string;
-    name: string;
-    image: string;
-    variant: string;
-    qty: number;
-    price: number;
-  }> = [];
-  const rawLines: Array<{ unitPrice: number; qty: number }> = [];
-
-  for (const item of items) {
-    let product;
-    try {
-      product = await Product.findById(item.productId).lean();
-    } catch (error) {
-      console.error("[create-order] product lookup failed", {
-        productId: item.productId,
-        message: error instanceof Error ? error.message : String(error),
+  // ---------------------------------------------------------------
+  // Centralised calculation: products re-fetched from DB, promotion
+  // applied, coupon validated & discount computed. Any CouponError
+  // contains a customer-safe message.
+  // ---------------------------------------------------------------
+  let totals;
+  try {
+    totals = await calculateOrderTotals({
+      rawItems: items,
+      couponCode: payload?.couponCode || null,
+      customerEmail: payload?.email || null,
+      customerPhone: payload?.phone || null,
+    });
+  } catch (error) {
+    if (error instanceof CouponError) {
+      console.warn("[create-order] coupon rejected", {
+        message: error.message,
       });
       return NextResponse.json(
-        { success: false, error: "Could not load product details" },
-        { status: 500 }
+        { success: false, error: error.message },
+        { status: error.status }
       );
     }
-
-    if (!product) {
-      return NextResponse.json(
-        { success: false, error: `Product not found: ${item.productId}` },
-        { status: 400 }
-      );
-    }
-
-    const variant = product.variants?.find(
-      (v: { weight: string }) => v.weight === item.variant
-    );
-    if (!variant) {
-      return NextResponse.json(
-        { success: false, error: `Variant not found: ${item.variant}` },
-        { status: 400 }
-      );
-    }
-
-    if (variant.stock < item.qty) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Insufficient stock for ${product.name} (${item.variant})`,
-        },
-        { status: 400 }
-      );
-    }
-
-    rawLines.push({ unitPrice: variant.price, qty: item.qty });
-
-    resolvedItems.push({
-      productId: String(product._id),
-      name: product.name,
-      image: product.images?.[0] || "",
-      variant: item.variant,
-      qty: item.qty,
-      price: variant.price, // replaced with discounted unit price below
+    console.error("[create-order] calculation failed", {
+      message: error instanceof Error ? error.message : String(error),
     });
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Could not calculate order total",
+      },
+      { status: 500 }
+    );
   }
-
-  const promotion = await getActivePromotion();
-  const pricedLines = priceLines(rawLines, promotion);
-  const totals = computeOrderTotals(pricedLines);
-
-  resolvedItems.forEach((item, i) => {
-    item.price = pricedLines[i].unitFinal;
-  });
 
   const subtotal = totals.finalSubtotal;
   const deliveryCharge = totals.deliveryCharge;
@@ -212,6 +163,8 @@ export async function POST(request: NextRequest) {
 
   console.log("[create-order] totals calculated", {
     subtotal,
+    offerDiscount: totals.offerDiscount,
+    couponDiscount: totals.couponDiscount,
     deliveryCharge,
     total,
     amountInPaise,
@@ -234,7 +187,8 @@ export async function POST(request: NextRequest) {
       keyIdPrefix,
     });
     const misconfigured =
-      error instanceof Error && error.message.includes("environment variables");
+      error instanceof Error &&
+      error.message.includes("environment variables");
     return NextResponse.json(
       {
         success: false,
@@ -260,9 +214,12 @@ export async function POST(request: NextRequest) {
     keyId: process.env.RAZORPAY_KEY_ID,
     subtotal,
     subtotalBeforeDiscount: totals.originalSubtotal,
-    discount: totals.discount,
+    discount: totals.offerDiscount,
+    couponDiscount: totals.couponDiscount,
+    eligibleSubtotal: totals.eligibleSubtotal,
+    coupon: totals.coupon,
     deliveryCharge,
     total,
-    items: resolvedItems,
+    items: totals.items,
   });
 }

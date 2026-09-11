@@ -11,20 +11,34 @@ export interface CartItem {
   qty: number;
 }
 
+export interface AppliedCoupon {
+  id: string;
+  code: string;
+  discountType: "percentage" | "fixed";
+  discountValue: number;
+  discountAmount: number;
+  eligibleSubtotal: number;
+  description: string;
+}
+
 interface CartStore {
   items: CartItem[];
+  coupon: AppliedCoupon | null;
   addItem: (item: Omit<CartItem, "qty">) => void;
   removeItem: (productId: string, variant: string) => void;
   updateQty: (productId: string, variant: string, qty: number) => void;
   clearCart: () => void;
   getTotal: () => number;
   getCount: () => number;
+  setCoupon: (coupon: AppliedCoupon) => void;
+  removeCoupon: () => void;
 }
 
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
+      coupon: null,
 
       addItem: (item) => {
         set((state) => {
@@ -68,12 +82,15 @@ export const useCartStore = create<CartStore>()(
         }));
       },
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], coupon: null }),
 
       getTotal: () =>
         get().items.reduce((sum, i) => sum + i.variant.price * i.qty, 0),
 
       getCount: () => get().items.reduce((sum, i) => sum + i.qty, 0),
+
+      setCoupon: (coupon) => set({ coupon }),
+      removeCoupon: () => set({ coupon: null }),
     }),
     { name: "crispo-cart", skipHydration: true }
   )

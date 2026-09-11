@@ -5,6 +5,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import StatsCard from "@/components/admin/stats-card";
 import { PIE_COLORS } from "@/components/admin/category-pie";
+import CouponAnalytics from "@/components/admin/coupon-analytics";
 import { formatPrice } from "@/lib/helpers";
 
 const RevenueChart = dynamic(
@@ -177,6 +178,9 @@ export default function DashboardPage() {
         </h2>
         <RevenueChart data={revenueChart} />
       </div>
+
+      {/* Coupon Analytics */}
+      <CouponAnalytics />
 
       {/* Two Column: Recent Orders + Category Pie */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

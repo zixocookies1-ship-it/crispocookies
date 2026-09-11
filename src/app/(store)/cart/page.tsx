@@ -3,11 +3,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Minus, Plus, X, ShoppingBag } from "lucide-react";
+import { Minus, Plus, X, ShoppingBag, Ticket } from "lucide-react";
+import { toast } from "sonner";
 import { useCartStore } from "@/store/useCartStore";
 import { formatPrice } from "@/lib/helpers";
 import { getActivePromotion, unitPriceWithDiscount } from "@/lib/promotion";
 import { ActivePromotion } from "@/lib/pricing-math";
+import {
+  validateCouponOnServer,
+  toAppliedCoupon,
+  cartItemsForValidation,
+} from "@/lib/coupon-client";
 
 function CartImage({ src, name, emoji }: { src: string; name: string; emoji: string }) {
   const isUrl = src.startsWith("http");
@@ -32,12 +38,17 @@ function CartImage({ src, name, emoji }: { src: string; name: string; emoji: str
 export default function CartPage() {
   const [mounted, setMounted] = useState(false);
   const items = useCartStore((s) => s.items);
+  const coupon = useCartStore((s) => s.coupon);
+  const setCoupon = useCartStore((s) => s.setCoupon);
+  const removeCoupon = useCartStore((s) => s.removeCoupon);
   const updateQty = useCartStore((s) => s.updateQty);
   const removeItem = useCartStore((s) => s.removeItem);
+  const [promotion, setPromotion] = useState<ActivePromotion | null>(null);
+  const [couponInput, setCouponInput] = useState("");
+  const [applying, setApplying] = useState(false);
+  const [revalidating, setRevalidating] = useState(false);
 
   useEffect(() => setMounted(true), []);
-
-  const [promotion, setPromotion] = useState<ActivePromotion | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,10 +76,76 @@ export default function CartPage() {
 
   const subtotal = linePricing.reduce((s, l) => s + l.originalLineTotal, 0);
   const promoDiscount = linePricing.reduce((s, l) => s + l.lineDiscount, 0);
+  const beforeCoupon = Math.max(0, subtotal - promoDiscount);
+  const couponAmount = Math.min(coupon?.discountAmount ?? 0, beforeCoupon);
   const delivery = subtotal >= 499 ? 0 : 49;
-  const total = subtotal - promoDiscount + delivery;
+  const total = beforeCoupon - couponAmount + delivery;
   const freeDeliveryDiff = 499 - subtotal;
   const progress = Math.min(100, Math.round((subtotal / 499) * 100));
+
+  // Revalidate the applied coupon whenever the cart changes (qty/item) so a
+  // coupon that no longer meets e.g. the minimum order value is removed.
+  const itemsKey = JSON.stringify(
+    items.map((i) => [i.productId, i.variant.weight, i.qty])
+  );
+  useEffect(() => {
+    if (!mounted) return;
+    const applied = useCartStore.getState().coupon;
+    if (!applied) return;
+    let cancelled = false;
+    setRevalidating(true);
+    validateCouponOnServer({
+      code: applied.code,
+      items: cartItemsForValidation(items),
+    })
+      .then((res) => {
+        if (cancelled) return;
+        if (res.valid) {
+          const next = toAppliedCoupon(res);
+          if (next) setCoupon(next);
+          else removeCoupon();
+        } else {
+          removeCoupon();
+          toast(res.error || "Coupon removed because it is no longer valid.");
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setRevalidating(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemsKey, mounted]);
+
+  const handleApply = async () => {
+    const code = couponInput.trim();
+    if (!code) {
+      toast.error("Please enter a coupon code.");
+      return;
+    }
+    if (applying) return;
+    setApplying(true);
+    try {
+      const res = await validateCouponOnServer({
+        code,
+        items: cartItemsForValidation(items),
+      });
+      if (res.valid) {
+        const applied = toAppliedCoupon(res);
+        if (applied) {
+          setCoupon(applied);
+          setCouponInput("");
+          toast.success(`Coupon ${applied.code} applied — you save ${formatPrice(applied.discountAmount)}!`);
+        }
+      } else {
+        toast.error(res.error || "Invalid coupon code.");
+      }
+    } finally {
+      setApplying(false);
+    }
+  };
 
   if (!mounted) {
     return (
@@ -228,13 +305,85 @@ export default function CartPage() {
               </div>
             </div>
 
+            {/* Coupon */}
+            <div className="mt-5 border-t border-royal/10 pt-4">
+              {coupon ? (
+                <div className="bg-[#16A34A]/8 border border-[#16A34A]/25 rounded-xl p-3.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Ticket size={16} className="text-[#16A34A] shrink-0" />
+                      <div>
+                        <p className="text-sm font-bold text-royal font-mono">
+                          {coupon.code}{" "}
+                          <span className="text-[#16A34A] font-semibold">✓</span>
+                        </p>
+                        <p className="text-xs text-muted">
+                          {coupon.discountType === "percentage"
+                            ? `${coupon.discountValue}% off`
+                            : `INR ${coupon.discountValue} off`}{" "}
+                          — you save {formatPrice(couponAmount)}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        removeCoupon();
+                        toast("Coupon removed.");
+                      }}
+                      className="text-xs text-muted hover:text-red font-medium shrink-0"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  {revalidating && (
+                    <p className="text-[11px] text-muted mt-2">
+                      Rechecking coupon after cart change…
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-muted flex items-center gap-1.5 mb-2 font-medium">
+                    <Ticket size={15} /> Have a coupon?
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => e.key === "Enter" && handleApply()}
+                      placeholder="Enter coupon code"
+                      className="input-field flex-1 font-mono uppercase text-sm"
+                      maxLength={32}
+                    />
+                    <button
+                      onClick={handleApply}
+                      disabled={applying}
+                      className="btn-navy py-2 px-4 text-sm shrink-0 disabled:opacity-60"
+                    >
+                      {applying ? "Applying..." : "Apply"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
             <div className="border-t border-royal/10 my-4" />
 
-            <div className="flex justify-between items-baseline mb-6">
-              <span className="font-heading text-lg font-bold text-royal">Total</span>
-              <span className="font-heading text-2xl font-bold text-royal">
-                {formatPrice(total)}
-              </span>
+            <div className="space-y-2 mb-6">
+              {couponAmount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted">Coupon ({coupon?.code})</span>
+                  <span className="text-[#16A34A] font-semibold">
+                    −{formatPrice(couponAmount)}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between items-baseline">
+                <span className="font-heading text-lg font-bold text-royal">Total</span>
+                <span className="font-heading text-2xl font-bold text-royal">
+                  {formatPrice(total)}
+                </span>
+              </div>
             </div>
 
             <Link href="/checkout" className="btn-primary w-full py-4">

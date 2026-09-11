@@ -54,37 +54,81 @@ export function priceLine(
   };
 }
 
+export type CouponDiscountType = "percentage" | "fixed";
+
+/**
+ * Coupon discount math (pure).
+ * - percentage: round(eligibleSubtotal * value / 100)
+ * - fixed:      value
+ * Capped by maximumDiscount (when > 0) and NEVER the eligible subtotal, so a
+ * coupon can never make the payable amount negative on its own.
+ */
+export function computeCouponDiscount(opts: {
+  discountType: CouponDiscountType;
+  discountValue: number;
+  eligibleSubtotal: number;
+  maximumDiscount?: number | null;
+}): number {
+  const eligible = Math.max(0, Math.round(opts.eligibleSubtotal));
+  if (eligible <= 0) return 0;
+  const value = Math.max(0, opts.discountValue || 0);
+  const discount =
+    opts.discountType === "percentage"
+      ? Math.round((eligible * Math.min(100, value)) / 100)
+      : Math.round(value);
+  const cap =
+    opts.maximumDiscount && opts.maximumDiscount > 0
+      ? Math.max(0, Math.round(opts.maximumDiscount))
+      : null;
+  return Math.min(discount, cap === null ? eligible : Math.min(cap, eligible));
+}
+
 export interface OrderTotals {
   /** Sum of original (pre-discount) line totals the customer sees. */
   originalSubtotal: number;
   /** Total launch-offer discount applied. */
   discount: number;
-  /** Final payable product total after discount. */
+  /** Final product total after launch-offer discount (before coupon). */
   finalSubtotal: number;
+  /** Coupon discount (0 when none). Never exceeds finalSubtotal. */
+  couponDiscount: number;
+  /** offer discount + coupon discount. */
+  totalDiscount: number;
   deliveryCharge: number;
-  /** finalSubtotal + deliveryCharge === the amount charged. */
+  /**
+   * The amount actually charged:
+   * finalSubtotal - couponDiscount + deliveryCharge (never negative).
+   * With no coupon this is exactly finalSubtotal + deliveryCharge, preserving
+   * every pre-coupon order's arithmetic.
+   */
   total: number;
   freeDelivery: boolean;
 }
 
 export function computeOrderTotals(
   lines: PricedLine[],
-  overrides?: { threshold?: number; charge?: number }
+  overrides?: { threshold?: number; charge?: number; couponDiscount?: number }
 ): OrderTotals {
   const threshold = overrides?.threshold ?? FREE_DELIVERY_THRESHOLD;
   const charge = overrides?.charge ?? DELIVERY_CHARGE;
   const originalSubtotal = lines.reduce((s, l) => s + l.unitPrice * l.qty, 0);
   const discount = lines.reduce((s, l) => s + l.lineDiscount, 0);
   const finalSubtotal = Math.max(0, originalSubtotal - discount);
+  const couponDiscount = Math.min(
+    Math.max(0, Math.round(overrides?.couponDiscount ?? 0)),
+    finalSubtotal
+  );
   // Free-delivery threshold is evaluated on the ORIGINAL cart value so the
-  // existing "free above ₹499" promise stays stable during the campaign.
+  // existing "free above ₹499" promise stays stable during promotions/coupons.
   const deliveryCharge = originalSubtotal >= threshold ? 0 : charge;
   return {
     originalSubtotal,
     discount,
     finalSubtotal,
+    couponDiscount,
+    totalDiscount: discount + couponDiscount,
     deliveryCharge,
-    total: finalSubtotal + deliveryCharge,
+    total: Math.max(0, finalSubtotal - couponDiscount) + deliveryCharge,
     freeDelivery: deliveryCharge === 0,
   };
 }

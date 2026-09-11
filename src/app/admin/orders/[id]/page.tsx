@@ -34,6 +34,14 @@ interface OrderData {
     discountType: string;
     discountValue: number;
   };
+  couponDiscount?: number;
+  eligibleSubtotal?: number;
+  coupon?: {
+    code: string;
+    discountType: string;
+    discountValue: number;
+    description?: string;
+  };
   deliveryCharge: number;
   total: number;
   paymentStatus: string;
@@ -283,6 +291,28 @@ export default function OrderDetailPage() {
                 - {formatPrice(order.discount)}
               </span>
             </div>
+          ) : null}
+          {order.couponDiscount && order.couponDiscount > 0 ? (
+            <>
+              <div className="flex justify-between">
+                <span className="text-[#5A5A7A]">
+                  Coupon: {order.coupon?.code || "—"}
+                </span>
+                <span className="text-[#16A34A] font-medium">
+                  - {formatPrice(order.couponDiscount)}
+                </span>
+              </div>
+              {order.eligibleSubtotal ? (
+                <div className="flex justify-between">
+                  <span className="text-[#5A5A7A] text-xs">
+                    Coupon eligible subtotal
+                  </span>
+                  <span className="text-[#5A5A7A] text-xs">
+                    {formatPrice(order.eligibleSubtotal)}
+                  </span>
+                </div>
+              ) : null}
+            </>
           ) : null}
           <div className="flex justify-between">
             <span className="text-[#5A5A7A]">Delivery</span>

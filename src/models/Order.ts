@@ -33,6 +33,18 @@ export interface IOrder extends Document {
     discountType: string;
     discountValue: number;
   };
+  /** Coupon discount applied to this order (0 when none). */
+  couponDiscount: number;
+  /** Catalog value of the lines the coupon was eligible on. */
+  eligibleSubtotal: number;
+  /** Historical snapshot of the exact coupon configuration used. */
+  coupon?: {
+    code: string;
+    id: string;
+    discountType: string;
+    discountValue: number;
+    description: string;
+  };
   deliveryCharge: number;
   total: number;
   razorpayOrderId: string;
@@ -72,6 +84,15 @@ const OrderSchema = new Schema<IOrder>({
     name: { type: String },
     discountType: { type: String },
     discountValue: { type: Number },
+  },
+  couponDiscount: { type: Number, default: 0 },
+  eligibleSubtotal: { type: Number, default: 0 },
+  coupon: {
+    code: { type: String },
+    id: { type: String },
+    discountType: { type: String },
+    discountValue: { type: Number },
+    description: { type: String },
   },
   deliveryCharge: { type: Number, default: 0 },
   total: { type: Number, required: true },
