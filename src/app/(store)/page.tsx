@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,6 @@ import { getActivePromotion } from "@/lib/promotion";
 import { ActivePromotion } from "@/lib/pricing-math";
 import { ProductCardSkeleton } from "@/components/skeleton";
 import ProductCard from "@/components/product-card";
-import HeroVideo from "@/components/hero-video";
 import BenefitsSection from "@/components/benefits-section";
 import { InstagramIcon, YoutubeIcon, SOCIAL_LINKS } from "@/components/social-icons";
 
@@ -47,6 +46,12 @@ const whyFeatures = [
   },
 ];
 
+// Hero banner videos — hero 2 shows first, hero 1 second.
+const HERO_BANNERS = [
+  { src: "/hero-2.mp4", label: "The Bake" },
+  { src: "/hero-1.mp4", label: "Our Story" },
+];
+
 export default function StoreHomePage() {
   const [activeCollection, setActiveCollection] = useState<"cookies" | "brownies">("cookies");
   const [products, setProducts] = useState<StoreProduct[]>([]);
@@ -54,6 +59,22 @@ export default function StoreHomePage() {
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [promotion, setPromotion] = useState<ActivePromotion | null>(null);
+  const [activeBanner, setActiveBanner] = useState(0);
+  const bannerRefs = useRef<(HTMLVideoElement | null)[]>([null, null]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveBanner((prev) => (prev + 1) % HERO_BANNERS.length);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const current = bannerRefs.current[activeBanner];
+    if (current) {
+      current.play().catch(() => {});
+    }
+  }, [activeBanner]);
 
   useEffect(() => {
     let cancelled = false;
@@ -96,7 +117,38 @@ export default function StoreHomePage() {
       {/* ─── SECTION 1: HERO ─── */}
       <section className="hero-backdrop" aria-label="Hero">
         <div className="gold-hero">
-          <div className="container-wide relative z-10 py-10 lg:py-16 px-4 sm:px-6">
+          {/* Full-bleed video banner background — hero-2, then hero-1 */}
+          <div className="absolute inset-0 z-0">
+            {HERO_BANNERS.map((banner, i) => (
+              <video
+                key={banner.src}
+                ref={(el) => {
+                  bannerRefs.current[i] = el;
+                }}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1500 ${
+                  activeBanner === i ? "opacity-100" : "opacity-0"
+                }`}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload={i === 0 ? "auto" : "metadata"}
+                aria-hidden="true"
+              >
+                <source src={banner.src} type="video/mp4" />
+              </video>
+            ))}
+            <div
+              className="absolute inset-0 bg-gradient-to-b from-plum/70 via-royal/30 to-royal/60"
+              aria-hidden="true"
+            />
+            <div
+              className="absolute inset-0 bg-gradient-to-t from-espresso/60 via-transparent to-transparent"
+              aria-hidden="true"
+            />
+          </div>
+
+          <div className="container-wide relative z-10 py-24 lg:py-32 px-4 sm:px-6">
             <div className="max-w-3xl mx-auto text-center">
               {promotion && (
                 <p className="mb-5">
@@ -133,10 +185,22 @@ export default function StoreHomePage() {
                 </Link>
               </div>
             </div>
+          </div>
 
-            <div className="mt-10 lg:mt-14 max-w-4xl mx-auto">
-              <HeroVideo />
-            </div>
+          {/* Banner indicators */}
+          <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
+            {HERO_BANNERS.map((banner, i) => (
+              <button
+                key={banner.src}
+                onClick={() => setActiveBanner(i)}
+                aria-label={`Show ${banner.label} banner`}
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
+                  activeBanner === i
+                    ? "bg-gold scale-125"
+                    : "bg-cream/40 hover:bg-cream/70"
+                }`}
+              />
+            ))}
           </div>
         </div>
       </section>
