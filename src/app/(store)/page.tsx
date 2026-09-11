@@ -95,54 +95,47 @@ export default function StoreHomePage() {
     <>
       {/* ─── SECTION 1: HERO ─── */}
       <section className="hero-backdrop" aria-label="Hero">
-        <div className="gold-frame">
-          <span className="gold-corner gold-corner-tl" aria-hidden="true" />
-          <span className="gold-corner gold-corner-tr" aria-hidden="true" />
-          <span className="gold-corner gold-corner-bl" aria-hidden="true" />
-          <span className="gold-corner gold-corner-br" aria-hidden="true" />
-
-          <div className="gold-hero">
-            <div className="container-wide relative z-10 py-10 lg:py-16 px-4 sm:px-6">
-              <div className="max-w-3xl mx-auto text-center">
-                {promotion && (
-                  <p className="mb-5">
-                    <span
-                      className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-gold/60 bg-gold/10 text-gold-soft text-xs font-bold tracking-[0.2em] uppercase"
-                    >
-                      <span
-                        className="w-2 h-2 rounded-full bg-gold animate-pulse"
-                        aria-hidden="true"
-                      />
-                      Launch Offer — {promotion.discountValue}% OFF
-                    </span>
-                  </p>
-                )}
-                <p className="eyebrow mb-4 text-gold-soft">Baked to Perfection</p>
-                <h1 className="font-heading text-5xl sm:text-6xl lg:text-display text-cream font-bold leading-[1.05] mb-5">
-                  Baked to Impress.
-                </h1>
-                <p className="text-cream/85 text-lg mb-3">
-                  Made with love for every bite.
-                </p>
-                <p className="text-gold-soft font-medium text-base mb-8">
-                  A Little Crisp. A Lot of Love.
-                </p>
-                <div className="flex flex-wrap items-center justify-center gap-4">
-                  <Link href="/cookies" className="btn-primary">
-                    Explore Cookies
-                  </Link>
-                  <Link
-                    href="/about"
-                    className="inline-flex items-center justify-center font-body font-semibold px-8 py-3.5 rounded-full border-2 border-cream/40 text-cream hover:bg-cream hover:text-plum transition-all duration-300 text-sm tracking-wider uppercase"
+        <div className="gold-hero">
+          <div className="container-wide relative z-10 py-10 lg:py-16 px-4 sm:px-6">
+            <div className="max-w-3xl mx-auto text-center">
+              {promotion && (
+                <p className="mb-5">
+                  <span
+                    className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-gold/60 bg-gold/10 text-gold-soft text-xs font-bold tracking-[0.2em] uppercase"
                   >
-                    Our Story
-                  </Link>
-                </div>
+                    <span
+                      className="w-2 h-2 rounded-full bg-gold animate-pulse"
+                      aria-hidden="true"
+                    />
+                    Launch Offer — {promotion.discountValue}% OFF
+                  </span>
+                </p>
+              )}
+              <p className="eyebrow mb-4 text-gold-soft">Baked to Perfection</p>
+              <h1 className="font-heading text-5xl sm:text-6xl lg:text-display text-cream font-bold leading-[1.05] mb-5">
+                Baked to Impress.
+              </h1>
+              <p className="text-cream/85 text-lg mb-3">
+                Made with love for every bite.
+              </p>
+              <p className="text-gold-soft font-medium text-base mb-8">
+                A Little Crisp. A Lot of Love.
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-4">
+                <Link href="/cookies" className="btn-primary">
+                  Explore Cookies
+                </Link>
+                <Link
+                  href="/about"
+                  className="inline-flex items-center justify-center font-body font-semibold px-8 py-3.5 rounded-full border-2 border-cream/40 text-cream hover:bg-cream hover:text-plum transition-all duration-300 text-sm tracking-wider uppercase"
+                >
+                  Our Story
+                </Link>
               </div>
+            </div>
 
-              <div className="mt-10 lg:mt-14 max-w-4xl mx-auto">
-                <HeroVideo />
-              </div>
+            <div className="mt-10 lg:mt-14 max-w-4xl mx-auto">
+              <HeroVideo />
             </div>
           </div>
         </div>
