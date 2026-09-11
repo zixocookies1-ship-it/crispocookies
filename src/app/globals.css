@@ -280,23 +280,18 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ─────────────────────────────────────────────
-   LUXURY GOLD FRAME — HERO BANNER
-   Layered metallic gold frame with inner
-   champagne highlight, ornamental corners and
-   a slow premium shimmer. Pure CSS.
+   FULL-SCREEN VIDEO HERO
+   Edge-to-edge background video that fills the
+   whole viewport on every device (100dvh).
 ────────────────────────────────────────────── */
 
-/* Wrapper behind the frame — dark warm stage that makes gold pop */
+/* Full-screen hero — the video is the entire background, edge to edge. */
 .hero-backdrop {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
   min-height: 100svh;
-  padding: clamp(0.75rem, 2.5vw, 1.75rem);
-  background:
-    radial-gradient(130% 120% at 50% -10%, rgba(196, 151, 42, 0.16), rgba(196, 151, 42, 0) 55%),
-    radial-gradient(110% 90% at 50% 110%, rgba(196, 151, 42, 0.08), rgba(196, 151, 42, 0) 50%),
-    linear-gradient(180deg, #17120E, #211A12 60%, #191410);
+  min-height: 100dvh;
+  padding: 0;
+  background: var(--royal);
   overflow: hidden;
 }
 
@@ -316,20 +311,18 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-/* The framed artwork itself */
+/* Full-bleed hero: fills the entire viewport on every device.
+   `100dvh` tracks the visible area as mobile browser chrome appears/disappears. */
 .gold-hero {
   position: relative;
   overflow: hidden;
-  border-radius: clamp(1.5rem, 3vw, 2.5rem);
+  border-radius: 0;
   background: var(--royal);
-  /* Content-driven: the section grows with the headline + full video below.
-     The old fixed screen-height forced the background video to be cropped. */
-  min-height: clamp(560px, 92svh, 820px);
+  width: 100%;
+  min-height: 100svh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
-  box-shadow:
-    0 26px 55px -18px rgba(0, 0, 0, 0.55),
-    0 0 46px -6px rgba(196, 151, 42, 0.4);
 }
 .gold-hero > video,
 .gold-hero > div {
