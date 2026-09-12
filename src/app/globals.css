@@ -466,6 +466,15 @@ h1, h2, h3, h4, h5, h6 {
 .admin-shell {
   background: #FFFFFF;
   color: #000000;
+  --admin-bg: #FFFFFF;
+  --admin-card: #FFFFFF;
+  --admin-text: #000000;
+  --admin-text-secondary: #333333;
+  --admin-text-muted: #666666;
+  --admin-border: #E5E5E5;
+  --admin-hover: #F7F7F7;
+  --admin-primary: #000000;
+  --admin-primary-text: #FFFFFF;
 }
 
 .admin-shell ::selection {
@@ -505,10 +514,26 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Cards */
 .admin-shell .card {
-  background: #FFFFFF;
-  border: 1px solid #E5E5E5;
-  color: #000000;
+  background: var(--admin-card, #FFFFFF);
+  border: 1px solid var(--admin-border, #E5E5E5);
+  color: var(--admin-text, #000000);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px -12px rgba(0, 0, 0, 0.08);
+}
+
+/* Tables */
+.admin-shell thead,
+.admin-shell thead tr {
+  background: #F8F8F8;
+}
+.admin-shell thead th {
+  color: #000000;
+  font-weight: 600;
+}
+.admin-shell tbody tr {
+  background: #FFFFFF;
+}
+.admin-shell tbody tr:hover {
+  background: #F7F7F7;
 }
 
 /* Form inputs */
