@@ -42,6 +42,7 @@ interface ServerTotals {
   discount: number;
   couponDiscount: number;
   deliveryCharge: number;
+  deliveryProvider?: "delhivery" | "flat";
   total: number;
 }
 
@@ -92,6 +93,12 @@ export default function CheckoutPage() {
   const [applying, setApplying] = useState(false);
   const [revalidating, setRevalidating] = useState(false);
   const [server, setServer] = useState<ServerTotals | null>(null);
+  const [shipping, setShipping] = useState<{
+    checking: boolean;
+    serviceable: boolean | null;
+    amount: number | null;
+    mode: "flat" | "delhivery";
+  }>({ checking: false, serviceable: null, amount: null, mode: "flat" });
   const processingRef = useRef(false);
   const formRef = useRef(form);
   formRef.current = form;
@@ -135,7 +142,7 @@ export default function CheckoutPage() {
     coupon?.discountAmount ?? 0,
     previewBeforeCoupon
   );
-  const previewDelivery = 100;
+  const previewDelivery = shipping.amount ?? 100;
   const previewTotal = previewBeforeCoupon - previewCouponAmount + previewDelivery;
 
   // Storefront identity for coupon-safe customer checks (guest checkout uses
@@ -184,6 +191,56 @@ export default function CheckoutPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemsKey, mounted]);
+
+  // Live Delhivery serviceability + delivery estimate for the entered
+  // pincode. The quoted amount is informational — create-order recomputes
+  // the authoritative delivery charge server-side before any money moves.
+  useEffect(() => {
+    if (!mounted) return;
+    const pincode = form.pincode.trim();
+    if (!/^\d{6}$/.test(pincode) || items.length === 0) {
+      setShipping({ checking: false, serviceable: null, amount: null, mode: "flat" });
+      return;
+    }
+    let cancelled = false;
+    setShipping((prev) => ({ ...prev, checking: true }));
+    const timer = setTimeout(() => {
+      fetch("/api/shipping/rate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pincode,
+          items: items.map((item) => ({
+            productId: item.productId,
+            variant: item.variant.weight,
+            qty: item.qty,
+          })),
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (cancelled) return;
+          setShipping({
+            checking: false,
+            serviceable: data.serviceable !== false,
+            amount:
+              typeof data.amount === "number" && data.amount >= 0
+                ? data.amount
+                : null,
+            mode: data.mode === "delhivery" ? "delhivery" : "flat",
+          });
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setShipping({ checking: false, serviceable: true, amount: null, mode: "flat" });
+        });
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.pincode, itemsKey, mounted]);
 
   if (!mounted) {
     return (
@@ -246,6 +303,14 @@ export default function CheckoutPage() {
   const handlePayment = async () => {
     if (processingRef.current) return;
     if (!validate()) return;
+    if (shipping.serviceable === false) {
+      toast.error("Delivery is not available at this pincode.");
+      return;
+    }
+    if (shipping.checking) {
+      toast.error("Please wait — we are still checking delivery for your pincode.");
+      return;
+    }
     processingRef.current = true;
     setLoading(true);
 
@@ -268,6 +333,7 @@ export default function CheckoutPage() {
           couponCode: coupon?.code || undefined,
           email: form.email.trim(),
           phone: form.phone.trim(),
+          deliveryPincode: form.pincode.trim(),
         }),
       });
 
@@ -288,6 +354,7 @@ export default function CheckoutPage() {
         discount: orderData.discount,
         couponDiscount: orderData.couponDiscount || 0,
         deliveryCharge: orderData.deliveryCharge,
+        deliveryProvider: orderData.deliveryProvider,
         total: orderData.total,
       });
       if (orderData.coupon && coupon) {
@@ -368,6 +435,7 @@ export default function CheckoutPage() {
 
   const displayCoupon = server ? server.couponDiscount : previewCouponAmount;
   const displayDelivery = server ? server.deliveryCharge : previewDelivery;
+  const displayDeliveryMode = server?.deliveryProvider ?? shipping.mode;
   const displaySubtotal = server
     ? server.subtotal
     : previewBeforeCoupon - previewCouponAmount;
@@ -531,6 +599,28 @@ export default function CheckoutPage() {
                   autoComplete="postal-code"
                   required
                 />
+                {shipping.checking && (
+                  <p className="text-xs text-muted mt-1.5">
+                    Checking delivery availability…
+                  </p>
+                )}
+                {!shipping.checking && shipping.serviceable === false && (
+                  <p className="text-xs text-red mt-1.5">
+                    Delivery is not available at this pincode yet. Please check
+                    your address.
+                  </p>
+                )}
+                {!shipping.checking &&
+                  shipping.serviceable === true &&
+                  shipping.amount != null && (
+                    <p className="text-xs text-[#16A34A] mt-1.5">
+                      {shipping.mode === "delhivery"
+                        ? `Delhivery delivery available · ${formatPrice(shipping.amount)}${
+                            shipping.amount === 0 ? " (free)" : ""
+                          } estimated`
+                        : `Flat ${formatPrice(shipping.amount)} delivery applies`}
+                    </p>
+                  )}
               </div>
             </div>
           </div>
@@ -582,7 +672,9 @@ export default function CheckoutPage() {
                 <span className="text-cream font-medium">{formatPrice(displaySubtotal)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted">Delivery</span>
+                <span className="text-muted">
+                  Delivery{displayDeliveryMode === "delhivery" ? " (Delhivery)" : ""}
+                </span>
                 <span className={displayDelivery === 0 ? "text-green font-medium" : "text-cream font-medium"}>
                   {displayDelivery === 0 ? "Free" : formatPrice(displayDelivery)}
                 </span>
@@ -672,7 +764,9 @@ export default function CheckoutPage() {
                 </div>
               )}
               <div className="flex justify-between text-sm">
-                <span className="text-muted">Delivery (flat)</span>
+                <span className="text-muted">
+                  Delivery{displayDeliveryMode === "delhivery" ? " (Delhivery)" : ""}
+                </span>
                 <span className="text-cream font-medium">
                   {formatPrice(displayDelivery)}
                 </span>
@@ -687,7 +781,7 @@ export default function CheckoutPage() {
 
             <button
               onClick={handlePayment}
-              disabled={loading}
+              disabled={loading || shipping.checking || shipping.serviceable === false}
               className="crispo-btn-gold w-full py-4 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? (

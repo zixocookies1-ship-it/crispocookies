@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
     couponCode?: string;
     email?: string;
     phone?: string;
+    deliveryPincode?: string;
   };
 
   try {
@@ -46,6 +47,7 @@ export async function POST(request: NextRequest) {
       couponCode?: string;
       email?: string;
       phone?: string;
+      deliveryPincode?: string;
     };
   } catch {
     return NextResponse.json(
@@ -117,6 +119,7 @@ export async function POST(request: NextRequest) {
       couponCode: payload?.couponCode || null,
       customerEmail: payload?.email || null,
       customerPhone: payload?.phone || null,
+      deliveryPincode: payload?.deliveryPincode || null,
     });
   } catch (error) {
     if (error instanceof CouponError) {
@@ -219,6 +222,8 @@ export async function POST(request: NextRequest) {
     eligibleSubtotal: totals.eligibleSubtotal,
     coupon: totals.coupon,
     deliveryCharge,
+    deliveryProvider: totals.deliveryProvider,
+    shippingWeightGrams: totals.shippingWeightGrams,
     total,
     items: totals.items,
   });

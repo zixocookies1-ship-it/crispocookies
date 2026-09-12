@@ -6,6 +6,8 @@ export interface IProductVariant {
   price: number;
   mrp?: number;
   stock: number;
+  /** Shipping weight of one unit in grams (used for Delhivery rate/shipment). */
+  shippingWeightGrams?: number;
 }
 
 export interface IProduct extends Document {
@@ -37,6 +39,7 @@ const ProductSchema = new Schema<IProduct>({
       weight: { type: String },
       price: { type: Number },
       stock: { type: Number, default: 0 },
+      shippingWeightGrams: { type: Number, default: 0 },
     },
   ],
   sortOrder: { type: Number, default: 0 },

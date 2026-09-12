@@ -43,6 +43,18 @@ interface OrderData {
     description?: string;
   };
   deliveryCharge: number;
+  deliveryProvider?: string;
+  waybill?: string;
+  shipmentStatus?: string;
+  lastScan?: string;
+  lastScanTime?: string;
+  trackingUrl?: string;
+  labelUrl?: string;
+  shipmentError?: string;
+  pickedUp?: boolean;
+  pickedUpAt?: string;
+  shippingWeightGrams?: number;
+  shippingCost?: number;
   total: number;
   paymentStatus: string;
   razorpayPaymentId?: string;
@@ -58,6 +70,13 @@ export default function OrderDetailPage() {
   const [updating, setUpdating] = useState(false);
   const [newStatus, setNewStatus] = useState("");
   const [toast, setToast] = useState("");
+  const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [shipmentState, setShipmentState] = useState<{
+    waybill?: string;
+    shipmentStatus?: string;
+    trackingUrl?: string;
+    labelUrl?: string;
+  }>({});
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -67,6 +86,12 @@ export default function OrderDetailPage() {
         const data = await res.json();
         setOrder(data);
         setNewStatus(data.status);
+        setShipmentState({
+          waybill: data.waybill,
+          shipmentStatus: data.shipmentStatus,
+          trackingUrl: data.trackingUrl,
+          labelUrl: data.labelUrl,
+        });
       } catch {
         setError(true);
       } finally {
@@ -100,6 +125,50 @@ export default function OrderDetailPage() {
 
   const printInvoice = () => {
     window.print();
+  };
+
+  const runShipmentAction = async (
+    action: string,
+    url: string,
+    method: "POST" | "GET" = "POST",
+    onSuccess?: (data: {
+      labelUrl?: string;
+      trackingUrl?: string;
+      waybill?: string;
+      shipmentStatus?: string;
+      latest?: { status?: string };
+    }) => void
+  ) => {
+    if (!order) return;
+    setBusyAction(action);
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setToast(`Error: ${data.error || "Request failed"}`);
+        return;
+      }
+      if (action === "create") {
+        setShipmentState((prev) => ({
+          ...prev,
+          waybill: data.waybill,
+          shipmentStatus: data.shipmentStatus,
+          trackingUrl: data.trackingUrl,
+          labelUrl: data.labelUrl,
+        }));
+        setToast(`Shipment created — AWB ${data.waybill}`);
+      } else if (action === "pickup") {
+        setToast(`Pickup requested — ID ${data.pickupId}`);
+      }
+      onSuccess?.(data);
+    } catch {
+      setToast("Something went wrong");
+    } finally {
+      setBusyAction(null);
+    }
   };
 
   if (loading) {
@@ -324,6 +393,162 @@ export default function OrderDetailPage() {
             <span className="text-black">Total</span>
             <span className="text-black">{formatPrice(order.total)}</span>
           </div>
+        </div>
+      </div>
+
+      {/* Delivery / Delhivery */}
+      <div className="card rounded-2xl p-6 mb-6 no-print">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-heading font-bold text-black">Delivery</h3>
+          {order.waybill && (
+            <span className="badge-green">AWB {order.waybill}</span>
+          )}
+        </div>
+
+        {order.shipmentError && (
+          <div className="bg-[#DC2626]/5 border border-[#DC2626]/20 text-[#DC2626] text-sm rounded-xl p-3.5 mb-4">
+            Last shipment attempt failed: {order.shipmentError}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5 text-sm">
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-[#666666]">Charge</span>
+              <span className="font-medium text-black">
+                {order.deliveryCharge === 0
+                  ? "Free"
+                  : formatPrice(order.deliveryCharge)}
+                {order.deliveryProvider === "delhivery"
+                  ? " (Delhivery)"
+                  : ""}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#666666]">Shipping weight</span>
+              <span className="font-medium text-black">
+                {order.shippingWeightGrams
+                  ? `${(order.shippingWeightGrams / 1000).toFixed(2)} kg`
+                  : "—"}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#666666]">Shipment status</span>
+              <span className="font-medium text-black">
+                {order.shipmentStatus || "Not shipped"}
+              </span>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-[#666666]">Pickup</span>
+              <span className="font-medium text-black">
+                {order.pickedUp ? "Requested" : "Not requested"}
+                {order.pickedUpAt
+                  ? ` · ${new Date(order.pickedUpAt).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                    })}`
+                  : ""}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#666666]">Latest scan</span>
+              <span className="font-medium text-black max-w-[220px] text-right">
+                {order.lastScan || "—"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5">
+          {!order.waybill && (
+            <button
+              onClick={() =>
+                runShipmentAction("create", `/api/admin/orders/${order._id}/shipment`)
+              }
+              disabled={busyAction !== null}
+              className="btn-gold text-sm disabled:opacity-50"
+            >
+              {busyAction === "create" ? "Creating…" : "Create Shipment"}
+            </button>
+          )}
+
+          {order.waybill && (
+            <>
+              <button
+                onClick={() =>
+                  runShipmentAction(
+                    "label",
+                    `/api/admin/orders/${order._id}/label`,
+                    "GET",
+                    (data) => {
+                      if (data.labelUrl) window.open(data.labelUrl, "_blank");
+                    }
+                  )
+                }
+                disabled={busyAction !== null}
+                className="btn-navy-outline text-sm disabled:opacity-50"
+              >
+                {busyAction === "label" ? "Fetching…" : "Print / View Label"}
+              </button>
+
+              <button
+                onClick={() =>
+                  runShipmentAction(
+                    "pickup",
+                    `/api/admin/orders/${order._id}/pickup`
+                  )
+                }
+                disabled={busyAction !== null || order.pickedUp}
+                className="btn-navy-outline text-sm disabled:opacity-50"
+              >
+                {busyAction === "pickup" ? "Requesting…" : "Request Pickup"}
+              </button>
+
+              <button
+                onClick={() =>
+                  runShipmentAction(
+                    "track",
+                    `/api/admin/orders/${order._id}/track`,
+                    "GET",
+                    (data) => {
+                      if (data.trackingUrl) {
+                        setShipmentState((prev) => ({
+                          ...prev,
+                          trackingUrl: data.trackingUrl,
+                        }));
+                        window.open(
+                          order.trackingUrl || data.trackingUrl,
+                          "_blank"
+                        );
+                        setToast(
+                          data.latest?.status
+                            ? `Latest: ${data.latest.status}`
+                            : "Tracking refreshed"
+                        );
+                      }
+                    }
+                  )
+                }
+                disabled={busyAction !== null}
+                className="btn-navy-outline text-sm disabled:opacity-50"
+              >
+                {busyAction === "track" ? "Refreshing…" : "Track Shipment"}
+              </button>
+            </>
+          )}
+
+          {order.shipmentStatus && (
+            <a
+              href={order.trackingUrl || shipmentState.trackingUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm text-black underline underline-offset-2 hover:text-gray-700"
+            >
+              Delhivery tracking page ↗
+            </a>
+          )}
         </div>
       </div>
 

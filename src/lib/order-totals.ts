@@ -6,12 +6,18 @@ import {
   computeOrderTotals,
   CouponDiscountType,
   ActivePromotion,
+  DELIVERY_CHARGE,
 } from "./pricing-math";
 import {
   validateCoupon,
   normalizeCouponCode,
   CouponError,
 } from "./coupons";
+import {
+  isDelhiveryConfigured,
+  checkPincodeServiceability,
+  estimateShippingRate,
+} from "./delhivery";
 
 /**
  * SINGLE authoritative calculation for checkout, coupon validation, the
@@ -41,6 +47,8 @@ export interface ResolvedLine {
   /** MRP / reference price (from the database). */
   mrp?: number;
   categoryId: string | null;
+  /** Shipping weight of one unit in grams (from the database). */
+  shippingWeightGrams: number;
 }
 
 export interface StoredItem {
@@ -65,6 +73,10 @@ export interface TotalsSnapshot {
   couponDiscount: number; // coupon discount actually applied
   totalDiscount: number; // offer + coupon
   deliveryCharge: number;
+  /** "delhivery" when the charge came from Delhivery rate, else "flat". */
+  deliveryProvider: "delhivery" | "flat";
+  /** Total shipping weight of the order in grams. */
+  shippingWeightGrams: number;
   freeDelivery: boolean;
   total: number; // the exact amount charged (paise = total * 100)
   coupon: {
@@ -84,6 +96,7 @@ export async function calculateOrderTotals(opts: {
   couponCode?: string | null;
   customerEmail?: string | null;
   customerPhone?: string | null;
+  deliveryPincode?: string | null;
 }): Promise<TotalsSnapshot> {
   await connectDB();
 
@@ -136,6 +149,11 @@ export async function calculateOrderTotals(opts: {
       typeof variant.mrp === "number" && Number.isFinite(variant.mrp)
         ? variant.mrp
         : undefined;
+    const shippingWeightGrams =
+      typeof variant.shippingWeightGrams === "number" &&
+      Number.isFinite(variant.shippingWeightGrams)
+        ? variant.shippingWeightGrams
+        : 0;
 
     resolved.push({
       productId: String(product._id),
@@ -146,6 +164,7 @@ export async function calculateOrderTotals(opts: {
       unitPrice,
       mrp,
       categoryId: product.category ? String(product.category) : null,
+      shippingWeightGrams,
     });
     eligibilityLines.push({
       productId: String(product._id),
@@ -188,7 +207,46 @@ export async function calculateOrderTotals(opts: {
     };
   }
 
-  const totals = computeOrderTotals(pricedLines, { couponDiscount });
+  const totalWeightGrams = resolved.reduce(
+    (sum, line) => sum + line.shippingWeightGrams * line.qty,
+    0
+  );
+  let deliveryCharge = DELIVERY_CHARGE;
+  let deliveryProvider: "delhivery" | "flat" = "flat";
+
+  const deliveryPincode = opts.deliveryPincode?.trim();
+  if (deliveryPincode && isDelhiveryConfigured()) {
+    try {
+      const serviceable = await checkPincodeServiceability(deliveryPincode);
+      if (!serviceable.serviceable) {
+        throw new CouponError(
+          "Delivery is not available at this pincode.",
+          400
+        );
+      }
+      if (totalWeightGrams > 0) {
+        const estimate = await estimateShippingRate({
+          toPincode: deliveryPincode,
+          weightGrams: totalWeightGrams,
+        });
+        deliveryCharge = estimate.amount;
+        deliveryProvider = "delhivery";
+      }
+    } catch (error) {
+      if (error instanceof CouponError) throw error;
+      console.warn(
+        "[order-totals] Delhivery rate unavailable — using flat delivery",
+        { message: error instanceof Error ? error.message : String(error) }
+      );
+      deliveryCharge = DELIVERY_CHARGE;
+      deliveryProvider = "flat";
+    }
+  }
+
+  const finalTotals = computeOrderTotals(pricedLines, {
+    couponDiscount,
+    charge: deliveryCharge,
+  });
 
   const items = resolved.map((line, i) => ({
     productId: line.productId,
@@ -203,15 +261,17 @@ export async function calculateOrderTotals(opts: {
     lines: resolved,
     items,
     promotion,
-    originalSubtotal: totals.originalSubtotal,
-    offerDiscount: totals.discount,
-    finalSubtotal: totals.finalSubtotal,
+    originalSubtotal: finalTotals.originalSubtotal,
+    offerDiscount: finalTotals.discount,
+    finalSubtotal: finalTotals.finalSubtotal,
     eligibleSubtotal: coupon ? eligibleSubtotal : 0,
-    couponDiscount: totals.couponDiscount,
-    totalDiscount: totals.totalDiscount,
-    deliveryCharge: totals.deliveryCharge,
-    freeDelivery: totals.freeDelivery,
-    total: totals.total,
+    couponDiscount: finalTotals.couponDiscount,
+    totalDiscount: finalTotals.totalDiscount,
+    deliveryCharge: finalTotals.deliveryCharge,
+    deliveryProvider,
+    shippingWeightGrams: totalWeightGrams,
+    freeDelivery: finalTotals.freeDelivery,
+    total: finalTotals.total,
     coupon,
   };
 }

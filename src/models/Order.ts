@@ -52,6 +52,25 @@ export interface IOrder extends Document {
   razorpaySignature: string;
   paymentStatus: "pending" | "paid" | "failed";
   orderStatus: "processing" | "shipped" | "delivered" | "cancelled";
+  /** Delhivery One integrations (all server-side). */
+  deliveryProvider?: string;
+  /** Total shipping weight of the order in grams. */
+  shippingWeightGrams?: number;
+  /** Shipment cost charged (already inside deliveryCharge/total). */
+  shippingCost?: number;
+  waybill?: string;
+  shipmentStatus?: string;
+  /** Latest Delhivery scan status text (e.g. "Manifested"). */
+  lastScan?: string;
+  lastScanTime?: Date;
+  lastScanType?: string;
+  trackingUrl?: string;
+  labelUrl?: string;
+  shipmentId?: string;
+  pickedUp?: boolean;
+  pickedUpAt?: Date;
+  shipmentCreatedAt?: Date;
+  shipmentError?: string;
   createdAt: Date;
 }
 
@@ -109,6 +128,21 @@ const OrderSchema = new Schema<IOrder>({
     enum: ["processing", "shipped", "delivered", "cancelled"],
     default: "processing",
   },
+  deliveryProvider: { type: String },
+  shippingWeightGrams: { type: Number, default: 0 },
+  shippingCost: { type: Number, default: 0 },
+  waybill: { type: String },
+  shipmentStatus: { type: String },
+  lastScan: { type: String },
+  lastScanTime: { type: Date },
+  lastScanType: { type: String },
+  trackingUrl: { type: String },
+  labelUrl: { type: String },
+  shipmentId: { type: String },
+  pickedUp: { type: Boolean, default: false },
+  pickedUpAt: { type: Date },
+  shipmentCreatedAt: { type: Date },
+  shipmentError: { type: String },
   createdAt: { type: Date, default: Date.now },
 });
 
@@ -116,6 +150,7 @@ const OrderSchema = new Schema<IOrder>({
 OrderSchema.index({ createdAt: -1 });
 OrderSchema.index({ paymentStatus: 1, createdAt: -1 });
 OrderSchema.index({ razorpayOrderId: 1 });
+OrderSchema.index({ waybill: 1 });
 
 export default mongoose.models.Order ||
   mongoose.model<IOrder>("Order", OrderSchema);

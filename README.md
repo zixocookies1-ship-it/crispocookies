@@ -65,6 +65,14 @@ See [`.env.example`](./.env.example) for the full list with descriptions:
 | `RAZORPAY_KEY_ID` | Razorpay key ID (server-side, order creation) |
 | `RAZORPAY_KEY_SECRET` | Razorpay key secret (order verification) |
 | `NEXT_PUBLIC_RAZORPAY_KEY_ID` | Razorpay key ID (public, checkout modal) |
+| `DELHIVERY_API_TOKEN` | **Server-only** Delhivery One API token (never `NEXT_PUBLIC_*`, never committed) |
+| `DELHIVERY_API_BASE` | Optional. Defaults to production `https://track.delhivery.com`; set to `https://staging-express.delhivery.com` for testing |
+| `DELHIVERY_PICKUP_LOCATION` | Registered warehouse/pickup location name (case-sensitive, used for shipments + pickups) |
+| `DELHIVERY_ORIGIN_PINCODE` | Warehouse origin pincode, used for rate + serviceability |
+| `DELHIVERY_SHIPPING_MODE` | `S` (Surface, default) or `E` (Express) |
+| `DELHIVERY_SELLER_GST_TIN` | Optional; sent on each shipment |
+| `DELHIVERY_HSN_CODE` | Optional; sent on each shipment |
+| `DELHIVERY_PICKUP_TIME` | Optional pickup request time `HH:MM:SS` (default `10:00:00`) |
 
 ## Scripts
 
@@ -144,12 +152,20 @@ src/
 - Secure login (NextAuth CredentialsProvider, 1-day JWT)
 - Middleware-protected `/admin/*` routes (except `/admin/login`)
 - Dashboard: revenue stats, 7-day revenue chart, recent orders, category pie chart, low-stock alerts
-- Products: full CRUD with Cloudinary image upload, variant manager, draft/publish toggle
-- Orders: list with filters/search/CSV export, detail with status updates and printable invoice
+- Products: full CRUD with Cloudinary image upload, variant manager, shipping weight (g) per variant, draft/publish toggle
+- Orders: list with filters/search/CSV export, detail with status updates, printable invoice and a **Delivery** panel (create Delhivery shipment, print label, request pickup, live tracking)
 - Customers: aggregated analytics with slide-in drawer
 - Categories: CRUD with inline editing and delete guard
 - Settings: store info, delivery, payment keys (masked), social links
 - Notifications: real-time order + low-stock alerts with read/unread state
+
+### Delhivery One (prepaid shipping)
+- Checkout validates the destination pincode against Delhivery and quotes the actual prepaid shipping rate for the order weight
+- Authoritative delivery charge is computed server-side at payment time; any Delhivery outage falls back to the legacy flat charge so the store never stops selling
+- Paid orders are automatically handed to Delhivery (`payment_mode: Prepaid`) — waybill, label and tracking URL stored on the order
+- Admin can retry shipment creation, generate labels, request pickups and refresh tracking from the order detail page
+- Customer-facing tracking at `/track?order=<orderId>`
+- Onboarding checklist: create a Delhivery One account, configure a pickup location, get a production API token, set the env vars above, then fill in every product's shipping weight in the admin.
 
 ## Deployment (Vercel)
 

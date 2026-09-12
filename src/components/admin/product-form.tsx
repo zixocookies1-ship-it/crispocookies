@@ -8,6 +8,7 @@ interface Variant {
   weight: string;
   price: string;
   stock: string;
+  shippingWeightGrams: string;
 }
 
 interface Category {
@@ -25,7 +26,7 @@ interface ProductData {
   shortDescription: string;
   description: string;
   images: string[];
-  variants: { weight: string; price: number; stock: number }[];
+  variants: { weight: string; price: number; stock: number; shippingWeightGrams?: number }[];
   ingredients: string;
 }
 
@@ -56,7 +57,8 @@ export default function ProductForm({ product }: Props) {
       weight: v.weight,
       price: String(v.price),
       stock: String(v.stock),
-    })) || [{ weight: "", price: "", stock: "" }]
+      shippingWeightGrams: String(v.shippingWeightGrams ?? ""),
+    })) || [{ weight: "", price: "", stock: "", shippingWeightGrams: "" }]
   );
   const [ingredients, setIngredients] = useState(product?.ingredients || "");
   const [uploading, setUploading] = useState(false);
@@ -84,7 +86,7 @@ export default function ProductForm({ product }: Props) {
   };
 
   const addVariant = () => {
-    setVariants([...variants, { weight: "", price: "", stock: "" }]);
+    setVariants([...variants, { weight: "", price: "", stock: "", shippingWeightGrams: "" }]);
   };
 
   const removeVariant = (index: number) => {
@@ -131,6 +133,15 @@ export default function ProductForm({ product }: Props) {
     if (variants.length === 0 || variants.every((v) => !v.weight || !v.price)) {
       newErrors.variants = "At least one variant with weight and price is required";
     }
+    const weightless = variants.find(
+      (v) =>
+        (v.weight || v.price) &&
+        (!v.shippingWeightGrams || Number(v.shippingWeightGrams) <= 0)
+    );
+    if (weightless) {
+      newErrors.variants =
+        "Shipping weight (g) is required for every variant — it is used to calculate delivery charges";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -155,6 +166,7 @@ export default function ProductForm({ product }: Props) {
           weight: v.weight,
           price: Number(v.price),
           stock: Number(v.stock) || 0,
+          shippingWeightGrams: Number(v.shippingWeightGrams) || 0,
         })),
       ingredients: ingredients.trim(),
     };
@@ -389,6 +401,17 @@ export default function ProductForm({ product }: Props) {
                 placeholder="Stock"
                 min="0"
               />
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="number"
+                  value={variant.shippingWeightGrams}
+                  onChange={(e) => updateVariant(i, "shippingWeightGrams", e.target.value)}
+                  className="input-field flex-1 min-w-[100px]"
+                  placeholder="Weight (g)"
+                  min="0"
+                />
+                <span className="text-xs text-[#666666] whitespace-nowrap">g</span>
+              </div>
               <button
                 onClick={() => removeVariant(i)}
                 disabled={variants.length === 1}

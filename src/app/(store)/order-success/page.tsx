@@ -49,6 +49,12 @@ function OrderSuccessContent() {
               Estimated delivery: 2–3 business days
             </li>
           </ul>
+          <Link
+            href={`/track?order=${encodeURIComponent(orderId)}`}
+            className="inline-flex items-center gap-1.5 text-sm text-gold mt-4 hover:opacity-80 transition-opacity"
+          >
+            Track your order →
+          </Link>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">

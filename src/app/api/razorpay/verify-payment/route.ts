@@ -9,6 +9,7 @@ import Product from "@/models/Product";
 import { getRazorpay } from "@/lib/razorpay";
 import { generateOrderId } from "@/lib/helpers";
 import { calculateOrderTotals } from "@/lib/order-totals";
+import { attemptAutoShipment } from "@/lib/delhivery";
 import {
   CouponError,
   couponCustomerKey,
@@ -145,6 +146,7 @@ export async function POST(request: NextRequest) {
           : null,
       customerEmail: email,
       customerPhone: phone,
+      deliveryPincode: (address as Address).pincode,
     });
   } catch (error) {
     const message =
@@ -256,6 +258,8 @@ export async function POST(request: NextRequest) {
         }
       : undefined,
     deliveryCharge: totals.deliveryCharge,
+    deliveryProvider: totals.deliveryProvider,
+    shippingWeightGrams: totals.shippingWeightGrams,
     total: totals.total,
     razorpayOrderId: razorpay_order_id,
     razorpayPaymentId: razorpay_payment_id,
@@ -263,6 +267,13 @@ export async function POST(request: NextRequest) {
     paymentStatus: "paid",
     orderStatus: "processing",
   });
+
+  // ---------------------------------------------------------------
+  // 3b. Prepaid shipment: hand the paid order to Delhivery immediately.
+  //     Attempts are safe (never blocks this response) and idempotent;
+  //     failures are stored on the order and retryable from the admin UI.
+  // ---------------------------------------------------------------
+  await attemptAutoShipment(order);
 
   // ---------------------------------------------------------------
   // 4. Claim coupon usage atomically and record usage history.
