@@ -101,7 +101,7 @@ export default function CustomersPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[#5A5A7A] border-b border-gray-100 bg-gray-50/50">
+              <tr className="text-left text-[#666666] border-b border-gray-100 bg-gray-50/50">
                 <th className="py-3 px-4 font-medium">Name</th>
                 <th className="py-3 px-4 font-medium">Email</th>
                 <th className="py-3 px-4 font-medium">Phone</th>
@@ -122,7 +122,7 @@ export default function CustomersPage() {
                 </tr>
               ) : customers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-[#5A5A7A]">
+                  <td colSpan={6} className="text-center py-12 text-[#666666]">
                     No customers found
                   </td>
                 </tr>
@@ -133,14 +133,14 @@ export default function CustomersPage() {
                     onClick={() => openDrawer(customer)}
                     className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors cursor-pointer"
                   >
-                    <td className="py-4 px-4 font-medium text-[#1B1B4B]">{customer.name}</td>
-                    <td className="py-4 px-4 text-[#5A5A7A]">{customer.email}</td>
-                    <td className="py-4 px-4 text-[#5A5A7A]">{customer.phone || "-"}</td>
-                    <td className="py-4 px-4 text-[#5A5A7A]">{customer.totalOrders}</td>
-                    <td className="py-4 px-4 font-medium text-[#1B1B4B]">
+                    <td className="py-4 px-4 font-medium text-black">{customer.name}</td>
+                    <td className="py-4 px-4 text-[#666666]">{customer.email}</td>
+                    <td className="py-4 px-4 text-[#666666]">{customer.phone || "-"}</td>
+                    <td className="py-4 px-4 text-[#666666]">{customer.totalOrders}</td>
+                    <td className="py-4 px-4 font-medium text-black">
                       {formatPrice(customer.totalSpent)}
                     </td>
-                    <td className="py-4 px-4 text-[#5A5A7A] text-xs">
+                    <td className="py-4 px-4 text-[#666666] text-xs">
                       {new Date(customer.createdAt).toLocaleDateString("en-IN")}
                     </td>
                   </tr>
@@ -159,22 +159,22 @@ export default function CustomersPage() {
             {/* Drawer Header */}
             <div className="p-6 border-b border-gray-100">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-heading font-bold text-[#1B1B4B] text-lg">
+                <h3 className="font-heading font-bold text-black text-lg">
                   {drawer.customer?.name}
                 </h3>
                 <button
                   onClick={closeDrawer}
-                  className="text-[#5A5A7A] hover:text-[#1B1B4B] text-xl"
+                  className="text-[#666666] hover:text-black text-xl"
                 >
                   ✕
                 </button>
               </div>
-              <p className="text-sm text-[#5A5A7A]">{drawer.customer?.email}</p>
+              <p className="text-sm text-[#666666]">{drawer.customer?.email}</p>
             </div>
 
             {/* Drawer Body */}
             <div className="flex-1 overflow-y-auto p-6">
-              <h4 className="font-medium text-[#1B1B4B] mb-3 text-sm">Recent Orders</h4>
+              <h4 className="font-medium text-black mb-3 text-sm">Recent Orders</h4>
               {drawerLoading ? (
                 <div className="space-y-3">
                   {[...Array(3)].map((_, i) => (
@@ -182,7 +182,7 @@ export default function CustomersPage() {
                   ))}
                 </div>
               ) : drawerOrders.length === 0 ? (
-                <p className="text-sm text-[#5A5A7A] text-center py-8">No orders yet</p>
+                <p className="text-sm text-[#666666] text-center py-8">No orders yet</p>
               ) : (
                 <div className="space-y-3">
                   {drawerOrders.map((order) => (
@@ -191,7 +191,7 @@ export default function CustomersPage() {
                       className="border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition-colors"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-[#1B1B4B]">
+                        <span className="text-sm font-medium text-black">
                           {order.orderId}
                         </span>
                         <span
@@ -199,16 +199,16 @@ export default function CustomersPage() {
                             order.status === "Delivered"
                               ? "bg-[#16A34A]/10 text-[#16A34A]"
                               : order.status === "Cancelled"
-                              ? "bg-gray-100 text-[#5A5A7A]"
-                              : "bg-[#1B1B4B]/10 text-[#1B1B4B]"
+                              ? "bg-gray-100 text-[#666666]"
+                              : "bg-black/5 text-black"
                           }`}
                         >
                           {order.status}
                         </span>
                       </div>
                       <div className="flex items-center justify-between mt-1">
-                        <span className="text-xs text-[#5A5A7A]">{formatPrice(order.total)}</span>
-                        <span className="text-xs text-[#5A5A7A]">{timeAgo(new Date(order.createdAt))}</span>
+                        <span className="text-xs text-[#666666]">{formatPrice(order.total)}</span>
+                        <span className="text-xs text-[#666666]">{timeAgo(new Date(order.createdAt))}</span>
                       </div>
                     </div>
                   ))}

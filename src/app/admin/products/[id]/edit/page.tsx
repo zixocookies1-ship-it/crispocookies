@@ -69,7 +69,7 @@ export default function EditProductPage() {
 
   return (
     <div>
-      <h1 className="font-heading font-bold text-[#1B1B4B] text-2xl mb-6">
+      <h1 className="font-heading font-bold text-black text-2xl mb-6">
         Edit Product
       </h1>
       <ProductForm product={product} />

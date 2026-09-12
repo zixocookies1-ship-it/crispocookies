@@ -36,10 +36,10 @@ function ConfirmModal({
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-        <h3 className="font-heading font-bold text-[#1B1B4B] text-lg mb-2">{title}</h3>
-        <p className="text-sm text-[#5A5A7A] mb-6">{message}</p>
+        <h3 className="font-heading font-bold text-black text-lg mb-2">{title}</h3>
+        <p className="text-sm text-[#666666] mb-6">{message}</p>
         <div className="flex gap-3 justify-end">
-          <button onClick={onCancel} className="px-4 py-2 text-sm text-[#5A5A7A] hover:text-[#1B1B4B] transition-colors">
+          <button onClick={onCancel} className="px-4 py-2 text-sm text-[#666666] hover:text-black transition-colors">
             Cancel
           </button>
           <button onClick={onConfirm} className="btn-red text-sm">
@@ -177,7 +177,7 @@ export default function ProductsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[#5A5A7A] border-b border-gray-100 bg-gray-50/50">
+              <tr className="text-left text-[#666666] border-b border-gray-100 bg-gray-50/50">
                 <th className="py-3 px-4 font-medium">Image</th>
                 <th className="py-3 px-4 font-medium">Name</th>
                 <th className="py-3 px-4 font-medium">Category</th>
@@ -200,7 +200,7 @@ export default function ProductsPage() {
                 </tr>
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-[#5A5A7A]">
+                  <td colSpan={8} className="text-center py-12 text-[#666666]">
                     No products found
                   </td>
                 </tr>
@@ -210,20 +210,20 @@ export default function ProductsPage() {
                   return (
                     <tr key={product._id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
                       <td className="py-4 px-4">
-                        <div className="w-12 h-12 bg-[#FAF7F2] rounded-lg flex items-center justify-center text-xl">
+                        <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center text-xl">
                           🍪
                         </div>
                       </td>
                       <td className="py-4 px-4">
-                        <p className="font-medium text-[#1B1B4B]">{product.name}</p>
+                        <p className="font-medium text-black">{product.name}</p>
                       </td>
-                      <td className="py-4 px-4 text-[#5A5A7A]">
+                      <td className="py-4 px-4 text-[#666666]">
                         {product.category?.name || "-"}
                       </td>
-                      <td className="py-4 px-4 text-[#5A5A7A] text-xs">
+                      <td className="py-4 px-4 text-[#666666] text-xs">
                         {product.variants.map((v) => v.weight).join(", ") || "-"}
                       </td>
-                      <td className="py-4 px-4 font-medium text-[#1B1B4B]">
+                      <td className="py-4 px-4 font-medium text-black">
                         {formatPrice(minPrice(product.variants))}
                       </td>
                       <td className="py-4 px-4">
@@ -243,7 +243,7 @@ export default function ProductsPage() {
                           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                             product.isActive
                               ? "bg-[#16A34A]/10 text-[#16A34A] hover:bg-[#16A34A]/20"
-                              : "bg-gray-100 text-[#5A5A7A] hover:bg-gray-200"
+                              : "bg-gray-100 text-[#666666] hover:bg-gray-200"
                           }`}
                         >
                           {product.isActive ? "Active" : "Draft"}
@@ -253,7 +253,7 @@ export default function ProductsPage() {
                         <div className="flex items-center gap-2">
                           <Link
                             href={`/admin/products/${product._id}/edit`}
-                            className="text-[#8B6410] hover:text-[#7A5A0E] transition-colors"
+                            className="text-black hover:text-gray-800 transition-colors"
                             title="Edit"
                           >
                             ✏️
@@ -292,8 +292,8 @@ export default function ProductsPage() {
               onClick={() => setPage(p)}
               className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
                 p === page
-                  ? "bg-[#8B6410] text-white"
-                  : "text-[#5A5A7A] hover:bg-gray-100"
+                  ? "bg-black text-white"
+                  : "text-[#666666] hover:bg-gray-100"
               }`}
             >
               {p}

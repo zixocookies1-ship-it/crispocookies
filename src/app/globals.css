@@ -454,3 +454,210 @@ h1, h2, h3, h4, h5, h6 {
 .hero-backdrop, .gold-hero {
   position: relative;
 }
+
+/* ─────────────────────────────────────────────
+   ADMIN PANEL DESIGN SYSTEM (scoped to admin)
+   White background · black text · light-gray
+   borders. Only affects pages rendered inside
+   the `.admin-shell` wrapper (admin layout).
+   The customer-facing website is untouched.
+────────────────────────────────────────────── */
+
+.admin-shell {
+  background: #FFFFFF;
+  color: #000000;
+}
+
+.admin-shell ::selection {
+  background: #000000;
+  color: #FFFFFF;
+}
+
+.admin-shell ::-webkit-scrollbar-track {
+  background: #FFFFFF;
+}
+.admin-shell ::-webkit-scrollbar-thumb {
+  background: #D9D9D9;
+  border-radius: 4px;
+}
+.admin-shell ::-webkit-scrollbar-thumb:hover {
+  background: #BFBFBF;
+}
+
+.admin-shell :focus-visible {
+  outline: 2px solid #000000;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Headings: modern sans (Manrope), black */
+.admin-shell h1,
+.admin-shell h2,
+.admin-shell h3,
+.admin-shell h4,
+.admin-shell h5,
+.admin-shell h6,
+.admin-shell .font-heading {
+  font-family: var(--font-manrope);
+  color: #000000;
+  letter-spacing: -0.01em;
+}
+
+/* Cards */
+.admin-shell .card {
+  background: #FFFFFF;
+  border: 1px solid #E5E5E5;
+  color: #000000;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px -12px rgba(0, 0, 0, 0.08);
+}
+
+/* Form inputs */
+.admin-shell .input-field {
+  background: #FFFFFF;
+  color: #000000;
+  border: 1px solid #D9D9D9;
+  border-radius: 0.625rem;
+  box-shadow: none;
+}
+.admin-shell .input-field::placeholder {
+  color: #777777;
+}
+.admin-shell .input-field:focus {
+  outline: none;
+  border-color: #000000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Buttons */
+.admin-shell .btn-gold,
+.admin-shell .btn-primary {
+  background: #000000;
+  color: #FFFFFF;
+  border: 1px solid #000000;
+  border-radius: 0.5rem;
+  box-shadow: none;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
+.admin-shell .btn-gold:hover,
+.admin-shell .btn-primary:hover {
+  background: #222222;
+  transform: none;
+  box-shadow: none;
+}
+.admin-shell .btn-gold:disabled,
+.admin-shell .btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.admin-shell .btn-navy-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #FFFFFF;
+  color: #000000;
+  border: 1px solid #000000;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.admin-shell .btn-navy-outline:hover {
+  background: #000000;
+  color: #FFFFFF;
+}
+
+.admin-shell .btn-red {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: background-color 0.2s ease;
+}
+.admin-shell .btn-red:hover {
+  background: #FEE2E2;
+}
+
+/* Status badges */
+.admin-shell .badge-blue {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #EFF6FF;
+  color: #1D4ED8;
+}
+.admin-shell .badge-indigo {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #EEF2FF;
+  color: #4338CA;
+}
+.admin-shell .badge-grey {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #F3F4F6;
+  color: #374151;
+}
+.admin-shell .badge-amber {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #FEF3C7;
+  color: #B45309;
+}
+.admin-shell .badge-green {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #F0FDF4;
+  color: #15803D;
+}
+.admin-shell .badge-red {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #FEF2F2;
+  color: #DC2626;
+}
+.admin-shell .badge-gold {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #F7F7F7;
+  color: #000000;
+}

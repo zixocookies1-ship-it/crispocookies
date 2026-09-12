@@ -52,14 +52,14 @@ export default function CouponAnalytics() {
   ];
 
   return (
-    <div className="card rounded-2xl p-5 border-t-[3px] border-t-[#8B6410]">
+    <div className="card rounded-2xl p-5 border-t-2 border-t-gray-200">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-heading font-bold text-[#1B1B4B] text-lg">
+        <h2 className="font-heading font-bold text-black text-lg">
           Coupon Analytics
         </h2>
         <a
           href="/admin/coupons"
-          className="text-sm text-[#8B6410] hover:text-[#7A5A0E] font-medium"
+          className="text-sm text-black hover:text-gray-800 font-medium"
         >
           Manage Coupons →
         </a>
@@ -68,16 +68,16 @@ export default function CouponAnalytics() {
         {cards.map((c) => (
           <div
             key={c.title}
-            className="bg-[#FAF7F2] rounded-xl p-4 flex flex-col gap-1"
+            className="bg-gray-50 rounded-xl p-4 flex flex-col gap-1"
           >
-            <span className="text-xs text-[#5A5A7A] font-medium">
+            <span className="text-xs text-[#666666] font-medium">
               {c.icon} {c.title}
             </span>
-            <span className="font-heading font-bold text-[#1B1B4B] text-xl">
+            <span className="font-heading font-bold text-black text-xl">
               {c.value}
             </span>
             {c.title === "Total Coupon Uses" && stats.mostUsedCoupon && (
-              <span className="text-[10px] text-[#5A5A7A] truncate">
+              <span className="text-[10px] text-[#666666] truncate">
                 Top: {stats.mostUsedCoupon.code}
               </span>
             )}

@@ -166,7 +166,7 @@ export default function OrderDetailPage() {
 
       {/* Top bar */}
       <div className="flex items-center justify-between mb-6 no-print">
-        <Link href="/admin/orders" className="text-sm text-[#8B6410] hover:text-[#7A5A0E] font-medium">
+        <Link href="/admin/orders" className="text-sm text-black hover:text-gray-800 font-medium">
           ← Back to Orders
         </Link>
         <button onClick={printInvoice} className="btn-navy-outline text-sm">
@@ -177,15 +177,15 @@ export default function OrderDetailPage() {
       {/* Info Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="card rounded-2xl p-6">
-          <h3 className="font-heading font-bold text-[#1B1B4B] mb-3">Order Details</h3>
+          <h3 className="font-heading font-bold text-black mb-3">Order Details</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-[#5A5A7A]">Order ID</span>
-              <span className="font-medium text-[#1B1B4B]">{order.orderId}</span>
+              <span className="text-[#666666]">Order ID</span>
+              <span className="font-medium text-black">{order.orderId}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#5A5A7A]">Date</span>
-              <span className="text-[#1B1B4B]">
+              <span className="text-[#666666]">Date</span>
+              <span className="text-black">
                 {new Date(order.createdAt).toLocaleDateString("en-IN", {
                   day: "numeric",
                   month: "long",
@@ -196,13 +196,13 @@ export default function OrderDetailPage() {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#5A5A7A]">Payment ID</span>
-              <span className="text-[#1B1B4B] font-mono text-xs break-all min-w-0">
+              <span className="text-[#666666]">Payment ID</span>
+              <span className="text-black font-mono text-xs break-all min-w-0">
                 {order.razorpayPaymentId || "-"}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-[#5A5A7A]">Payment Status</span>
+              <span className="text-[#666666]">Payment Status</span>
               <span className={paymentBadge(order.paymentStatus)}>
                 {order.paymentStatus}
               </span>
@@ -211,23 +211,23 @@ export default function OrderDetailPage() {
         </div>
 
         <div className="card rounded-2xl p-6">
-          <h3 className="font-heading font-bold text-[#1B1B4B] mb-3">Customer Details</h3>
+          <h3 className="font-heading font-bold text-black mb-3">Customer Details</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-[#5A5A7A]">Name</span>
-              <span className="font-medium text-[#1B1B4B]">{order.customerName}</span>
+              <span className="text-[#666666]">Name</span>
+              <span className="font-medium text-black">{order.customerName}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#5A5A7A]">Phone</span>
-              <span className="text-[#1B1B4B]">{order.phone}</span>
+              <span className="text-[#666666]">Phone</span>
+              <span className="text-black">{order.phone}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#5A5A7A]">Email</span>
-              <span className="text-[#1B1B4B]">{order.email || "-"}</span>
+              <span className="text-[#666666]">Email</span>
+              <span className="text-black">{order.email || "-"}</span>
             </div>
             <div className="pt-2 border-t border-gray-100">
-              <span className="text-[#5A5A7A] block mb-1">Address</span>
-              <p className="text-[#1B1B4B]">
+              <span className="text-[#666666] block mb-1">Address</span>
+              <p className="text-black">
                 {order.address?.line1}
                 {order.address?.line2 && <>, {order.address.line2}</>}
                 <br />
@@ -240,11 +240,11 @@ export default function OrderDetailPage() {
 
       {/* Items */}
       <div className="card rounded-2xl p-6 mb-6">
-        <h3 className="font-heading font-bold text-[#1B1B4B] mb-4">Items</h3>
+        <h3 className="font-heading font-bold text-black mb-4">Items</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[#5A5A7A] border-b border-gray-100">
+              <tr className="text-left text-[#666666] border-b border-gray-100">
                 <th className="pb-3 font-medium">Item</th>
                 <th className="pb-3 font-medium">Variant</th>
                 <th className="pb-3 font-medium text-center">Qty</th>
@@ -256,15 +256,15 @@ export default function OrderDetailPage() {
               {order.items.map((item, i) => (
                 <tr key={i} className="border-b border-gray-50 last:border-0">
                   <td className="py-3 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-[#FAF7F2] rounded-lg flex items-center justify-center text-sm">
+                    <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-sm">
                       🍪
                     </div>
-                    <span className="font-medium text-[#1B1B4B]">{item.productName}</span>
+                    <span className="font-medium text-black">{item.productName}</span>
                   </td>
-                  <td className="py-3 text-[#5A5A7A]">{item.variant}</td>
-                  <td className="py-3 text-center text-[#5A5A7A]">{item.quantity}</td>
-                  <td className="py-3 text-right text-[#5A5A7A]">{formatPrice(item.price)}</td>
-                  <td className="py-3 text-right font-medium text-[#1B1B4B]">
+                  <td className="py-3 text-[#666666]">{item.variant}</td>
+                  <td className="py-3 text-center text-[#666666]">{item.quantity}</td>
+                  <td className="py-3 text-right text-[#666666]">{formatPrice(item.price)}</td>
+                  <td className="py-3 text-right font-medium text-black">
                     {formatPrice(item.price * item.quantity)}
                   </td>
                 </tr>
@@ -276,12 +276,12 @@ export default function OrderDetailPage() {
         {/* Totals */}
         <div className="border-t border-gray-100 mt-4 pt-4 space-y-2 max-w-xs ml-auto text-sm">
           <div className="flex justify-between">
-            <span className="text-[#5A5A7A]">Subtotal</span>
-            <span className="text-[#1B1B4B]">{formatPrice(order.subtotal)}</span>
+            <span className="text-[#666666]">Subtotal</span>
+            <span className="text-black">{formatPrice(order.subtotal)}</span>
           </div>
           {order.discount && order.discount > 0 ? (
             <div className="flex justify-between">
-              <span className="text-[#5A5A7A]">
+              <span className="text-[#666666]">
                 Discount
                 {order.promotion?.name
                   ? ` (${order.promotion.name})`
@@ -295,7 +295,7 @@ export default function OrderDetailPage() {
           {order.couponDiscount && order.couponDiscount > 0 ? (
             <>
               <div className="flex justify-between">
-                <span className="text-[#5A5A7A]">
+                <span className="text-[#666666]">
                   Coupon: {order.coupon?.code || "—"}
                 </span>
                 <span className="text-[#16A34A] font-medium">
@@ -304,10 +304,10 @@ export default function OrderDetailPage() {
               </div>
               {order.eligibleSubtotal ? (
                 <div className="flex justify-between">
-                  <span className="text-[#5A5A7A] text-xs">
+                  <span className="text-[#666666] text-xs">
                     Coupon eligible subtotal
                   </span>
-                  <span className="text-[#5A5A7A] text-xs">
+                  <span className="text-[#666666] text-xs">
                     {formatPrice(order.eligibleSubtotal)}
                   </span>
                 </div>
@@ -315,21 +315,21 @@ export default function OrderDetailPage() {
             </>
           ) : null}
           <div className="flex justify-between">
-            <span className="text-[#5A5A7A]">Delivery</span>
-            <span className="text-[#1B1B4B]">
+            <span className="text-[#666666]">Delivery</span>
+            <span className="text-black">
               {order.deliveryCharge === 0 ? "Free" : formatPrice(order.deliveryCharge)}
             </span>
           </div>
           <div className="flex justify-between text-base font-bold border-t border-gray-100 pt-2">
-            <span className="text-[#1B1B4B]">Total</span>
-            <span className="text-[#1B1B4B]">{formatPrice(order.total)}</span>
+            <span className="text-black">Total</span>
+            <span className="text-black">{formatPrice(order.total)}</span>
           </div>
         </div>
       </div>
 
       {/* Update Status */}
       <div className="card rounded-2xl p-6 no-print">
-        <h3 className="font-heading font-bold text-[#1B1B4B] mb-4">Update Status</h3>
+        <h3 className="font-heading font-bold text-black mb-4">Update Status</h3>
         <div className="flex items-center gap-3 flex-wrap">
           <select
             value={newStatus}

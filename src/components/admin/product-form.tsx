@@ -201,10 +201,10 @@ export default function ProductForm({ product }: Props) {
 
       {/* Section 1: Basic Info */}
       <div className="card rounded-2xl p-6">
-        <h3 className="font-heading font-bold text-[#1B1B4B] text-lg mb-4">Basic Info</h3>
+        <h3 className="font-heading font-bold text-black text-lg mb-4">Basic Info</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-[#1B1B4B] mb-1">Product Name *</label>
+            <label className="block text-sm font-medium text-black mb-1">Product Name *</label>
             <input
               type="text"
               value={name}
@@ -215,7 +215,7 @@ export default function ProductForm({ product }: Props) {
             {errors.name && <p className="text-xs text-[#DC2626] mt-1">{errors.name}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#1B1B4B] mb-1">Slug *</label>
+            <label className="block text-sm font-medium text-black mb-1">Slug *</label>
             <input
               type="text"
               value={slug}
@@ -226,7 +226,7 @@ export default function ProductForm({ product }: Props) {
             {errors.slug && <p className="text-xs text-[#DC2626] mt-1">{errors.slug}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#1B1B4B] mb-1">Category *</label>
+            <label className="block text-sm font-medium text-black mb-1">Category *</label>
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
@@ -240,14 +240,14 @@ export default function ProductForm({ product }: Props) {
             {errors.category && <p className="text-xs text-[#DC2626] mt-1">{errors.category}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#1B1B4B] mb-1">Status</label>
+            <label className="block text-sm font-medium text-black mb-1">Status</label>
             <button
               type="button"
               onClick={() => setIsActive(!isActive)}
               className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 isActive
                   ? "bg-[#16A34A]/10 text-[#16A34A]"
-                  : "bg-gray-100 text-[#5A5A7A]"
+                  : "bg-gray-100 text-[#666666]"
               }`}
             >
               {isActive ? "Active" : "Draft"}
@@ -255,7 +255,7 @@ export default function ProductForm({ product }: Props) {
           </div>
         </div>
         <div className="mt-4">
-          <label className="block text-sm font-medium text-[#1B1B4B] mb-2">Tags</label>
+          <label className="block text-sm font-medium text-black mb-2">Tags</label>
           <div className="flex flex-wrap gap-2">
             {AVAILABLE_TAGS.map((tag) => (
               <button
@@ -264,8 +264,8 @@ export default function ProductForm({ product }: Props) {
                 onClick={() => toggleTag(tag)}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   tags.includes(tag)
-                    ? "bg-[#8B6410] text-white"
-                    : "border border-[#8B6410] text-[#8B6410] hover:bg-[#8B6410]/10"
+                    ? "bg-black text-white"
+                    : "border border-black text-black hover:bg-black/5"
                 }`}
               >
                 {tag}
@@ -277,20 +277,20 @@ export default function ProductForm({ product }: Props) {
 
       {/* Section 2: Descriptions */}
       <div className="card rounded-2xl p-6">
-        <h3 className="font-heading font-bold text-[#1B1B4B] text-lg mb-4">Descriptions</h3>
+        <h3 className="font-heading font-bold text-black text-lg mb-4">Descriptions</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[#1B1B4B] mb-1">Short Description</label>
+            <label className="block text-sm font-medium text-black mb-1">Short Description</label>
             <textarea
               value={shortDescription}
               onChange={(e) => setShortDescription(e.target.value.slice(0, 150))}
               className="input-field w-full h-20 resize-none"
               placeholder="Brief description for product cards..."
             />
-            <p className="text-xs text-[#5A5A7A] mt-1 text-right">{shortDescription.length}/150</p>
+            <p className="text-xs text-[#666666] mt-1 text-right">{shortDescription.length}/150</p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#1B1B4B] mb-1">Full Description</label>
+            <label className="block text-sm font-medium text-black mb-1">Full Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -303,20 +303,20 @@ export default function ProductForm({ product }: Props) {
 
       {/* Section 3: Images */}
       <div className="card rounded-2xl p-6">
-        <h3 className="font-heading font-bold text-[#1B1B4B] text-lg mb-4">Images</h3>
+        <h3 className="font-heading font-bold text-black text-lg mb-4">Images</h3>
         {images.length < 5 && (
           <div
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
             onClick={() => document.getElementById("image-input")?.click()}
-            className="border-2 border-dashed border-[#8B6410]/30 rounded-xl p-8 text-center cursor-pointer hover:border-[#8B6410]/60 transition-colors"
+            className="border-2 border-dashed border-black/15 rounded-xl p-8 text-center cursor-pointer hover:border-black/40 transition-colors"
           >
             {uploading ? (
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#8B6410] border-t-transparent mx-auto" />
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-black border-t-transparent mx-auto" />
             ) : (
               <>
-                <p className="text-[#5A5A7A] text-sm mb-1">Drag & drop images or click to browse</p>
-                <p className="text-xs text-[#5A5A7A]/60">Max 5 images</p>
+                <p className="text-[#666666] text-sm mb-1">Drag & drop images or click to browse</p>
+                <p className="text-xs text-[#666666]/60">Max 5 images</p>
               </>
             )}
             <input
@@ -334,16 +334,16 @@ export default function ProductForm({ product }: Props) {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mt-4">
             {images.map((img, i) => (
               <div key={i} className="relative group">
-                <div className="aspect-square bg-[#FAF7F2] rounded-xl flex items-center justify-center text-2xl overflow-hidden">
+                <div className="aspect-square bg-gray-50 rounded-xl flex items-center justify-center text-2xl overflow-hidden">
                   {images[i] ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={images[i]} alt={`Product ${i + 1}`} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-[#5A5A7A] text-xs">No image</span>
+                    <span className="text-[#666666] text-xs">No image</span>
                   )}
                 </div>
                 {i === 0 && (
-                  <span className="absolute top-2 left-2 bg-[#8B6410] text-white text-xs px-2 py-0.5 rounded-full">
+                  <span className="absolute top-2 left-2 bg-black text-white text-xs px-2 py-0.5 rounded-full">
                     Main
                   </span>
                 )}
@@ -361,7 +361,7 @@ export default function ProductForm({ product }: Props) {
 
       {/* Section 4: Variants */}
       <div className="card rounded-2xl p-6">
-        <h3 className="font-heading font-bold text-[#1B1B4B] text-lg mb-4">Variants *</h3>
+        <h3 className="font-heading font-bold text-black text-lg mb-4">Variants *</h3>
         {errors.variants && <p className="text-xs text-[#DC2626] mb-3">{errors.variants}</p>}
         <div className="space-y-3">
           {variants.map((variant, i) => (
@@ -406,7 +406,7 @@ export default function ProductForm({ product }: Props) {
 
       {/* Section 5: Ingredients */}
       <div className="card rounded-2xl p-6">
-        <h3 className="font-heading font-bold text-[#1B1B4B] text-lg mb-4">Ingredients</h3>
+        <h3 className="font-heading font-bold text-black text-lg mb-4">Ingredients</h3>
         <textarea
           value={ingredients}
           onChange={(e) => setIngredients(e.target.value)}

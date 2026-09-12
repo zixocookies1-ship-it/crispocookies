@@ -11,6 +11,8 @@ import {
 } from "recharts";
 import { formatPrice } from "@/lib/helpers";
 
+const AXIS_TICK = { fill: "#333333", fontSize: 12 };
+
 export default function RevenueChart({
   data,
 }: {
@@ -20,37 +22,40 @@ export default function RevenueChart({
     <div className="h-72">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#FAF7F2" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#E5E5E5" vertical={false} />
           <XAxis
             dataKey="day"
-            stroke="#5A5A7A"
-            fontSize={12}
+            stroke="#999999"
+            tick={AXIS_TICK}
             tickLine={false}
+            axisLine={{ stroke: "#E5E5E5" }}
           />
           <YAxis
-            stroke="#5A5A7A"
-            fontSize={12}
+            stroke="#999999"
+            tick={AXIS_TICK}
             tickLine={false}
+            axisLine={false}
             tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
           />
           <Tooltip
             contentStyle={{
               backgroundColor: "#fff",
-              border: "1px solid #eee",
+              border: "1px solid #E5E5E5",
               borderRadius: "12px",
-              color: "#1B1B4B",
+              color: "#000",
               boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
             }}
+            labelStyle={{ color: "#333333", fontWeight: 600 }}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             formatter={(value: any) => [formatPrice(Number(value)), "Revenue"]}
           />
           <Line
             type="monotone"
             dataKey="revenue"
-            stroke="#8B6410"
-            strokeWidth={3}
-            dot={{ fill: "#1B1B4B", strokeWidth: 2, r: 4 }}
-            activeDot={{ r: 6, fill: "#8B6410" }}
+            stroke="#000000"
+            strokeWidth={2.5}
+            dot={{ fill: "#000000", strokeWidth: 2, r: 4 }}
+            activeDot={{ r: 6, fill: "#000000" }}
           />
         </LineChart>
       </ResponsiveContainer>

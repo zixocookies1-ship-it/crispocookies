@@ -173,7 +173,7 @@ export default function DashboardPage() {
 
       {/* Revenue Chart */}
       <div className="card rounded-2xl p-6">
-        <h2 className="font-heading font-bold text-[#1B1B4B] text-lg mb-6">
+        <h2 className="font-heading font-bold text-black text-lg mb-6">
           Revenue Overview
         </h2>
         <RevenueChart data={revenueChart} />
@@ -187,17 +187,17 @@ export default function DashboardPage() {
         {/* Recent Orders */}
         <div className="card rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-heading font-bold text-[#1B1B4B] text-lg">
+            <h2 className="font-heading font-bold text-black text-lg">
               Recent Orders
             </h2>
-            <Link href="/admin/orders" className="text-sm text-[#8B6410] hover:text-[#7A5A0E] font-medium">
+            <Link href="/admin/orders" className="text-sm text-black hover:text-gray-800 font-medium">
               View All →
             </Link>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-[#5A5A7A] border-b border-gray-100">
+                <tr className="text-left text-[#666666] border-b border-gray-100">
                   <th className="pb-3 font-medium">Order ID</th>
                   <th className="pb-3 font-medium">Customer</th>
                   <th className="pb-3 font-medium text-right">Total</th>
@@ -207,18 +207,18 @@ export default function DashboardPage() {
               <tbody>
                 {recentOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="text-center py-8 text-[#5A5A7A]">
+                    <td colSpan={4} className="text-center py-8 text-[#666666]">
                       No orders yet
                     </td>
                   </tr>
                 ) : (
                   recentOrders.map((order) => (
                     <tr key={order._id} className="border-b border-gray-50 last:border-0">
-                      <td className="py-3 font-medium text-[#1B1B4B]">
+                      <td className="py-3 font-medium text-black">
                         {order.orderId}
                       </td>
-                      <td className="py-3 text-[#5A5A7A]">{order.customerName}</td>
-                      <td className="py-3 text-right font-medium text-[#1B1B4B]">
+                      <td className="py-3 text-[#666666]">{order.customerName}</td>
+                      <td className="py-3 text-right font-medium text-black">
                         {formatPrice(order.total)}
                       </td>
                       <td className="py-3">
@@ -236,11 +236,11 @@ export default function DashboardPage() {
 
         {/* Category Breakdown */}
         <div className="card rounded-2xl p-6">
-          <h2 className="font-heading font-bold text-[#1B1B4B] text-lg mb-4">
+          <h2 className="font-heading font-bold text-black text-lg mb-4">
             Orders by Category
           </h2>
           {categoryBreakdown.length === 0 ? (
-            <div className="h-64 flex items-center justify-center text-[#5A5A7A]">
+            <div className="h-64 flex items-center justify-center text-[#666666]">
               No data available
             </div>
           ) : (
@@ -248,7 +248,7 @@ export default function DashboardPage() {
           )}
           <div className="flex flex-wrap gap-3 mt-2 justify-center">
             {categoryBreakdown.map((cat, i) => (
-              <div key={cat.name} className="flex items-center gap-1.5 text-xs text-[#5A5A7A]">
+              <div key={cat.name} className="flex items-center gap-1.5 text-xs text-[#666666]">
                 <span
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }}
@@ -269,7 +269,7 @@ export default function DashboardPage() {
           <div className="space-y-2 mb-4">
             {lowStockProducts.map((p) => (
               <div key={p._id} className="flex items-center justify-between gap-3 py-2 border-b border-gray-50 last:border-0">
-                <span className="text-sm text-[#1B1B4B] font-medium truncate">{p.name}</span>
+                <span className="text-sm text-black font-medium truncate">{p.name}</span>
                 <span className="text-sm text-[#D97706] font-medium shrink-0">{p.stock} left</span>
               </div>
             ))}

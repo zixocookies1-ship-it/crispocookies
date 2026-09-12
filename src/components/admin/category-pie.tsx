@@ -8,7 +8,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-export const PIE_COLORS = ["#8B6410", "#1B1B4B", "#A07820", "#0F0F2D"];
+export const PIE_COLORS = ["#0A0A0A", "#525252", "#A3A3A3", "#D4D4D4"];
 
 export default function CategoryPie({
   data,
@@ -36,9 +36,9 @@ export default function CategoryPie({
           <Tooltip
             contentStyle={{
               backgroundColor: "#fff",
-              border: "1px solid #eee",
+              border: "1px solid #E5E5E5",
               borderRadius: "12px",
-              color: "#1B1B4B",
+              color: "#000",
             }}
           />
         </PieChart>

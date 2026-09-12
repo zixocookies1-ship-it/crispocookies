@@ -157,7 +157,7 @@ export default function OrdersPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[#5A5A7A] border-b border-gray-100 bg-gray-50/50">
+              <tr className="text-left text-[#666666] border-b border-gray-100 bg-gray-50/50">
                 <th className="py-3 px-4 font-medium">Order ID</th>
                 <th className="py-3 px-4 font-medium">Customer</th>
                 <th className="py-3 px-4 font-medium">Phone</th>
@@ -181,20 +181,20 @@ export default function OrdersPage() {
                 </tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="text-center py-12 text-[#5A5A7A]">
+                  <td colSpan={9} className="text-center py-12 text-[#666666]">
                     No orders found
                   </td>
                 </tr>
               ) : (
                 orders.map((order) => (
                   <tr key={order._id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
-                    <td className="py-4 px-4 font-medium text-[#1B1B4B]">
+                    <td className="py-4 px-4 font-medium text-black">
                       {order.orderId}
                     </td>
-                    <td className="py-4 px-4 text-[#5A5A7A]">{order.customerName}</td>
-                    <td className="py-4 px-4 text-[#5A5A7A]">{order.phone}</td>
-                    <td className="py-4 px-4 text-[#5A5A7A]">{order.totalItems}</td>
-                    <td className="py-4 px-4 font-medium text-[#1B1B4B]">
+                    <td className="py-4 px-4 text-[#666666]">{order.customerName}</td>
+                    <td className="py-4 px-4 text-[#666666]">{order.phone}</td>
+                    <td className="py-4 px-4 text-[#666666]">{order.totalItems}</td>
+                    <td className="py-4 px-4 font-medium text-black">
                       {formatPrice(order.total)}
                     </td>
                     <td className="py-4 px-4">
@@ -207,13 +207,13 @@ export default function OrdersPage() {
                         {order.status}
                       </span>
                     </td>
-                    <td className="py-4 px-4 text-[#5A5A7A] text-xs">
+                    <td className="py-4 px-4 text-[#666666] text-xs">
                       {new Date(order.createdAt).toLocaleDateString("en-IN")}
                     </td>
                     <td className="py-4 px-4">
                       <Link
                         href={`/admin/orders/${order._id}`}
-                        className="text-[#8B6410] hover:text-[#7A5A0E] transition-colors"
+                        className="text-black hover:text-gray-800 transition-colors"
                         title="View Order"
                       >
                         👁️
@@ -243,8 +243,8 @@ export default function OrdersPage() {
               onClick={() => setPage(p)}
               className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
                 p === page
-                  ? "bg-[#8B6410] text-white"
-                  : "text-[#5A5A7A] hover:bg-gray-100"
+                  ? "bg-black text-white"
+                  : "text-[#666666] hover:bg-gray-100"
               }`}
             >
               {p}

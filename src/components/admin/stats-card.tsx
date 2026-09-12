@@ -8,19 +8,21 @@ interface StatsCardProps {
 
 export default function StatsCard({ title, value, icon, growth, subtitle }: StatsCardProps) {
   return (
-    <div className="card rounded-2xl p-5 border-t-[3px] border-t-[#8B6410] relative">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-[#5A5A7A] font-medium">{title}</p>
-          <p className="text-2xl font-bold text-[#1B1B4B] mt-1">{value}</p>
+    <div className="bg-white border border-[#E5E5E5] rounded-2xl p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-12px_rgba(0,0,0,0.08)]">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-[#333333] font-medium">{title}</p>
+          <p className="text-3xl font-bold text-black mt-2">{value}</p>
           {growth !== undefined && (
-            <p className={`text-xs font-medium mt-1 ${growth >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
-              {growth >= 0 ? "↑" : "↓"} {Math.abs(growth)}%
+            <p className={`text-xs font-medium mt-2 ${growth >= 0 ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
+              {growth >= 0 ? "↑" : "↓"} {Math.abs(growth)}% from previous period
             </p>
           )}
-          {subtitle && <p className="text-xs text-[#5A5A7A] mt-1">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-[#666666] mt-2">{subtitle}</p>}
         </div>
-        <span className="text-2xl text-[#8B6410]">{icon}</span>
+        <span className="w-12 h-12 shrink-0 bg-gray-100 rounded-full flex items-center justify-center text-xl">
+          {icon}
+        </span>
       </div>
     </div>
   );

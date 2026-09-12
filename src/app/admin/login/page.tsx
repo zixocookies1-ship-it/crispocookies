@@ -47,7 +47,7 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] flex items-center justify-center p-4">
+    <div className="admin-shell min-h-screen bg-gray-50 flex items-center justify-center p-4">
       {error && (
         <div className="fixed top-4 right-4 bg-[#DC2626] text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2">
           <span>{error}</span>
@@ -60,15 +60,15 @@ export default function AdminLoginPage() {
       <div className="card w-full max-w-md p-8">
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🍪</div>
-          <h1 className="font-heading text-3xl text-[#1B1B4B] mb-1">
+          <h1 className="font-heading text-3xl text-black mb-1">
             Crispo
           </h1>
-          <p className="text-[#8B6410] font-heading text-lg">Admin Panel</p>
+          <p className="text-black font-heading text-lg">Admin Panel</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-[#1B1B4B] mb-1.5">
+            <label className="block text-sm font-medium text-black mb-1.5">
               Email Address
             </label>
             <input
@@ -82,7 +82,7 @@ export default function AdminLoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#1B1B4B] mb-1.5">
+            <label className="block text-sm font-medium text-black mb-1.5">
               Password
             </label>
             <div className="relative">
@@ -97,7 +97,7 @@ export default function AdminLoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5A5A7A] hover:text-[#1B1B4B] transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#666666] hover:text-black transition-colors"
               >
                 {showPassword ? (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

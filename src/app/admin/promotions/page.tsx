@@ -72,10 +72,10 @@ function ConfirmModal({
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-        <h3 className="font-heading font-bold text-[#1B1B4B] text-lg mb-2">{title}</h3>
-        <p className="text-sm text-[#5A5A7A] mb-6">{message}</p>
+        <h3 className="font-heading font-bold text-black text-lg mb-2">{title}</h3>
+        <p className="text-sm text-[#666666] mb-6">{message}</p>
         <div className="flex gap-3 justify-end">
-          <button onClick={onCancel} className="px-4 py-2 text-sm text-[#5A5A7A] hover:text-[#1B1B4B] transition-colors">
+          <button onClick={onCancel} className="px-4 py-2 text-sm text-[#666666] hover:text-black transition-colors">
             Cancel
           </button>
           <button onClick={onConfirm} className="btn-red text-sm">
@@ -246,8 +246,8 @@ export default function PromotionsPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-heading font-bold text-[#1B1B4B] text-xl">Promotions</h2>
-          <p className="text-xs text-[#5A5A7A] mt-1">
+          <h2 className="font-heading font-bold text-black text-xl">Promotions</h2>
+          <p className="text-xs text-[#666666] mt-1">
             One active promotion is applied across the store. Being active now ends it for everyone immediately.
           </p>
         </div>
@@ -267,7 +267,7 @@ export default function PromotionsPage() {
         <div className="card rounded-2xl p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#1B1B4B] mb-1">Name</label>
+              <label className="block text-sm font-medium text-black mb-1">Name</label>
               <input
                 type="text"
                 value={form.name}
@@ -277,8 +277,8 @@ export default function PromotionsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1B1B4B] mb-1">
-                Discount (1–100%) <span className="text-xs text-[#5A5A7A]">of variant price</span>
+              <label className="block text-sm font-medium text-black mb-1">
+                Discount (1–100%) <span className="text-xs text-[#666666]">of variant price</span>
               </label>
               <input
                 type="number"
@@ -290,7 +290,7 @@ export default function PromotionsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1B1B4B] mb-1">Valid From</label>
+              <label className="block text-sm font-medium text-black mb-1">Valid From</label>
               <input
                 type="datetime-local"
                 value={form.startDate}
@@ -299,7 +299,7 @@ export default function PromotionsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1B1B4B] mb-1">Valid Until</label>
+              <label className="block text-sm font-medium text-black mb-1">Valid Until</label>
               <input
                 type="datetime-local"
                 value={form.endDate}
@@ -308,12 +308,12 @@ export default function PromotionsPage() {
               />
             </div>
           </div>
-          <label className="flex items-center gap-3 text-sm text-[#1B1B4B] cursor-pointer">
+          <label className="flex items-center gap-3 text-sm text-black cursor-pointer">
             <input
               type="checkbox"
               checked={form.isActive}
               onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-              className="w-4 h-4 accent-[#8B6410]"
+              className="w-4 h-4 accent-black"
             />
             Enabled (show this discount on the store)
           </label>
@@ -326,7 +326,7 @@ export default function PromotionsPage() {
                 setShowForm(false);
                 resetForm();
               }}
-              className="px-4 py-2 text-sm text-[#5A5A7A] hover:text-[#1B1B4B] transition-colors"
+              className="px-4 py-2 text-sm text-[#666666] hover:text-black transition-colors"
             >
               Cancel
             </button>
@@ -339,7 +339,7 @@ export default function PromotionsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[#5A5A7A] border-b border-gray-100 bg-gray-50/50">
+              <tr className="text-left text-[#666666] border-b border-gray-100 bg-gray-50/50">
                 <th className="py-3 px-4 font-medium">Name</th>
                 <th className="py-3 px-4 font-medium">Discount</th>
                 <th className="py-3 px-4 font-medium">Starts</th>
@@ -366,7 +366,7 @@ export default function PromotionsPage() {
                 </tr>
               ) : promotions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-[#5A5A7A]">
+                  <td colSpan={6} className="text-center py-12 text-[#666666]">
                     No promotions yet — create your first Launch Offer.
                   </td>
                 </tr>
@@ -374,10 +374,10 @@ export default function PromotionsPage() {
                 promotions.map((p) => (
                   <tr key={p._id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
                     <td className="py-4 px-4">
-                      <span className="font-medium text-[#1B1B4B]">{p.name}</span>
+                      <span className="font-medium text-black">{p.name}</span>
                     </td>
-                    <td className="py-4 px-4 text-[#8B6410] font-semibold">{p.discountValue}%</td>
-                    <td className="py-4 px-4 text-[#5A5A7A] text-xs">
+                    <td className="py-4 px-4 text-black font-semibold">{p.discountValue}%</td>
+                    <td className="py-4 px-4 text-[#666666] text-xs">
                       {new Date(p.startDate).toLocaleString("en-IN", {
                         day: "2-digit",
                         month: "short",
@@ -385,7 +385,7 @@ export default function PromotionsPage() {
                         minute: "2-digit",
                       })}
                     </td>
-                    <td className="py-4 px-4 text-[#5A5A7A] text-xs">
+                    <td className="py-4 px-4 text-[#666666] text-xs">
                       {new Date(p.endDate).toLocaleString("en-IN", {
                         day: "2-digit",
                         month: "short",
@@ -400,7 +400,7 @@ export default function PromotionsPage() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => startEdit(p)}
-                          className="text-[#8B6410] hover:text-[#7A5A0E] transition-colors"
+                          className="text-black hover:text-gray-800 transition-colors"
                           title="Edit"
                         >
                           ✏️
@@ -408,7 +408,7 @@ export default function PromotionsPage() {
                         <button
                           onClick={() => toggleActive(p)}
                           className={`text-sm font-medium transition-colors ${
-                            p.isActive ? "text-[#5A5A7A] hover:text-[#1B1B4B]" : "text-[#16A34A] hover:text-green-700"
+                            p.isActive ? "text-[#666666] hover:text-black" : "text-[#16A34A] hover:text-green-700"
                           }`}
                           title={p.isActive ? "Disable" : "Enable"}
                         >

@@ -161,13 +161,13 @@ function StatCard({
   return (
     <div className="card rounded-2xl p-5">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-[#5A5A7A] font-medium">{title}</p>
+        <p className="text-xs text-[#666666] font-medium">{title}</p>
         <span className="text-lg">{icon}</span>
       </div>
-      <p className="font-heading font-bold text-[#1B1B4B] text-2xl mt-2">
+      <p className="font-heading font-bold text-black text-2xl mt-2">
         {value}
       </p>
-      {sub && <p className="text-xs text-[#5A5A7A] mt-1 truncate">{sub}</p>}
+      {sub && <p className="text-xs text-[#666666] mt-1 truncate">{sub}</p>}
     </div>
   );
 }
@@ -193,12 +193,12 @@ function Modal({
         style={wide ? { maxWidth: "860px" } : { maxWidth: "720px" }}
       >
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-          <h3 className="font-heading font-bold text-[#1B1B4B] text-lg">
+          <h3 className="font-heading font-bold text-black text-lg">
             {title}
           </h3>
           <button
             onClick={onClose}
-            className="text-[#5A5A7A] hover:text-[#1B1B4B] text-xl leading-none"
+            className="text-[#666666] hover:text-black text-xl leading-none"
           >
             ✕
           </button>
@@ -228,14 +228,14 @@ function ConfirmModal({
   return (
     <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-        <h3 className="font-heading font-bold text-[#1B1B4B] text-lg mb-2">
+        <h3 className="font-heading font-bold text-black text-lg mb-2">
           {title}
         </h3>
-        <p className="text-sm text-[#5A5A7A] mb-6">{message}</p>
+        <p className="text-sm text-[#666666] mb-6">{message}</p>
         <div className="flex gap-3 justify-end">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm text-[#5A5A7A] hover:text-[#1B1B4B] transition-colors"
+            className="px-4 py-2 text-sm text-[#666666] hover:text-black transition-colors"
           >
             Cancel
           </button>
@@ -259,7 +259,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-[#1B1B4B] mb-1">
+      <label className="block text-sm font-medium text-black mb-1">
         {label}
       </label>
       {children}
@@ -288,7 +288,7 @@ function CheckboxList({
   );
   return (
     <div>
-      <p className="text-sm font-medium text-[#1B1B4B] mb-1">{title}</p>
+      <p className="text-sm font-medium text-black mb-1">{title}</p>
       <input
         className={inputCls}
         placeholder={`Search ${title.toLowerCase()}...`}
@@ -316,9 +316,9 @@ function CheckboxList({
                       : [...selected, o._id]
                   )
                 }
-                className="w-4 h-4 accent-[#8B6410]"
+                className="w-4 h-4 accent-black"
               />
-              <span className="text-[#1B1B4B] truncate">{o.label}</span>
+              <span className="text-black truncate">{o.label}</span>
             </label>
           );
         })}
@@ -664,10 +664,10 @@ export default function CouponsPage() {
 
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="font-heading font-bold text-[#1B1B4B] text-xl">
+          <h2 className="font-heading font-bold text-black text-xl">
             Coupons
           </h2>
-          <p className="text-xs text-[#5A5A7A] mt-1">
+          <p className="text-xs text-[#666666] mt-1">
             Discount codes validated by the server at checkout and payment.
           </p>
         </div>
@@ -733,7 +733,7 @@ export default function CouponsPage() {
           <option value="exhausted">Usage limit reached</option>
           <option value="inactive">Inactive</option>
         </select>
-        <span className="text-xs text-[#5A5A7A]">
+        <span className="text-xs text-[#666666]">
           {total} coupon{total !== 1 ? "s" : ""}
         </span>
         {stats && stats.expiringSoon.length > 0 && (
@@ -749,7 +749,7 @@ export default function CouponsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[#5A5A7A] border-b border-gray-100 bg-gray-50/50">
+              <tr className="text-left text-[#666666] border-b border-gray-100 bg-gray-50/50">
                 <th className="py-3 px-4 font-medium">Code</th>
                 <th className="py-3 px-4 font-medium">Description</th>
                 <th className="py-3 px-4 font-medium">Discount</th>
@@ -781,7 +781,7 @@ export default function CouponsPage() {
                 </tr>
               ) : coupons.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="text-center py-12 text-[#5A5A7A]">
+                  <td colSpan={9} className="text-center py-12 text-[#666666]">
                     No coupons{search ? " match your search" : " yet"} — create
                     your first coupon.
                   </td>
@@ -795,33 +795,33 @@ export default function CouponsPage() {
                     <td className="py-4 px-4">
                       <button
                         onClick={() => setDetail(c)}
-                        className="font-mono font-bold text-[#1B1B4B] hover:text-[#8B6410] transition-colors"
+                        className="font-mono font-bold text-black hover:text-black transition-colors"
                         title="View details"
                       >
                         {c.code}
                       </button>
                     </td>
                     <td className="py-4 px-4">
-                      <span className="text-[#5A5A7A] text-xs line-clamp-2 max-w-[200px] block">
+                      <span className="text-[#666666] text-xs line-clamp-2 max-w-[200px] block">
                         {c.description || "-"}
                       </span>
                     </td>
-                    <td className="py-4 px-4 text-[#8B6410] font-semibold">
+                    <td className="py-4 px-4 text-black font-semibold">
                       {c.discountLabel}
                     </td>
-                    <td className="py-4 px-4 text-[#5A5A7A]">
+                    <td className="py-4 px-4 text-[#666666]">
                       {c.minimumOrderValue
                         ? formatPrice(c.minimumOrderValue)
                         : "—"}
                     </td>
-                    <td className="py-4 px-4 text-[#5A5A7A] whitespace-nowrap">
+                    <td className="py-4 px-4 text-[#666666] whitespace-nowrap">
                       {c.totalUsed}
                       {c.maxTotalUses ? ` / ${c.maxTotalUses}` : " / ∞"}
                     </td>
-                    <td className="py-4 px-4 text-[#5A5A7A] text-xs whitespace-nowrap">
+                    <td className="py-4 px-4 text-[#666666] text-xs whitespace-nowrap">
                       {formatDateTime(c.startDate)}
                     </td>
-                    <td className="py-4 px-4 text-[#5A5A7A] text-xs whitespace-nowrap">
+                    <td className="py-4 px-4 text-[#666666] text-xs whitespace-nowrap">
                       {formatDateTime(c.expiryDate)}
                     </td>
                     <td className="py-4 px-4">
@@ -831,21 +831,21 @@ export default function CouponsPage() {
                       <div className="flex items-center gap-2 whitespace-nowrap">
                         <button
                           onClick={() => setDetail(c)}
-                          className="text-[#8B6410] hover:text-[#7A5A0E] transition-colors"
+                          className="text-black hover:text-gray-800 transition-colors"
                           title="Details"
                         >
                           👁️
                         </button>
                         <button
                           onClick={() => openUsage(c._id, c.code)}
-                          className="text-[#5A5A7A] hover:text-[#1B1B4B] transition-colors text-xs font-medium"
+                          className="text-[#666666] hover:text-black transition-colors text-xs font-medium"
                           title="Usage history"
                         >
                           History
                         </button>
                         <button
                           onClick={() => startEdit(c)}
-                          className="text-[#8B6410] hover:text-[#7A5A0E] transition-colors"
+                          className="text-black hover:text-gray-800 transition-colors"
                           title="Edit"
                         >
                           ✏️
@@ -854,7 +854,7 @@ export default function CouponsPage() {
                           onClick={() => toggleActive(c)}
                           className={`text-sm font-medium transition-colors ${
                             c.active
-                              ? "text-[#5A5A7A] hover:text-[#1B1B4B]"
+                              ? "text-[#666666] hover:text-black"
                               : "text-[#16A34A] hover:text-green-700"
                           }`}
                           title={c.active ? "Deactivate" : "Activate"}
@@ -887,21 +887,21 @@ export default function CouponsPage() {
 
         {pages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-            <span className="text-xs text-[#5A5A7A]">
+            <span className="text-xs text-[#666666]">
               Page {page} of {pages}
             </span>
             <div className="flex gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                className="px-3 py-1 text-xs rounded-lg border border-gray-200 text-[#5A5A7A] disabled:opacity-40"
+                className="px-3 py-1 text-xs rounded-lg border border-gray-200 text-[#666666] disabled:opacity-40"
               >
                 Previous
               </button>
               <button
                 onClick={() => setPage((p) => Math.min(pages, p + 1))}
                 disabled={page >= pages}
-                className="px-3 py-1 text-xs rounded-lg border border-gray-200 text-[#5A5A7A] disabled:opacity-40"
+                className="px-3 py-1 text-xs rounded-lg border border-gray-200 text-[#666666] disabled:opacity-40"
               >
                 Next
               </button>
@@ -1108,7 +1108,7 @@ export default function CouponsPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <label className="flex items-center gap-3 text-sm text-[#1B1B4B] cursor-pointer">
+            <label className="flex items-center gap-3 text-sm text-black cursor-pointer">
               <input
                 type="checkbox"
                 checked={form.firstOrderOnly}
@@ -1116,16 +1116,16 @@ export default function CouponsPage() {
                   setForm({ ...form, firstOrderOnly: e.target.checked })
                 }
                 disabled={discounted}
-                className="w-4 h-4 accent-[#8B6410] disabled:opacity-60"
+                className="w-4 h-4 accent-black disabled:opacity-60"
               />
               First order only
             </label>
-            <label className="flex items-center gap-3 text-sm text-[#1B1B4B] cursor-pointer">
+            <label className="flex items-center gap-3 text-sm text-black cursor-pointer">
               <input
                 type="checkbox"
                 checked={form.active}
                 onChange={(e) => setForm({ ...form, active: e.target.checked })}
-                className="w-4 h-4 accent-[#8B6410]"
+                className="w-4 h-4 accent-black"
               />
               Active (can be applied now)
             </label>
@@ -1144,7 +1144,7 @@ export default function CouponsPage() {
                 setShowForm(false);
                 resetForm();
               }}
-              className="px-4 py-2 text-sm text-[#5A5A7A] hover:text-[#1B1B4B] transition-colors"
+              className="px-4 py-2 text-sm text-[#666666] hover:text-black transition-colors"
             >
               Cancel
             </button>
@@ -1167,86 +1167,86 @@ export default function CouponsPage() {
               <span className={statusBadge(detail.status)}>{detail.status}</span>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-              <span className="text-[#5A5A7A]">Description</span>
-              <span className="text-[#1B1B4B] text-right">
+              <span className="text-[#666666]">Description</span>
+              <span className="text-black text-right">
                 {detail.description || "-"}
               </span>
-              <span className="text-[#5A5A7A]">Discount</span>
-              <span className="text-[#1B1B4B] text-right font-semibold">
+              <span className="text-[#666666]">Discount</span>
+              <span className="text-black text-right font-semibold">
                 {detail.discountLabel}
               </span>
-              <span className="text-[#5A5A7A]">Minimum Order</span>
-              <span className="text-[#1B1B4B] text-right">
+              <span className="text-[#666666]">Minimum Order</span>
+              <span className="text-black text-right">
                 {detail.minimumOrderValue
                   ? formatPrice(detail.minimumOrderValue)
                   : "None"}
               </span>
-              <span className="text-[#5A5A7A]">Maximum Discount</span>
-              <span className="text-[#1B1B4B] text-right">
+              <span className="text-[#666666]">Maximum Discount</span>
+              <span className="text-black text-right">
                 {detail.maximumDiscount
                   ? formatPrice(detail.maximumDiscount)
                   : "None"}
               </span>
-              <span className="text-[#5A5A7A]">Starts</span>
-              <span className="text-[#1B1B4B] text-right">
+              <span className="text-[#666666]">Starts</span>
+              <span className="text-black text-right">
                 {formatDateTime(detail.startDate)}
               </span>
-              <span className="text-[#5A5A7A]">Expires</span>
-              <span className="text-[#1B1B4B] text-right">
+              <span className="text-[#666666]">Expires</span>
+              <span className="text-black text-right">
                 {formatDateTime(detail.expiryDate)}
               </span>
-              <span className="text-[#5A5A7A]">Usage</span>
-              <span className="text-[#1B1B4B] text-right">
+              <span className="text-[#666666]">Usage</span>
+              <span className="text-black text-right">
                 {detail.totalUsed} / {detail.maxTotalUses || "∞"}
               </span>
-              <span className="text-[#5A5A7A]">Remaining</span>
-              <span className="text-[#1B1B4B] text-right">
+              <span className="text-[#666666]">Remaining</span>
+              <span className="text-black text-right">
                 {detail.remainingUses === null
                   ? "Unlimited"
                   : detail.remainingUses}
               </span>
-              <span className="text-[#5A5A7A]">Per Customer</span>
-              <span className="text-[#1B1B4B] text-right">
+              <span className="text-[#666666]">Per Customer</span>
+              <span className="text-black text-right">
                 {detail.maxUsesPerCustomer || "Unlimited"}
               </span>
-              <span className="text-[#5A5A7A]">Applicable Products</span>
-              <span className="text-[#1B1B4B] text-right">
+              <span className="text-[#666666]">Applicable Products</span>
+              <span className="text-black text-right">
                 {detail.applicableProducts.length
                   ? detail.applicableProducts.slice(0, 3).map(productLabel).join(", ") +
                     (detail.applicableProducts.length > 3 ? "…" : "")
                   : "All"}
               </span>
-              <span className="text-[#5A5A7A]">Excluded Products</span>
-              <span className="text-[#1B1B4B] text-right">
+              <span className="text-[#666666]">Excluded Products</span>
+              <span className="text-black text-right">
                 {detail.excludedProducts.length
                   ? detail.excludedProducts.slice(0, 3).map(productLabel).join(", ") +
                     (detail.excludedProducts.length > 3 ? "…" : "")
                   : "None"}
               </span>
-              <span className="text-[#5A5A7A]">Applicable Categories</span>
-              <span className="text-[#1B1B4B] text-right">
+              <span className="text-[#666666]">Applicable Categories</span>
+              <span className="text-black text-right">
                 {detail.applicableCategories.length
                   ? detail.applicableCategories.slice(0, 3).map(categoryLabel).join(", ") +
                     (detail.applicableCategories.length > 3 ? "…" : "")
                   : "All"}
               </span>
-              <span className="text-[#5A5A7A]">Excluded Categories</span>
-              <span className="text-[#1B1B4B] text-right">
+              <span className="text-[#666666]">Excluded Categories</span>
+              <span className="text-black text-right">
                 {detail.excludedCategories.length
                   ? detail.excludedCategories.slice(0, 3).map(categoryLabel).join(", ") +
                     (detail.excludedCategories.length > 3 ? "…" : "")
                   : "None"}
               </span>
-              <span className="text-[#5A5A7A]">Created</span>
-              <span className="text-[#1B1B4B] text-right">
+              <span className="text-[#666666]">Created</span>
+              <span className="text-black text-right">
                 {formatDateTime(detail.createdAt)}
               </span>
-              <span className="text-[#5A5A7A]">Last Updated</span>
-              <span className="text-[#1B1B4B] text-right">
+              <span className="text-[#666666]">Last Updated</span>
+              <span className="text-black text-right">
                 {formatDateTime(detail.updatedAt)}
               </span>
-              <span className="text-[#5A5A7A]">Created By</span>
-              <span className="text-[#1B1B4B] text-right">
+              <span className="text-[#666666]">Created By</span>
+              <span className="text-black text-right">
                 {detail.createdBy || "-"}
               </span>
             </div>
@@ -1263,10 +1263,10 @@ export default function CouponsPage() {
       >
         {!usage.loaded ? (
           <div className="h-24 flex items-center justify-center">
-            <div className="w-6 h-6 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-gray-200 border-t-black rounded-full animate-spin" />
           </div>
         ) : usage.rows.length === 0 ? (
-          <p className="text-center text-[#5A5A7A] py-8">
+          <p className="text-center text-[#666666] py-8">
             No successful uses yet. Usage is recorded only after a payment is
             verified.
           </p>
@@ -1274,7 +1274,7 @@ export default function CouponsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-[#5A5A7A] border-b border-gray-100">
+                <tr className="text-left text-[#666666] border-b border-gray-100">
                   <th className="pb-3 font-medium">Order</th>
                   <th className="pb-3 font-medium">Customer</th>
                   <th className="pb-3 font-medium">Discount</th>
@@ -1287,7 +1287,7 @@ export default function CouponsPage() {
                 {usage.rows.map((row) => (
                   <tr key={row.orderId} className="border-b border-gray-50 last:border-0">
                     <td className="py-3">
-                      <span className="font-medium text-[#1B1B4B]">
+                      <span className="font-medium text-black">
                         {row.orderId}
                       </span>
                       <span className="block text-xs text-[#A3A3C2]">
@@ -1295,7 +1295,7 @@ export default function CouponsPage() {
                       </span>
                     </td>
                     <td className="py-3">
-                      <span className="text-[#1B1B4B]">{row.customerName || "-"}</span>
+                      <span className="text-black">{row.customerName || "-"}</span>
                       <span className="block text-xs text-[#A3A3C2]">
                         {row.email || row.phone || "-"}
                       </span>
@@ -1303,13 +1303,13 @@ export default function CouponsPage() {
                     <td className="py-3 text-[#16A34A] font-semibold">
                       −{formatPrice(row.discountAmount)}
                     </td>
-                    <td className="py-3 text-right text-[#5A5A7A]">
+                    <td className="py-3 text-right text-[#666666]">
                       {formatPrice(row.orderSubtotal)}
                     </td>
-                    <td className="py-3 text-right font-medium text-[#1B1B4B]">
+                    <td className="py-3 text-right font-medium text-black">
                       {formatPrice(row.orderTotal)}
                     </td>
-                    <td className="py-3 text-[#5A5A7A] text-xs whitespace-nowrap">
+                    <td className="py-3 text-[#666666] text-xs whitespace-nowrap">
                       {formatDateTime(row.usedAt)}
                     </td>
                   </tr>

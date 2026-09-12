@@ -104,7 +104,7 @@ export default function SettingsPage() {
         </div>
       )}
 
-      <h1 className="font-heading font-bold text-[#1B1B4B] text-2xl">Settings</h1>
+      <h1 className="font-heading font-bold text-black text-2xl">Settings</h1>
 
       {/* Tabs */}
       <div className="flex gap-0 border-b border-gray-200 overflow-x-auto no-scrollbar">
@@ -114,8 +114,8 @@ export default function SettingsPage() {
             onClick={() => setActiveTab(tab)}
             className={`px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px whitespace-nowrap ${
               activeTab === tab
-                ? "border-[#8B6410] text-[#8B6410]"
-                : "border-transparent text-[#5A5A7A] hover:text-[#1B1B4B]"
+                ? "border-black text-black"
+                : "border-transparent text-[#666666] hover:text-black"
             }`}
           >
             {tab}
@@ -128,7 +128,7 @@ export default function SettingsPage() {
         {activeTab === "Store Info" && (
           <div className="space-y-4 max-w-xl">
             <div>
-              <label className="block text-sm font-medium text-[#1B1B4B] mb-1">Store Name</label>
+              <label className="block text-sm font-medium text-black mb-1">Store Name</label>
               <input
                 type="text"
                 value={settings.storeName}
@@ -138,7 +138,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1B1B4B] mb-1">Tagline</label>
+              <label className="block text-sm font-medium text-black mb-1">Tagline</label>
               <input
                 type="text"
                 value={settings.tagline}
@@ -148,7 +148,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1B1B4B] mb-1">Contact Email</label>
+              <label className="block text-sm font-medium text-black mb-1">Contact Email</label>
               <input
                 type="email"
                 value={settings.contactEmail}
@@ -158,7 +158,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1B1B4B] mb-1">Contact Phone</label>
+              <label className="block text-sm font-medium text-black mb-1">Contact Phone</label>
               <input
                 type="tel"
                 value={settings.contactPhone}
@@ -168,7 +168,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1B1B4B] mb-1">Address</label>
+              <label className="block text-sm font-medium text-black mb-1">Address</label>
               <textarea
                 value={settings.address}
                 onChange={(e) => handleChange("address", e.target.value)}
@@ -182,7 +182,7 @@ export default function SettingsPage() {
         {activeTab === "Delivery" && (
           <div className="space-y-4 max-w-xl">
             <div>
-              <label className="block text-sm font-medium text-[#1B1B4B] mb-1">
+              <label className="block text-sm font-medium text-black mb-1">
                 Free Delivery Above (₹)
               </label>
               <input
@@ -194,7 +194,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1B1B4B] mb-1">
+              <label className="block text-sm font-medium text-black mb-1">
                 Standard Delivery Charge (₹)
               </label>
               <input
@@ -211,7 +211,7 @@ export default function SettingsPage() {
         {activeTab === "Payment Keys" && (
           <div className="space-y-4 max-w-xl">
             <div>
-              <label className="block text-sm font-medium text-[#1B1B4B] mb-1">
+              <label className="block text-sm font-medium text-black mb-1">
                 Razorpay Key ID
               </label>
               <input
@@ -223,7 +223,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1B1B4B] mb-1">
+              <label className="block text-sm font-medium text-black mb-1">
                 Razorpay Key Secret
               </label>
               <div className="relative">
@@ -237,7 +237,7 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => setShowSecret(!showSecret)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5A5A7A] hover:text-[#1B1B4B] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#666666] hover:text-black transition-colors"
                 >
                   {showSecret ? (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -258,7 +258,7 @@ export default function SettingsPage() {
         {activeTab === "Social Links" && (
           <div className="space-y-4 max-w-xl">
             <div>
-              <label className="block text-sm font-medium text-[#1B1B4B] mb-1">Instagram</label>
+              <label className="block text-sm font-medium text-black mb-1">Instagram</label>
               <input
                 type="url"
                 value={settings.instagram}
@@ -268,7 +268,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1B1B4B] mb-1">Facebook</label>
+              <label className="block text-sm font-medium text-black mb-1">Facebook</label>
               <input
                 type="url"
                 value={settings.facebook}
@@ -278,7 +278,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1B1B4B] mb-1">WhatsApp</label>
+              <label className="block text-sm font-medium text-black mb-1">WhatsApp</label>
               <input
                 type="tel"
                 value={settings.whatsapp}

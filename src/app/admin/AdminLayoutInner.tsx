@@ -18,8 +18,8 @@ const NAV_ITEMS = [
 
 function Spinner() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#8B6410] border-t-transparent" />
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#D9D9D9] border-t-black" />
     </div>
   );
 }
@@ -82,7 +82,7 @@ export default function AdminLayoutInner({
     : "A";
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2]">
+    <div className="admin-shell min-h-screen bg-white text-black">
       {mobileOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -91,15 +91,15 @@ export default function AdminLayoutInner({
       )}
 
       <aside
-        className={`fixed top-0 left-0 h-full bg-[#0F0F2D] z-50 transition-all duration-300 flex flex-col
+        className={`fixed top-0 left-0 h-full bg-white border-r border-[#E5E5E5] z-50 transition-all duration-300 flex flex-col
           ${mobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0
           ${sidebarOpen ? "w-[260px]" : "w-16"}`}
       >
-        <div className="h-16 flex items-center px-4 border-b border-white/10">
+        <div className="h-16 flex items-center px-4 border-b border-[#E5E5E5]">
           <span className="text-2xl flex-shrink-0">🍪</span>
           {sidebarOpen && (
-            <span className="ml-2 text-[#8B6410] font-heading font-bold text-lg whitespace-nowrap">
-              Admin Panel
+            <span className="ml-2 font-body font-bold text-lg whitespace-nowrap text-black">
+              Crispo Admin
             </span>
           )}
         </div>
@@ -118,8 +118,8 @@ export default function AdminLayoutInner({
                 className={`flex items-center px-4 py-3 mx-2 rounded-lg transition-all text-sm font-medium
                   ${
                     isActive
-                      ? "border-l-4 border-[#8B6410] text-[#8B6410] bg-[#8B6410]/10"
-                      : "border-l-4 border-transparent text-white/60 hover:text-white hover:bg-white/5"
+                      ? "bg-black text-white"
+                      : "text-[#333333] hover:bg-gray-100 hover:text-black"
                   }
                   ${!sidebarOpen ? "justify-center" : ""}`}
               >
@@ -132,23 +132,24 @@ export default function AdminLayoutInner({
           })}
         </nav>
 
-        <div className="p-3 border-t border-white/10">
+        <div className="p-3 border-t border-[#E5E5E5]">
           {sidebarOpen ? (
             <>
-              <p className="text-white/70 text-xs truncate px-2 mb-2">
+              <p className="text-[#666666] text-xs truncate px-2 mb-2">
                 {session.user?.email}
               </p>
               <button
                 onClick={() => signOut({ callbackUrl: "/admin/login" })}
-                className="btn-red w-full text-sm py-2"
+                className="w-full inline-flex items-center justify-center gap-2 border border-black text-black hover:bg-black hover:text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors"
               >
+                <span>🚪</span>
                 Logout
               </button>
             </>
           ) : (
             <button
               onClick={() => signOut({ callbackUrl: "/admin/login" })}
-              className="w-full flex justify-center py-2 text-[#DC2626] hover:text-red-400"
+              className="w-full flex justify-center py-2 text-black hover:text-gray-600"
               title="Logout"
             >
               🚪
@@ -162,7 +163,7 @@ export default function AdminLayoutInner({
           sidebarOpen ? "lg:ml-[260px]" : "lg:ml-16"
         }`}
       >
-        <header className="h-16 bg-[#1B1B4B] flex items-center justify-between px-4 sticky top-0 z-30">
+        <header className="h-16 bg-white border-b border-[#E5E5E5] flex items-center justify-between px-4 sticky top-0 z-30">
           <div className="flex items-center gap-3">
             <button
               onClick={() => {
@@ -172,7 +173,8 @@ export default function AdminLayoutInner({
                   setSidebarOpen(!sidebarOpen);
                 }
               }}
-              className="text-[#8B6410] hover:text-[#A07820] transition-colors"
+              className="text-black hover:text-gray-600 transition-colors"
+              aria-label="Toggle sidebar"
             >
               <svg
                 className="w-6 h-6"
@@ -193,10 +195,10 @@ export default function AdminLayoutInner({
               <input
                 type="text"
                 placeholder="Search..."
-                className="bg-white/10 text-white placeholder-white/40 rounded-full px-4 py-1.5 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-[#8B6410]/50"
+                className="bg-gray-100 text-black placeholder-[#777777] border border-[#E5E5E5] rounded-full px-4 py-1.5 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-black/20 focus:bg-white"
               />
               <svg
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666666]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -218,7 +220,8 @@ export default function AdminLayoutInner({
                   setNotificationOpen(!notificationOpen);
                   setAvatarOpen(false);
                 }}
-                className="relative text-white/80 hover:text-white transition-colors"
+                className="relative text-black hover:text-gray-600 transition-colors"
+                aria-label="Notifications"
               >
                 <svg
                   className="w-6 h-6"
@@ -234,7 +237,7 @@ export default function AdminLayoutInner({
                   />
                 </svg>
                 {notificationCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#8B6410] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                  <span className="absolute -top-1 -right-1 bg-black text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
                     {notificationCount > 9 ? "9+" : notificationCount}
                   </span>
                 )}
@@ -253,17 +256,18 @@ export default function AdminLayoutInner({
                   setAvatarOpen(!avatarOpen);
                   setNotificationOpen(false);
                 }}
-                className="w-9 h-9 rounded-full bg-[#8B6410] flex items-center justify-center text-white font-bold text-sm"
+                className="w-9 h-9 rounded-full bg-black flex items-center justify-center text-white font-bold text-sm"
+                aria-label="Account menu"
               >
                 {initials}
               </button>
               {avatarOpen && (
-                <div className="absolute right-0 top-12 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
-                  <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="text-sm font-medium text-[#1B1B4B]">
+                <div className="absolute right-0 top-12 w-56 bg-white rounded-xl shadow-lg border border-[#E5E5E5] py-2 z-50">
+                  <div className="px-4 py-2 border-b border-[#E5E5E5]">
+                    <p className="text-sm font-medium text-black">
                       {session.user?.name || "Admin"}
                     </p>
-                    <p className="text-xs text-[#5A5A7A]">
+                    <p className="text-xs text-[#666666]">
                       {session.user?.email}
                     </p>
                   </div>

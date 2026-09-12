@@ -27,10 +27,10 @@ function ConfirmModal({
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-        <h3 className="font-heading font-bold text-[#1B1B4B] text-lg mb-2">{title}</h3>
-        <p className="text-sm text-[#5A5A7A] mb-6">{message}</p>
+        <h3 className="font-heading font-bold text-black text-lg mb-2">{title}</h3>
+        <p className="text-sm text-[#666666] mb-6">{message}</p>
         <div className="flex gap-3 justify-end">
-          <button onClick={onCancel} className="px-4 py-2 text-sm text-[#5A5A7A] hover:text-[#1B1B4B] transition-colors">
+          <button onClick={onCancel} className="px-4 py-2 text-sm text-[#666666] hover:text-black transition-colors">
             Cancel
           </button>
           <button onClick={onConfirm} className="btn-red text-sm">
@@ -178,7 +178,7 @@ export default function CategoriesPage() {
       )}
 
       <div className="flex items-center justify-between">
-        <h2 className="font-heading font-bold text-[#1B1B4B] text-xl">Categories</h2>
+        <h2 className="font-heading font-bold text-black text-xl">Categories</h2>
         <button onClick={() => setShowForm(!showForm)} className="btn-gold text-sm">
           + Add Category
         </button>
@@ -189,7 +189,7 @@ export default function CategoriesPage() {
         <div className="card rounded-2xl p-6 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#1B1B4B] mb-1">Name</label>
+              <label className="block text-sm font-medium text-black mb-1">Name</label>
               <input
                 type="text"
                 value={newName}
@@ -199,7 +199,7 @@ export default function CategoriesPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1B1B4B] mb-1">Slug</label>
+              <label className="block text-sm font-medium text-black mb-1">Slug</label>
               <input
                 type="text"
                 value={newSlug}
@@ -215,7 +215,7 @@ export default function CategoriesPage() {
             </button>
             <button
               onClick={() => { setShowForm(false); setNewName(""); setNewSlug(""); setSlugEdited(false); }}
-              className="px-4 py-2 text-sm text-[#5A5A7A] hover:text-[#1B1B4B] transition-colors"
+              className="px-4 py-2 text-sm text-[#666666] hover:text-black transition-colors"
             >
               Cancel
             </button>
@@ -228,7 +228,7 @@ export default function CategoriesPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-[#5A5A7A] border-b border-gray-100 bg-gray-50/50">
+              <tr className="text-left text-[#666666] border-b border-gray-100 bg-gray-50/50">
                 <th className="py-3 px-4 font-medium">Name</th>
                 <th className="py-3 px-4 font-medium">Slug</th>
                 <th className="py-3 px-4 font-medium">Products</th>
@@ -247,7 +247,7 @@ export default function CategoriesPage() {
                 </tr>
               ) : categories.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="text-center py-12 text-[#5A5A7A]">
+                  <td colSpan={4} className="text-center py-12 text-[#666666]">
                     No categories yet
                   </td>
                 </tr>
@@ -263,7 +263,7 @@ export default function CategoriesPage() {
                           className="input-field text-sm py-1.5"
                         />
                       ) : (
-                        <span className="font-medium text-[#1B1B4B]">{cat.name}</span>
+                        <span className="font-medium text-black">{cat.name}</span>
                       )}
                     </td>
                     <td className="py-4 px-4">
@@ -275,10 +275,10 @@ export default function CategoriesPage() {
                           className="input-field text-sm py-1.5"
                         />
                       ) : (
-                        <span className="text-[#5A5A7A] text-xs">{cat.slug}</span>
+                        <span className="text-[#666666] text-xs">{cat.slug}</span>
                       )}
                     </td>
-                    <td className="py-4 px-4 text-[#5A5A7A]">{cat.productCount}</td>
+                    <td className="py-4 px-4 text-[#666666]">{cat.productCount}</td>
                     <td className="py-4 px-4">
                       {editingId === cat._id ? (
                         <div className="flex gap-2">
@@ -290,7 +290,7 @@ export default function CategoriesPage() {
                           </button>
                           <button
                             onClick={() => setEditingId(null)}
-                            className="text-[#5A5A7A] hover:text-[#1B1B4B] text-sm transition-colors"
+                            className="text-[#666666] hover:text-black text-sm transition-colors"
                           >
                             Cancel
                           </button>
@@ -299,7 +299,7 @@ export default function CategoriesPage() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => startEdit(cat)}
-                            className="text-[#8B6410] hover:text-[#7A5A0E] transition-colors"
+                            className="text-black hover:text-gray-800 transition-colors"
                             title="Edit"
                           >
                             ✏️
