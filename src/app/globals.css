@@ -714,3 +714,40 @@ h1, h2, h3, h4, h5, h6 {
   background: #F7F7F7;
   color: #000000;
 }
+
+/* ═════════════════════════════════════════════
+   STRICT MONOCHROME (admin only)
+   Final say: only black text and white backgrounds
+   inside the admin panel. Blueprint-neutralizes
+   badges, buttons, gray text and colored states.
+══════════════════════════════════════════════ */
+
+.admin-shell,
+.admin-shell * {
+  color: #000000 !important;
+}
+.admin-shell * {
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+}
+.admin-shell input::placeholder,
+.admin-shell textarea::placeholder {
+  color: #000000 !important;
+  opacity: 1 !important;
+}
+.admin-shell ::selection {
+  background: #FFFFFF !important;
+  color: #000000 !important;
+}
+.admin-shell ::-webkit-scrollbar-track {
+  background: #FFFFFF !important;
+}
+.admin-shell ::-webkit-scrollbar-thumb,
+.admin-shell ::-webkit-scrollbar-thumb:hover {
+  background: #E5E5E5 !important;
+}
+/* Keep the mobile drawer split-screen dim functional. */
+.admin-shell .fixed.inset-0 {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  background-image: none !important;
+}

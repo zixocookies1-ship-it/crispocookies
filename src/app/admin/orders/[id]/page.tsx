@@ -257,6 +257,59 @@ export default function OrderDetailPage() {
         </button>
       </div>
 
+      {/* Print-only shipping label with the full delivery address data */}
+      <div className="print-only mb-6">
+        <div className="card rounded-2xl p-6">
+          <div className="flex items-start justify-between mb-4 gap-4">
+            <div>
+              <p className="font-heading font-bold text-black text-lg mb-1">Shipping Label</p>
+              <p className="text-xs text-black">Order #{order.orderId}</p>
+              <p className="text-xs text-black">
+                Date:{" "}
+                {new Date(order.createdAt).toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </p>
+              {order.waybill && (
+                <p className="text-xs font-bold text-black mt-1">AWB: {order.waybill}</p>
+              )}
+            </div>
+            <div className="text-right">
+              <p className="font-heading font-bold text-black">Crispo Cookies</p>
+              <p className="text-xs text-black">Baked with 100% Oats</p>
+            </div>
+          </div>
+
+          <div className="border border-gray-300 rounded-lg p-4 mb-4">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-black mb-2">
+              Deliver To
+            </p>
+            <p className="text-sm font-bold text-black">{order.customerName}</p>
+            <p className="text-sm text-black">
+              Phone: {order.phone}
+              {order.email ? ` · Email: ${order.email}` : ""}
+            </p>
+            <p className="text-sm text-black mt-3">
+              {order.address?.line1}
+              {order.address?.line2 ? `, ${order.address.line2}` : ""}
+              <br />
+              {order.address?.city}, {order.address?.state} - {order.address?.pincode}
+            </p>
+          </div>
+
+          <div className="flex justify-between text-xs text-black">
+            <span>
+              Payment: {order.paymentStatus} · Delivery:{" "}
+              {order.deliveryCharge === 0 ? "Free" : formatPrice(order.deliveryCharge)}
+              {order.deliveryProvider === "delhivery" ? " (Delhivery)" : ""}
+            </span>
+            <span>Subtotal {formatPrice(order.subtotal)} · Total {formatPrice(order.total)}</span>
+          </div>
+        </div>
+      </div>
+
       {/* Info Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="card rounded-2xl p-6">
@@ -619,10 +672,12 @@ export default function OrderDetailPage() {
 
       {/* Print Invoice Styles */}
       <style>{`
+        .print-only { display: none !important; }
         @media print {
           .no-print { display: none !important; }
           body { background: white !important; }
           .card { box-shadow: none !important; border: 1px solid #eee !important; }
+          .print-only { display: block !important; }
         }
       `}</style>
     </>
