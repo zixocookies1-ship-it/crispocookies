@@ -3,8 +3,8 @@ import type { IOrder } from "@/models/Order";
 import Notification from "@/models/Notification";
 import {
   createDelhiveryShipment,
-  getShippingLabelUrl,
   resolveShipmentLines,
+  totalWeightGrams,
   buildDhlTrackingUrl,
   isDelhiveryConfigured,
 } from "./index";
@@ -18,8 +18,8 @@ export interface AutoShipmentResult {
 /**
  * Create a Delhivery shipment for a PAID order. Idempotent: only runs when
  * there is no waybill yet AND the integration is configured. Persists the
- * waybill / label / tracking url on the order so a failed attempt can be
- * retried from the admin panel.
+ * waybill / tracking url / syncState on the order so a failed attempt can be
+ * retried from the admin panel or the sync cron.
  *
  * This is called automatically right after Razorpay verification so prepaid
  * orders are handed to Delhivery for scanning as early as possible.
@@ -28,12 +28,17 @@ export async function attemptAutoShipment(
   order: HydratedDocument<IOrder>
 ): Promise<AutoShipmentResult> {
   if (!isDelhiveryConfigured()) {
+    order.syncState = "unconfigured";
+    order.syncAttemptedAt = new Date();
+    await order.save().catch(() => {});
     return { ok: false, error: "Delhivery is not configured." };
   }
   if (order.paymentStatus !== "paid") {
     return { ok: false, error: "Order is not paid yet." };
   }
   if (order.waybill && order.shipmentStatus) {
+    order.syncState = "synced";
+    order.syncAttemptedAt = new Date();
     return { ok: true, waybill: order.waybill };
   }
 
@@ -43,7 +48,22 @@ export async function attemptAutoShipment(
       name?: string;
       variant?: string;
       qty?: number;
-    }>, { requireWeights: true });
+    }>);
+
+    // Prefer the weight that was actually used for the checkout shipping
+    // quote so sync never depends on product records being unchanged.
+    const storedWeight =
+      typeof order.shippingWeightGrams === "number"
+        ? order.shippingWeightGrams
+        : 0;
+    const resolvedWeight = totalWeightGrams(lines);
+    const weightGrams =
+      storedWeight > 0 ? storedWeight : resolvedWeight > 0 ? resolvedWeight : 0;
+    if (weightGrams <= 0) {
+      throw new Error(
+        "Order has no shipping weight. Update product shipping weights in the admin panel."
+      );
+    }
 
     const response = await createDelhiveryShipment({
       orderId: order.orderId,
@@ -53,6 +73,7 @@ export async function attemptAutoShipment(
       phone: order.phone,
       lines,
       totalAmount: order.total,
+      weightGrams,
     });
 
     const pkg = response.packages?.[0];
@@ -61,24 +82,16 @@ export async function attemptAutoShipment(
       throw new Error("Delhivery did not return a waybill for the shipment.");
     }
 
-    // Label is best-effort; a packing-slip hiccup must not fail the shipment.
-    let labelUrl: string | null = null;
-    try {
-      labelUrl = await getShippingLabelUrl(waybill);
-    } catch (error) {
-      console.warn("[delhivery] label fetch failed", {
-        waybill,
-        message: error instanceof Error ? error.message : String(error),
-      });
-    }
-
-    order.waybill = waybill;
-    order.shipmentId = response.upload_wbn || "";
+    order.waybill = String(waybill);
+    order.shipmentId = response.upload_wbn ? String(response.upload_wbn) : "";
     order.shipmentStatus = "Manifested";
     order.shipmentCreatedAt = new Date();
-    order.trackingUrl = buildDhlTrackingUrl(waybill);
-    if (labelUrl) order.labelUrl = labelUrl;
+    order.trackingUrl = buildDhlTrackingUrl(String(waybill));
+    // Label endpoint streams the PDF fresh from Delhivery — never store a URL.
+    order.labelUrl = null;
     order.shipmentError = undefined;
+    order.syncState = "synced";
+    order.syncAttemptedAt = new Date();
     await order.save();
 
     await Notification.create({
@@ -87,16 +100,23 @@ export async function attemptAutoShipment(
       orderId: String(order._id),
     });
 
-    return { ok: true, waybill };
+    return { ok: true, waybill: String(waybill) };
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Shipment creation failed";
     order.shipmentError = message.slice(0, 500);
+    order.syncState = "failed";
+    order.syncAttemptedAt = new Date();
     await order.save().catch(() => {});
     console.error("[delhivery] auto-shipment failed", {
       orderId: order.orderId,
       message,
     });
+    await Notification.create({
+      message: `Delhivery sync failed for order #${order.orderId} — ${message.slice(0, 200)}`,
+      type: "order",
+      orderId: String(order._id),
+    }).catch(() => {});
     return { ok: false, error: message };
   }
 }

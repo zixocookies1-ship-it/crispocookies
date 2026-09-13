@@ -36,6 +36,7 @@ export async function POST(
       shipmentStatus: order.shipmentStatus,
       trackingUrl: order.trackingUrl,
       labelUrl: order.labelUrl,
+      syncState: order.syncState,
     });
   } catch (error) {
     console.error("POST /api/admin/orders/[id]/shipment error:", error);

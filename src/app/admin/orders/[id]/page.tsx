@@ -51,6 +51,7 @@ interface OrderData {
   trackingUrl?: string;
   labelUrl?: string;
   shipmentError?: string;
+  syncState?: string;
   pickedUp?: boolean;
   pickedUpAt?: string;
   shippingWeightGrams?: number;
@@ -159,6 +160,19 @@ export default function OrderDetailPage() {
           trackingUrl: data.trackingUrl,
           labelUrl: data.labelUrl,
         }));
+        setOrder((prev) =>
+          prev
+            ? {
+                ...prev,
+                waybill: data.waybill,
+                shipmentStatus: data.shipmentStatus,
+                trackingUrl: data.trackingUrl,
+                labelUrl: data.labelUrl,
+                syncState: data.syncState || "synced",
+                shipmentError: undefined,
+              }
+            : prev
+        );
         setToast(`Shipment created — AWB ${data.waybill}`);
       } else if (action === "pickup") {
         setToast(`Pickup requested — ID ${data.pickupId}`);
@@ -401,9 +415,40 @@ export default function OrderDetailPage() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-heading font-bold text-black">Delivery</h3>
           {order.waybill && (
-            <span className="badge-green">AWB {order.waybill}</span>
+            <span className="flex items-center gap-2">
+              <span className="badge-green">AWB {order.waybill}</span>
+              <button
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(String(order.waybill));
+                    setToast("AWB copied");
+                  } catch {
+                    setToast("Could not copy AWB");
+                  }
+                }}
+                className="text-xs text-black underline underline-offset-2 hover:text-gray-700"
+              >
+                Copy AWB
+              </button>
+            </span>
           )}
         </div>
+
+        {order.syncState === "unconfigured" && (
+          <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-xl p-3.5 mb-4">
+            Delhivery is not configured on the server (DELHIVERY_API_TOKEN missing).
+            Paid orders will NOT be handed to Delhivery until it is set — until then
+            syncing fails silently. Set the env vars, then use “Create Shipment” once
+            to push this order.
+          </div>
+        )}
+
+        {order.syncState === "failed" && !order.waybill && (
+          <div className="bg-[#DC2626]/5 border border-[#DC2626]/20 text-[#DC2626] text-sm rounded-xl p-3.5 mb-4">
+            Delhivery sync failed — see the reason below, fix it, then press “Create
+            Shipment” to retry.
+          </div>
+        )}
 
         {order.shipmentError && (
           <div className="bg-[#DC2626]/5 border border-[#DC2626]/20 text-[#DC2626] text-sm rounded-xl p-3.5 mb-4">
@@ -478,19 +523,12 @@ export default function OrderDetailPage() {
             <>
               <button
                 onClick={() =>
-                  runShipmentAction(
-                    "label",
-                    `/api/admin/orders/${order._id}/label`,
-                    "GET",
-                    (data) => {
-                      if (data.labelUrl) window.open(data.labelUrl, "_blank");
-                    }
-                  )
+                  window.open(`/api/admin/orders/${order._id}/label`, "_blank")
                 }
                 disabled={busyAction !== null}
                 className="btn-navy-outline text-sm disabled:opacity-50"
               >
-                {busyAction === "label" ? "Fetching…" : "Print / View Label"}
+                Print / View Label
               </button>
 
               <button

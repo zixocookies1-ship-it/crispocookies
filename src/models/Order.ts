@@ -65,12 +65,17 @@ export interface IOrder extends Document {
   lastScanTime?: Date;
   lastScanType?: string;
   trackingUrl?: string;
-  labelUrl?: string;
+  /** null = label is streamed on demand via the admin label endpoint. */
+  labelUrl?: string | null;
   shipmentId?: string;
   pickedUp?: boolean;
   pickedUpAt?: Date;
   shipmentCreatedAt?: Date;
   shipmentError?: string;
+  /** Delhivery sync lifecycle: pending → synced | failed | unconfigured. */
+  syncState?: "pending" | "synced" | "failed" | "unconfigured";
+  /** Last time a Delhivery sync attempt touched this order (retry throttle). */
+  syncAttemptedAt?: Date;
   createdAt: Date;
 }
 
@@ -137,12 +142,17 @@ const OrderSchema = new Schema<IOrder>({
   lastScanTime: { type: Date },
   lastScanType: { type: String },
   trackingUrl: { type: String },
-  labelUrl: { type: String },
+  labelUrl: { type: String, default: null },
   shipmentId: { type: String },
   pickedUp: { type: Boolean, default: false },
   pickedUpAt: { type: Date },
   shipmentCreatedAt: { type: Date },
   shipmentError: { type: String },
+  syncState: {
+    type: String,
+    enum: ["pending", "synced", "failed", "unconfigured"],
+  },
+  syncAttemptedAt: { type: Date },
   createdAt: { type: Date, default: Date.now },
 });
 

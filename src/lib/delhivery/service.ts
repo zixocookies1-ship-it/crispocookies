@@ -2,6 +2,7 @@ import Product from "@/models/Product";
 import {
   delhiveryFetch,
   DelhiveryError,
+  getDelhiveryBaseUrl,
   getPickupLocation,
   getOriginPincode,
   getShippingMode,
@@ -11,6 +12,7 @@ import type {
   DelhiveryRateItem,
   DelhiveryRatesResponse,
   DelhiveryServiceabilityResponse,
+  DelhiveryShipmentPackage,
   DelhiveryShipmentRequest,
   DelhiveryShipmentResponse,
   DelhiveryTrackResponse,
@@ -227,6 +229,8 @@ export async function createDelhiveryShipment(opts: {
   phone: string;
   lines: ShipmentLine[];
   totalAmount: number;
+  /** Optional override for the shipment weight when a stored order weight exists. */
+  weightGrams?: number;
 }): Promise<DelhiveryShipmentResponse> {
   const pickupLocation = getPickupLocation();
   if (!pickupLocation) {
@@ -235,7 +239,10 @@ export async function createDelhiveryShipment(opts: {
       safeMessage: "Pickup location is not configured on the server.",
     });
   }
-  const totalGrams = totalWeightGrams(opts.lines);
+  const totalGrams =
+    opts.weightGrams && opts.weightGrams > 0
+      ? Math.round(opts.weightGrams)
+      : totalWeightGrams(opts.lines);
   if (totalGrams <= 0) {
     throw new DelhiveryError("Order has no shipping weight", {
       status: 422,
@@ -253,7 +260,7 @@ export async function createDelhiveryShipment(opts: {
     country: "India",
     order: opts.orderId,
     order_date: formatDelhiveryDate(opts.orderedAt),
-    payment_mode: "Prepaid",
+    payment_mode: "Pre-paid",
     shipping_mode: getShippingMode() === "E" ? "Express" : "Surface",
     weight: String(totalGrams),
     quantity: String(opts.lines.reduce((s, l) => s + l.qty, 0)),
@@ -283,41 +290,101 @@ export async function createDelhiveryShipment(opts: {
     }
   );
 
-  if (!response?.success && !response?.packages) {
-    throw new DelhiveryError("Delhivery rejected the shipment", {
+  const pkg = response?.packages?.[0];
+  if (!response || (!response.success && !response.packages)) {
+    // Delhivery replies HTTP 200 with success:false + the real reason here.
+    const reason = extractShipmentError(response, pkg);
+    throw new DelhiveryError(`Delhivery rejected the shipment${reason}`, {
       status: 422,
       safeMessage: "Could not create the courier shipment. Check the order address and try again.",
     });
   }
+  if (pkg && typeof pkg.status === "string" && pkg.status.toLowerCase() !== "success") {
+    const reason = extractShipmentError(response, pkg);
+    throw new DelhiveryError(
+      `Delhivery did not accept the shipment${reason}`,
+      {
+        status: 422,
+        safeMessage: "Delhivery did not accept the shipment. Check the pickup location and order details.",
+      }
+    );
+  }
   return response;
 }
 
-export async function getShippingLabelUrl(waybill: string): Promise<string | null> {
-  const response = await delhiveryFetch<unknown>(
-    `/api/p/packing_slip?wbns=${encodeURIComponent(waybill)}&pdf=True`,
-    { timeoutMs: 20000 }
-  );
-  return findUrlInJson(response);
+/** Best-effort extraction of the exact reason Delhivery put in the body. */
+function extractShipmentError(
+  response: DelhiveryShipmentResponse | null | undefined,
+  pkg?: DelhiveryShipmentPackage
+): string {
+  const bits: string[] = [];
+  const push = (value: unknown) => {
+    if (typeof value === "string" && value.trim()) {
+      bits.push(value.trim().slice(0, 200));
+    } else if (value && typeof value === "object") {
+      bits.push(JSON.stringify(value).slice(0, 200));
+    }
+  };
+  push(response?.error);
+  push(response?.nearest);
+  for (const remark of pkg?.remarks ?? []) push(remark);
+  push(pkg?.status);
+  if (bits.length) return `: ${bits.filter(Boolean).join(" · ")}`;
+  return "";
 }
 
-function findUrlInJson(value: unknown): string | null {
-  if (typeof value === "string") {
-    return /^https?:\/\//.test(value) ? value : null;
+/** Fetch the A4 shipping-label PDF directly (the packing-slip route returns raw PDF, not JSON). */
+export async function fetchShippingLabelPdf(waybill: string): Promise<Buffer> {
+  const token = process.env.DELHIVERY_API_TOKEN;
+  if (!token) {
+    throw new DelhiveryError("Delhivery is not configured", {
+      status: 503,
+      safeMessage: "Shipping service is not configured yet.",
+    });
   }
-  if (Array.isArray(value)) {
-    for (const entry of value) {
-      const found = findUrlInJson(entry);
-      if (found) return found;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20000);
+  try {
+    const res = await fetch(
+      `${getDelhiveryBaseUrl()}/api/p/packing_slip?wbns=${encodeURIComponent(waybill)}&pdf=True`,
+      {
+        headers: {
+          Authorization: `Token ${token}`,
+          Accept: "application/pdf",
+        },
+        signal: controller.signal,
+        cache: "no-store",
+      }
+    );
+    const buffer = Buffer.from(await res.arrayBuffer());
+    if (!res.ok) {
+      throw new DelhiveryError(
+        `Delhivery label API ${res.status}: ${buffer.toString("utf8").slice(0, 300) || "no label PDF"}`,
+        { status: res.status, safeMessage: "Could not fetch the shipping label from Delhivery." }
+      );
     }
-    return null;
-  }
-  if (value && typeof value === "object") {
-    for (const entry of Object.values(value)) {
-      const found = findUrlInJson(entry);
-      if (found) return found;
+    if (buffer.length === 0) {
+      throw new DelhiveryError("Delhivery returned an empty label PDF", {
+        status: 422,
+        safeMessage: "Delhivery returned an empty label PDF. The label may not be ready yet.",
+      });
     }
+    return buffer;
+  } catch (error) {
+    if (error instanceof DelhiveryError) throw error;
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new DelhiveryError("Delhivery label request timed out", {
+        status: 0,
+        safeMessage: "Label request timed out. Try again.",
+      });
+    }
+    throw new DelhiveryError(
+      error instanceof Error ? error.message : "Delhivery label request failed",
+      { status: 0, safeMessage: "Could not fetch the shipping label from Delhivery." }
+    );
+  } finally {
+    clearTimeout(timer);
   }
-  return null;
 }
 
 export async function requestPickup(opts: {
@@ -336,23 +403,31 @@ export async function requestPickup(opts: {
     .slice(0, 10);
   const pickupTime = process.env.DELHIVERY_PICKUP_TIME || "10:00:00";
 
-  const response = await delhiveryFetch<{ pickup_id?: number }>(
-    "/fm/request/new/",
-    {
-      method: "POST",
-      body: {
-        pickup_time: pickupTime,
-        pickup_date: pickupDate,
-        pickup_location: pickupLocation,
-        expected_package_count: opts.packageCount,
-      },
-    }
-  );
+  const response = await delhiveryFetch<{
+    pickup_id?: number;
+    error?: string | Array<unknown> | Record<string, unknown>;
+    request_response?: { reason?: string };
+  }>("/fm/request/new/", {
+    method: "POST",
+    body: {
+      pickup_time: pickupTime,
+      pickup_date: pickupDate,
+      pickup_location: pickupLocation,
+      expected_package_count: opts.packageCount,
+    },
+  });
   if (!response || response.pickup_id == null) {
-    throw new DelhiveryError("Pickup request was not accepted", {
-      status: 422,
-      safeMessage: "Could not request a pickup from Delhivery.",
-    });
+    const reason =
+      (typeof response?.error === "string" && response.error) ||
+      (typeof response?.request_response?.reason === "string" &&
+        response.request_response.reason);
+    throw new DelhiveryError(
+      `Pickup request was not accepted${reason ? `: ${reason}` : ""}`,
+      {
+        status: 422,
+        safeMessage: "Could not request a pickup from Delhivery.",
+      }
+    );
   }
   return { pickupId: response.pickup_id };
 }

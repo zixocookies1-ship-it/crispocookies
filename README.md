@@ -73,6 +73,8 @@ See [`.env.example`](./.env.example) for the full list with descriptions:
 | `DELHIVERY_SELLER_GST_TIN` | Optional; sent on each shipment |
 | `DELHIVERY_HSN_CODE` | Optional; sent on each shipment |
 | `DELHIVERY_PICKUP_TIME` | Optional pickup request time `HH:MM:SS` (default `10:00:00`) |
+| `DELHIVERY_WEBHOOK_TOKEN` | Optional; auth token for the Delhivery Scan Push webhook (`/api/webhooks/delhivery`). Register the URL in the Delhivery portal and send this value as the `Authorization` header. The webhook returns 401 until set |
+| `CRON_SECRET` | Required for the auto-retry cron (`/api/cron/sync-delhivery`, scheduled every 6h in `vercel.json`). Vercel sends it as `Authorization: Bearer <CRON_SECRET>` |
 
 ## Scripts
 

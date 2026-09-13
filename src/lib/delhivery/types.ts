@@ -48,7 +48,7 @@ export interface DelhiveryShipmentRequest {
   country: string;
   order: string;
   order_date: string;
-  payment_mode: "Prepaid";
+  payment_mode: "Pre-paid";
   shipping_mode?: "Surface" | "Express";
   weight: string;
   quantity: string;
@@ -70,6 +70,8 @@ export interface DelhiveryShipmentPackage {
   status?: string;
   cod_amount?: number;
   payment?: string;
+  /** Delhivery can attach per-package remarks/rejections here. */
+  remarks?: Array<string | Record<string, unknown>>;
 }
 
 export interface DelhiveryShipmentResponse {
@@ -79,6 +81,9 @@ export interface DelhiveryShipmentResponse {
   cod_count?: number;
   packages?: DelhiveryShipmentPackage[];
   upload_wbn?: string;
+  /** Often present when the request is rejected (e.g. invalid pickup location). */
+  error?: string | Array<unknown> | Record<string, unknown>;
+  nearest?: string;
 }
 
 export interface DelhiveryPickupResponse {

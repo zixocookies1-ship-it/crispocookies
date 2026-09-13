@@ -91,8 +91,12 @@ export async function delhiveryFetch<T>(
     }
 
     if (!res.ok) {
+      // Include whatever Delhivery returned so the admin panel shows the real
+      // reason (invalid pickup location, bad phone, GST issues …) instead of a
+      // useless "API 400" line.
+      const detail = summarizeResponseBody(json, text);
       throw new DelhiveryError(
-        `Delhivery API ${res.status} on ${path}`,
+        `Delhivery API ${res.status} on ${path}${detail ? ` — ${detail}` : ""}`,
         {
           status: res.status,
           safeMessage: "Delivery service reported an error. Please try again.",
@@ -116,4 +120,28 @@ export async function delhiveryFetch<T>(
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** Pull a short, human-actionable message out of a Delhivery error body. */
+function summarizeResponseBody(
+  json: unknown,
+  text: string
+): string {
+  if (json && typeof json === "object") {
+    const obj = json as Record<string, unknown>;
+    const candidate =
+      obj.error ??
+      obj.message ??
+      obj.Error ??
+      obj.Message ??
+      obj.reason ??
+      obj.detail;
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate.slice(0, 300);
+    }
+    const trimmed = JSON.stringify(json);
+    return trimmed ? trimmed.slice(0, 300) : text.slice(0, 300);
+  }
+  if (typeof json === "string" && json.trim()) return json.slice(0, 300);
+  return text ? text.slice(0, 300) : "";
 }
