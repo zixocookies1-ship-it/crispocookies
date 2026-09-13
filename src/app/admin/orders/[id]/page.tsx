@@ -149,7 +149,18 @@ export default function OrderDetailPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setToast(`Error: ${data.error || "Request failed"}`);
+        const friendly =
+          data.code === "DELHIVERY_NOT_CONFIGURED"
+            ? "Shipping is not configured on this server (missing env vars). Add them in Admin → Settings → Delhivery."
+            : data.code === "DELHIVERY_AUTH_FAILED"
+              ? "Delhivery rejected the API token — check it in Admin → Settings → Delhivery."
+              : data.code === "PICKUP_LOCATION_NOT_CONFIGURED"
+                ? "Delhivery pickup location is not configured. Add it in Admin → Settings → Delhivery."
+                : data.code === "INVALID_CUSTOMER_ADDRESS" ||
+                    data.code === "INVALID_PINCODE"
+                  ? "The delivery address is invalid. Fix it, then press Create Shipment again."
+                  : data.error || "Request failed";
+        setToast(friendly);
         return;
       }
       if (action === "create") {
@@ -173,7 +184,11 @@ export default function OrderDetailPage() {
               }
             : prev
         );
-        setToast(`Shipment created — AWB ${data.waybill}`);
+        setToast(
+          data.alreadyCreated
+            ? `Shipment already created — AWB ${data.waybill}`
+            : `Shipment created — AWB ${data.waybill}`
+        );
       } else if (action === "pickup") {
         setToast(`Pickup requested — ID ${data.pickupId}`);
       }
@@ -492,7 +507,13 @@ export default function OrderDetailPage() {
             Delhivery is not configured on the server (DELHIVERY_API_TOKEN missing).
             Paid orders will NOT be handed to Delhivery until it is set — until then
             syncing fails silently. Set the env vars, then use “Create Shipment” once
-            to push this order.
+            to push this order.{" "}
+            <Link
+              href="/admin/settings"
+              className="underline underline-offset-2 hover:text-amber-900 font-medium"
+            >
+              Go to Settings → Delhivery
+            </Link>
           </div>
         )}
 
@@ -568,7 +589,9 @@ export default function OrderDetailPage() {
               disabled={busyAction !== null}
               className="btn-gold text-sm disabled:opacity-50"
             >
-              {busyAction === "create" ? "Creating…" : "Create Shipment"}
+              {busyAction === "create"
+                ? "Creating Shipment…"
+                : "Create Shipment"}
             </button>
           )}
 

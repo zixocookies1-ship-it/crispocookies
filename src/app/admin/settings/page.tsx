@@ -17,7 +17,32 @@ interface Settings {
   whatsapp: string;
 }
 
-const TABS = ["Store Info", "Delivery", "Payment Keys", "Social Links"] as const;
+const TABS = [
+  "Store Info",
+  "Delivery",
+  "Payment Keys",
+  "Social Links",
+  "Delhivery",
+] as const;
+
+interface DelhiveryHealth {
+  provider?: string;
+  configured?: boolean;
+  status?: string;
+  environment?: { baseUrl?: string; shippingMode?: string };
+  pickupLocationConfigured?: boolean;
+  pickupLocation?: string | null;
+  originPincodeConfigured?: boolean;
+  originPincode?: string | null;
+  apiTokenConfigured?: boolean;
+  apiTokenMasked?: string | null;
+  missing?: string[];
+}
+
+interface DiagnosticsResult {
+  status?: string;
+  checks?: Record<string, unknown>;
+}
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<string>("Store Info");
@@ -39,6 +64,11 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState("");
+  const [delhiveryHealth, setDelhiveryHealth] = useState<DelhiveryHealth | null>(
+    null
+  );
+  const [diagnostics, setDiagnostics] = useState<DiagnosticsResult | null>(null);
+  const [runningDiagnostics, setRunningDiagnostics] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/settings")
@@ -51,6 +81,32 @@ export default function SettingsPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (activeTab === "Delhivery") {
+      fetch("/api/admin/shipping/delhivery/health")
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && typeof data === "object") setDelhiveryHealth(data);
+        })
+        .catch(() => {});
+    }
+  }, [activeTab]);
+
+  const runDiagnostics = async () => {
+    setRunningDiagnostics(true);
+    setDiagnostics(null);
+    try {
+      const res = await fetch("/api/admin/shipping/diagnostics");
+      const data = await res.json();
+      setDiagnostics(data);
+      if (!res.ok) setToast("Diagnostics failed — see output");
+    } catch {
+      setToast("Diagnostics failed");
+    } finally {
+      setRunningDiagnostics(false);
+    }
+  };
 
   const handleChange = (field: keyof Settings, value: string | number) => {
     setSettings((prev) => ({ ...prev, [field]: value }));
@@ -287,6 +343,135 @@ export default function SettingsPage() {
                 placeholder="+91 98765 43210"
               />
             </div>
+          </div>
+        )}
+
+        {activeTab === "Delhivery" && (
+          <div className="space-y-6 max-w-2xl">
+            {!delhiveryHealth ? (
+              <div className="animate-pulse space-y-3">
+                <div className="h-4 bg-gray-200 rounded w-40" />
+                <div className="h-10 bg-gray-100 rounded-lg" />
+                <div className="h-10 bg-gray-100 rounded-lg" />
+              </div>
+            ) : (
+              <>
+                <div className="rounded-xl border border-gray-300 p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-heading font-bold text-black text-lg">
+                      Delhivery integration
+                    </h4>
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full border text-sm font-medium ${
+                        delhiveryHealth.configured
+                          ? "border-black"
+                          : "border-black"
+                      }`}
+                    >
+                      {delhiveryHealth.configured
+                        ? "Configured"
+                        : "Not configured"}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                      <span className="text-black/70">API token</span>
+                      <span className="font-medium text-black">
+                        {delhiveryHealth.apiTokenConfigured
+                          ? `Set (${delhiveryHealth.apiTokenMasked})`
+                          : "Missing — DELHIVERY_API_TOKEN"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                      <span className="text-black/70">Base URL</span>
+                      <span className="font-medium text-black break-all text-right pl-4">
+                        {delhiveryHealth.environment?.baseUrl || "—"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                      <span className="text-black/70">Shipping mode</span>
+                      <span className="font-medium text-black">
+                        {delhiveryHealth.environment?.shippingMode || "—"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                      <span className="text-black/70">Pickup location</span>
+                      <span className="font-medium text-black">
+                        {delhiveryHealth.pickupLocation || "Missing — DELHIVERY_PICKUP_LOCATION"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-b border-gray-100 pb-2">
+                      <span className="text-black/70">Origin pincode</span>
+                      <span className="font-medium text-black">
+                        {delhiveryHealth.originPincode || "Missing — DELHIVERY_ORIGIN_PINCODE"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {Array.isArray(delhiveryHealth.missing) &&
+                    delhiveryHealth.missing.length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-sm font-medium text-black mb-2">
+                          Add these environment variables (server-side, never in
+                          the browser):
+                        </p>
+                        <ul className="space-y-1 text-sm">
+                          {delhiveryHealth.missing.map((name) => (
+                            <li
+                              key={name}
+                              className="inline-block mr-2 mb-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1 font-mono text-black"
+                            >
+                              {name}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                  <p className="mt-4 text-black/70 text-xs leading-relaxed">
+                    These values are read from the server environment —
+                    <span className="font-medium text-black"> .env.local </span>
+                    locally and the Vercel dashboard (Settings → Environment
+                    Variables) in production. They are never editable here and
+                    never exposed in full.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-gray-300 p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-heading font-bold text-black">
+                      Connection diagnostics
+                    </h4>
+                    <button
+                      onClick={runDiagnostics}
+                      disabled={runningDiagnostics}
+                      className="btn-navy-outline text-sm disabled:opacity-50"
+                    >
+                      {runningDiagnostics ? "Checking…" : "Run checks"}
+                    </button>
+                  </div>
+                  {diagnostics ? (
+                    <div className="text-sm space-y-2">
+                      <p className="font-medium text-black">
+                        {diagnostics.status}
+                      </p>
+                      {diagnostics.checks && (
+                        <pre className="text-xs bg-transparent border border-gray-200 rounded-lg p-3 overflow-x-auto text-black whitespace-pre-wrap">
+                          {JSON.stringify(diagnostics.checks, null, 2)}
+                        </pre>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-black/70 text-sm">
+                      Verifies the token is live and the origin pincode is
+                      serviceable. Only shows when the integration is
+                      configured.
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

@@ -173,8 +173,13 @@ src/
 
 1. Push the repo to GitHub.
 2. Import into Vercel.
-3. Add all environment variables from `.env.example`.
+3. Add all environment variables from `.env.example` — **Vercel does not read your local `.env.local`**. Add them per environment (Development, Preview, Production) in Project → Settings → Environment Variables. In particular `DELHIVERY_API_TOKEN`, `DELHIVERY_PICKUP_LOCATION` and `DELHIVERY_ORIGIN_PINCODE` must be set or every "Create Shipment" action returns `DELHIVERY_NOT_CONFIGURED`.
 4. Deploy.
+
+Verify the shipping integration after a deploy with the admin health check
+`GET /api/admin/shipping/delhivery/health` (also shown in Admin → Settings →
+Delhivery, alongside live connection checks via "Run checks"). It reports exactly which
+env vars are missing and never exposes the token.
 
 Custom domain and Vercel Analytics can be configured in the Vercel dashboard.
 

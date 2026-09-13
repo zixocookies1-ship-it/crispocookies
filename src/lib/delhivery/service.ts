@@ -7,6 +7,7 @@ import {
   getOriginPincode,
   getShippingMode,
   isDelhiveryConfigured,
+  assertDelhiveryConfigured,
 } from "./client";
 import type {
   DelhiveryRateItem,
@@ -105,12 +106,14 @@ export async function estimateShippingRate(opts: {
   if (!/^\d{6}$/.test(toPincode)) {
     throw new DelhiveryError("Invalid destination pincode", {
       status: 400,
+      code: "INVALID_PINCODE",
       safeMessage: "Please enter a valid 6-digit pincode.",
     });
   }
   if (!fromPincode) {
     throw new DelhiveryError("DELHIVERY_ORIGIN_PINCODE is not configured", {
       status: 503,
+      code: "DELHIVERY_NOT_CONFIGURED",
       safeMessage: "Shipping is not configured yet.",
     });
   }
@@ -197,7 +200,11 @@ export async function resolveShipmentLines(items: Array<{
     if (weightGrams <= 0 && opts?.requireWeights) {
       throw new DelhiveryError(
         `Shipping weight missing for ${item.name || "an item"} (${item.variant || ""})`,
-        { status: 422, safeMessage: "A product is missing its shipping weight. Update it in the admin panel." }
+        {
+          status: 422,
+          code: "MISSING_WEIGHT",
+          safeMessage: "A product is missing its shipping weight. Update it in the admin panel.",
+        }
       );
     }
     lines.push({
@@ -211,6 +218,7 @@ export async function resolveShipmentLines(items: Array<{
   if (lines.length === 0) {
     throw new DelhiveryError("No shippable items in the order", {
       status: 400,
+      code: "MISSING_ORDER_DATA",
       safeMessage: "The order has no shippable items.",
     });
   }
@@ -236,6 +244,7 @@ export async function createDelhiveryShipment(opts: {
   if (!pickupLocation) {
     throw new DelhiveryError("DELHIVERY_PICKUP_LOCATION is not configured", {
       status: 503,
+      code: "PICKUP_LOCATION_NOT_CONFIGURED",
       safeMessage: "Pickup location is not configured on the server.",
     });
   }
@@ -246,7 +255,39 @@ export async function createDelhiveryShipment(opts: {
   if (totalGrams <= 0) {
     throw new DelhiveryError("Order has no shipping weight", {
       status: 422,
+      code: "MISSING_WEIGHT",
       safeMessage: "Order weight is missing. Update product shipping weights.",
+    });
+  }
+
+  const addressLine = [opts.address.line1, opts.address.line2]
+    .filter(Boolean)
+    .join(", ")
+    .trim();
+  if (
+    !opts.customerName?.trim() ||
+    !addressLine ||
+    !opts.address.city?.trim() ||
+    !opts.address.state?.trim()
+  ) {
+    throw new DelhiveryError("Order address is incomplete", {
+      status: 422,
+      code: "INVALID_CUSTOMER_ADDRESS",
+      safeMessage: "The delivery address is incomplete. Fix it in the admin panel.",
+    });
+  }
+  if (!/^\d{6}$/.test(opts.address.pincode ?? "")) {
+    throw new DelhiveryError("Order pincode is invalid", {
+      status: 422,
+      code: "INVALID_PINCODE",
+      safeMessage: "The delivery pincode is invalid. Fix it in the admin panel.",
+    });
+  }
+  if (!/^[0-9+\- ]{7,15}$/.test(opts.phone ?? "")) {
+    throw new DelhiveryError("Order phone number is invalid", {
+      status: 422,
+      code: "INVALID_CUSTOMER_ADDRESS",
+      safeMessage: "The delivery phone number is invalid. Fix it in the admin panel.",
     });
   }
 
@@ -296,6 +337,7 @@ export async function createDelhiveryShipment(opts: {
     const reason = extractShipmentError(response, pkg);
     throw new DelhiveryError(`Delhivery rejected the shipment${reason}`, {
       status: 422,
+      code: "DELHIVERY_API_ERROR",
       safeMessage: "Could not create the courier shipment. Check the order address and try again.",
     });
   }
@@ -305,6 +347,7 @@ export async function createDelhiveryShipment(opts: {
       `Delhivery did not accept the shipment${reason}`,
       {
         status: 422,
+        code: "DELHIVERY_API_ERROR",
         safeMessage: "Delhivery did not accept the shipment. Check the pickup location and order details.",
       }
     );
@@ -335,13 +378,8 @@ function extractShipmentError(
 
 /** Fetch the A4 shipping-label PDF directly (the packing-slip route returns raw PDF, not JSON). */
 export async function fetchShippingLabelPdf(waybill: string): Promise<Buffer> {
-  const token = process.env.DELHIVERY_API_TOKEN;
-  if (!token) {
-    throw new DelhiveryError("Delhivery is not configured", {
-      status: 503,
-      safeMessage: "Shipping service is not configured yet.",
-    });
-  }
+  assertDelhiveryConfigured();
+  const token = process.env.DELHIVERY_API_TOKEN as string;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 20000);
   try {
@@ -395,6 +433,7 @@ export async function requestPickup(opts: {
   if (!pickupLocation) {
     throw new DelhiveryError("DELHIVERY_PICKUP_LOCATION is not configured", {
       status: 503,
+      code: "PICKUP_LOCATION_NOT_CONFIGURED",
       safeMessage: "Pickup location is not configured on the server.",
     });
   }
@@ -425,6 +464,7 @@ export async function requestPickup(opts: {
       `Pickup request was not accepted${reason ? `: ${reason}` : ""}`,
       {
         status: 422,
+        code: "DELHIVERY_API_ERROR",
         safeMessage: "Could not request a pickup from Delhivery.",
       }
     );
