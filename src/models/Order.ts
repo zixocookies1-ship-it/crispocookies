@@ -20,6 +20,7 @@ export interface IOrder extends Document {
     city: string;
     state: string;
     pincode: string;
+    country?: string;
   };
   items: IOrderItem[];
   subtotal: number;
@@ -77,6 +78,7 @@ export interface IOrder extends Document {
   /** Last time a Delhivery sync attempt touched this order (retry throttle). */
   syncAttemptedAt?: Date;
   createdAt: Date;
+  updatedAt?: Date;
 }
 
 const OrderSchema = new Schema<IOrder>({
@@ -90,6 +92,7 @@ const OrderSchema = new Schema<IOrder>({
     city: { type: String },
     state: { type: String },
     pincode: { type: String },
+    country: { type: String, default: "India" },
   },
   items: [
     {
@@ -154,12 +157,14 @@ const OrderSchema = new Schema<IOrder>({
   },
   syncAttemptedAt: { type: Date },
   createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
 });
 
 // Indexes for admin dashboard + order lookups (sorts/filters must not COLLSCAN as volume grows)
 OrderSchema.index({ createdAt: -1 });
 OrderSchema.index({ paymentStatus: 1, createdAt: -1 });
 OrderSchema.index({ razorpayOrderId: 1 });
+OrderSchema.index({ razorpayPaymentId: 1 });
 OrderSchema.index({ waybill: 1 });
 
 export default mongoose.models.Order ||

@@ -331,9 +331,17 @@ export default function CheckoutPage() {
             qty: item.qty,
           })),
           couponCode: coupon?.code || undefined,
+          customerName: form.fullName.trim(),
           email: form.email.trim(),
           phone: form.phone.trim(),
           deliveryPincode: form.pincode.trim(),
+          address: {
+            line1: form.addressLine1.trim(),
+            line2: form.addressLine2.trim() || undefined,
+            city: form.city.trim(),
+            state: form.state.trim(),
+            pincode: form.pincode.trim(),
+          },
         }),
       });
 

@@ -10,6 +10,7 @@ import { getRazorpay } from "@/lib/razorpay";
 import { generateOrderId } from "@/lib/helpers";
 import { calculateOrderTotals } from "@/lib/order-totals";
 import { attemptAutoShipment } from "@/lib/delhivery";
+import { finalizeOrderPayment } from "@/lib/razorpay-payment";
 import {
   CouponError,
   couponCustomerKey,
@@ -107,6 +108,47 @@ export async function POST(request: NextRequest) {
         error: "Payment verification temporarily unavailable",
       },
       { status: 500 }
+    );
+  }
+
+  // -----------------------------------------------------------------
+  // Primary path: finalize the durable pending order persisted at
+  // create-order time. Atomic + idempotent — the webhook and the browser
+  // callback can both race here; only one wins the side effects.
+  // -----------------------------------------------------------------
+  const finalized = await finalizeOrderPayment({
+    razorpayOrderId: String(razorpay_order_id),
+    razorpayPaymentId: String(razorpay_payment_id),
+    razorpaySignature: String(razorpay_signature),
+    source: "verify",
+  });
+
+  if (finalized.ok) {
+    return NextResponse.json({
+      success: true,
+      orderId: finalized.orderId,
+      alreadyFinalized: Boolean(finalized.alreadyFinalized),
+    });
+  }
+
+  // A pending order always exists for new orders. ORDER_NOT_FOUND means the
+  // payment predates the durable-snapshot model (or a very old page) — fall
+  // back to the legacy recalc-and-create path below.
+  if (finalized.code !== "ORDER_NOT_FOUND") {
+    console.error("[verify-payment] finalization rejected", {
+      code: finalized.code,
+      error: finalized.error,
+      razorpay_order_id,
+    });
+    const status =
+      finalized.code === "GATEWAY_UNREACHABLE"
+        ? 502
+        : finalized.code === "FINALIZE_RACE"
+          ? 500
+          : 400;
+    return NextResponse.json(
+      { success: false, error: "Payment could not be confirmed" },
+      { status }
     );
   }
 

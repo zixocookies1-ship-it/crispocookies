@@ -16,6 +16,13 @@ interface Order {
   createdAt: string;
 }
 
+interface MissingPayment {
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  amountPaise: number;
+  status: string;
+}
+
 function SkeletonRow() {
   return (
     <tr className="border-b border-gray-50 animate-pulse">
@@ -39,6 +46,58 @@ export default function OrdersPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const perPage = 10;
+  const [missing, setMissing] = useState<MissingPayment[]>([]);
+  const [reconciling, setReconciling] = useState(false);
+  const [reconcileError, setReconcileError] = useState("");
+
+  const fetchReconcile = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/payments/reconcile");
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setMissing(data.missing || []);
+    } catch {
+      setReconcileError("Could not load reconciliation data.");
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchReconcile();
+  }, [fetchReconcile]);
+
+  const finalizePayment = async (entry: MissingPayment) => {
+    setReconciling(true);
+    setReconcileError("");
+    try {
+      const res = await fetch("/api/admin/payments/reconcile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          razorpayOrderId: entry.razorpayOrderId,
+          razorpayPaymentId: entry.razorpayPaymentId,
+          amountPaise: entry.amountPaise,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        if (data.code === "ORDER_NOT_FOUND") {
+          setReconcileError(
+            "No local snapshot exists for this payment — the customer may have used an old page. Order can't be reconstructed automatically."
+          );
+        } else {
+          setReconcileError(data.error || data.code || "Finalization failed.");
+        }
+        return;
+      }
+      setMissing((prev) =>
+        prev.filter((p) => p.razorpayOrderId !== entry.razorpayOrderId)
+      );
+    } catch {
+      setReconcileError("Finalization failed. Please retry.");
+    } finally {
+      setReconciling(false);
+    }
+  };
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -150,6 +209,62 @@ export default function OrdersPage() {
         <button onClick={exportCSV} className="btn-navy-outline text-sm whitespace-nowrap">
           Export CSV
         </button>
+      </div>
+
+      {/* Payment reconciliation */}
+      <div className={`card rounded-2xl p-5 ${missing.length ? "border-2 border-red/30" : ""}`}>
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <h2 className="font-bold text-black text-sm">Razorpay Reconciliation</h2>
+          <button
+            onClick={() => { setReconcileError(""); fetchReconcile(); }}
+            className="text-xs text-black hover:text-gray-700 font-medium"
+          >
+            Refresh
+          </button>
+        </div>
+        {reconcileError && (
+          <p className="text-[#DC2626] text-xs mb-3">{reconcileError}</p>
+        )}
+        {missing.length === 0 ? (
+          <p className="text-xs text-[#666666]">
+            No paid Razorpay payments are missing a local order. ✓
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-[#666666] border-b border-gray-100">
+                  <th className="py-2 px-3 font-medium text-xs">Razorpay Order</th>
+                  <th className="py-2 px-3 font-medium text-xs">Payment</th>
+                  <th className="py-2 px-3 font-medium text-xs">Amount</th>
+                  <th className="py-2 px-3 font-medium text-xs">Status</th>
+                  <th className="py-2 px-3 font-medium text-xs" />
+                </tr>
+              </thead>
+              <tbody>
+                {missing.map((p) => (
+                  <tr key={p.razorpayPaymentId} className="border-b border-gray-50 last:border-0">
+                    <td className="py-2.5 px-3 font-mono text-xs">{p.razorpayOrderId}</td>
+                    <td className="py-2.5 px-3 font-mono text-xs">{p.razorpayPaymentId}</td>
+                    <td className="py-2.5 px-3 text-xs">{formatPrice(p.amountPaise / 100)}</td>
+                    <td className="py-2.5 px-3">
+                      <span className="badge-red">{p.status}</span>
+                    </td>
+                    <td className="py-2.5 px-3 text-right">
+                      <button
+                        onClick={() => finalizePayment(p)}
+                        disabled={reconciling}
+                        className="btn-gold text-xs px-3 py-1.5 disabled:opacity-60"
+                      >
+                        {reconciling ? "Finalizing..." : "Finalize"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Table */}
