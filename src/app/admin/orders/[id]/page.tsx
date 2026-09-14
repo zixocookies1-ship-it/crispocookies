@@ -45,7 +45,9 @@ interface OrderData {
   deliveryCharge: number;
   deliveryProvider?: string;
   waybill?: string;
+  shipmentId?: string;
   shipmentStatus?: string;
+  shipmentCreatedAt?: string;
   lastScan?: string;
   lastScanTime?: string;
   trackingUrl?: string;
@@ -55,12 +57,30 @@ interface OrderData {
   pickedUp?: boolean;
   pickedUpAt?: string;
   shippingWeightGrams?: number;
+  shippingWeightOverrideGrams?: number;
+  packageDescription?: string;
+  packageDimensions?: {
+    lengthCm?: number;
+    breadthCm?: number;
+    heightCm?: number;
+  };
   shippingCost?: number;
   total: number;
   paymentStatus: string;
+  razorpayOrderId?: string;
   razorpayPaymentId?: string;
   status: string;
   createdAt: string;
+  updatedAt?: string;
+  delhiveryEnv?: {
+    configured: boolean;
+    pickupLocationConfigured: boolean;
+    pickupLocation?: string | null;
+    originPincodeConfigured: boolean;
+    originPincode?: string | null;
+    baseUrl?: string;
+    shippingMode?: string;
+  };
 }
 
 export default function OrderDetailPage() {
@@ -78,6 +98,123 @@ export default function OrderDetailPage() {
     trackingUrl?: string;
     labelUrl?: string;
   }>({});
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [trackHistory, setTrackHistory] = useState<
+    Array<{
+      scan?: string;
+      scanType?: string;
+      location?: string;
+      statusDateTime?: string;
+    }>
+  >([]);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState("");
+  const [editForm, setEditForm] = useState({
+    customerName: "",
+    phone: "",
+    email: "",
+    address: { line1: "", line2: "", city: "", state: "", pincode: "" },
+    shipmentWeightOverrideGrams: "",
+    packageDescription: "",
+    packageDimensions: { lengthCm: "", breadthCm: "", heightCm: "" },
+  });
+
+  const openEditForm = () => {
+    if (!order) return;
+    setEditForm({
+      customerName: order.customerName || "",
+      phone: order.phone || "",
+      email: order.email || "",
+      address: {
+        line1: order.address?.line1 || "",
+        line2: order.address?.line2 || "",
+        city: order.address?.city || "",
+        state: order.address?.state || "",
+        pincode: order.address?.pincode || "",
+      },
+      shipmentWeightOverrideGrams:
+        order.shippingWeightOverrideGrams != null
+          ? String(order.shippingWeightOverrideGrams)
+          : "",
+      packageDescription: order.packageDescription || "",
+      packageDimensions: {
+        lengthCm:
+          order.packageDimensions?.lengthCm != null
+            ? String(order.packageDimensions.lengthCm)
+            : "",
+        breadthCm:
+          order.packageDimensions?.breadthCm != null
+            ? String(order.packageDimensions.breadthCm)
+            : "",
+        heightCm:
+          order.packageDimensions?.heightCm != null
+            ? String(order.packageDimensions.heightCm)
+            : "",
+      },
+    });
+    setEditError("");
+    setShowEditForm(true);
+  };
+
+  const saveEditForm = async () => {
+    if (!order) return;
+    setSavingEdit(true);
+    setEditError("");
+    try {
+      const payload: Record<string, unknown> = {
+        address: editForm.address,
+        packageDescription: editForm.packageDescription,
+        packageDimensions: {
+          lengthCm:
+            editForm.packageDimensions.lengthCm.trim() === ""
+              ? null
+              : editForm.packageDimensions.lengthCm,
+          breadthCm:
+            editForm.packageDimensions.breadthCm.trim() === ""
+              ? null
+              : editForm.packageDimensions.breadthCm,
+          heightCm:
+            editForm.packageDimensions.heightCm.trim() === ""
+              ? null
+              : editForm.packageDimensions.heightCm,
+        },
+      };
+      // Once manifested, Delhivery holds the original customer/weight values
+      // for the AWB — don't even send them (the server would reject them).
+      if (!order.waybill) {
+        payload.customerName = editForm.customerName;
+        payload.phone = editForm.phone;
+        payload.email = editForm.email;
+        payload.shipmentWeightOverrideGrams =
+          editForm.shipmentWeightOverrideGrams.trim() === ""
+            ? null
+            : editForm.shipmentWeightOverrideGrams;
+      }
+      const res = await fetch(`/api/admin/orders/${order._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setEditError(data.error || "Failed to save");
+        return;
+      }
+      const refreshed = await fetch(`/api/admin/orders/${order._id}`);
+      if (refreshed.ok) {
+        const fresh = await refreshed.json();
+        setOrder(fresh);
+      } else {
+        setOrder(data);
+      }
+      setShowEditForm(false);
+      setToast("Delivery & package details saved");
+    } catch {
+      setEditError("Something went wrong");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -115,7 +252,10 @@ export default function OrderDetailPage() {
         setOrder({ ...order, status: newStatus });
         setToast("Status updated successfully!");
       } else {
-        setToast("Failed to update status");
+        const data = await res.json().catch(() => ({}));
+        setToast(
+          data.error || "Failed to update status"
+        );
       }
     } catch {
       setToast("Something went wrong");
@@ -137,7 +277,13 @@ export default function OrderDetailPage() {
       trackingUrl?: string;
       waybill?: string;
       shipmentStatus?: string;
-      latest?: { status?: string };
+      latest?: { status?: string; scan?: string; location?: string };
+      entries?: Array<{
+        scan?: string;
+        scanType?: string;
+        location?: string;
+        statusDateTime?: string;
+      }>;
     }) => void
   ) => {
     if (!order) return;
@@ -530,7 +676,7 @@ export default function OrderDetailPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 mb-5 text-sm">
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-[#666666]">Charge</span>
@@ -538,31 +684,37 @@ export default function OrderDetailPage() {
                 {order.deliveryCharge === 0
                   ? "Free"
                   : formatPrice(order.deliveryCharge)}
-                {order.deliveryProvider === "delhivery"
-                  ? " (Delhivery)"
-                  : ""}
+                {order.deliveryProvider === "delhivery" ? " (Delhivery)" : ""}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#666666]">Shipping weight</span>
+              <span className="text-[#666666]">Payment mode</span>
+              <span className="font-medium text-black">Pre-paid</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#666666]">Shipping mode</span>
               <span className="font-medium text-black">
-                {order.shippingWeightGrams
-                  ? `${(order.shippingWeightGrams / 1000).toFixed(2)} kg`
-                  : "—"}
+                {order.delhiveryEnv?.shippingMode || "—"}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#666666]">Shipment status</span>
+              <span className="text-[#666666]">Route</span>
               <span className="font-medium text-black">
-                {order.shipmentStatus || "Not shipped"}
+                {order.delhiveryEnv?.originPincode
+                  ? `${order.delhiveryEnv.originPincode} → ${order.address?.pincode}`
+                  : `${order.address?.pincode || "—"}`}
               </span>
             </div>
-          </div>
-          <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-[#666666]">Pickup</span>
-              <span className="font-medium text-black">
-                {order.pickedUp ? "Requested" : "Not requested"}
+              <span className="text-[#666666]">Pickup location</span>
+              <span className="font-medium text-black text-right max-w-[220px]">
+                {order.pickedUp
+                  ? "Requested"
+                  : order.delhiveryEnv?.pickupLocation
+                    ? order.delhiveryEnv.pickupLocation
+                    : order.delhiveryEnv?.pickupLocationConfigured === false
+                      ? "Not configured"
+                      : "—"}
                 {order.pickedUpAt
                   ? ` · ${new Date(order.pickedUpAt).toLocaleDateString("en-IN", {
                       day: "numeric",
@@ -572,15 +724,111 @@ export default function OrderDetailPage() {
               </span>
             </div>
             <div className="flex justify-between">
+              <span className="text-[#666666]">Package weight</span>
+              <span className="font-medium text-black">
+                {order.shippingWeightOverrideGrams
+                  ? `${(order.shippingWeightOverrideGrams / 1000).toFixed(2)} kg`
+                  : order.shippingWeightGrams
+                    ? `${(order.shippingWeightGrams / 1000).toFixed(2)} kg`
+                    : "—"}
+                {order.shippingWeightOverrideGrams ? " (override)" : ""}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#666666]">Package description</span>
+              <span className="font-medium text-black text-right max-w-[240px]">
+                {order.packageDescription || "—"}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#666666]">Package dimensions</span>
+              <span className="font-medium text-black">
+                {order.packageDimensions?.lengthCm ||
+                order.packageDimensions?.breadthCm ||
+                order.packageDimensions?.heightCm
+                  ? `L ${order.packageDimensions.lengthCm || "-"} × B ${
+                      order.packageDimensions.breadthCm || "-"
+                    } × H ${order.packageDimensions.heightCm || "-"} cm`
+                  : "—"}
+              </span>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-[#666666]">Shipment status</span>
+              <span className="font-medium text-black">
+                {order.shipmentStatus || "Not shipped"}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#666666]">Delhivery shipment ID</span>
+              <span className="font-medium text-black font-mono text-xs break-all max-w-[200px] text-right">
+                {order.shipmentId || "—"}
+              </span>
+            </div>
+            <div className="flex justify-between">
               <span className="text-[#666666]">Latest scan</span>
               <span className="font-medium text-black max-w-[220px] text-right">
                 {order.lastScan || "—"}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#666666]">Shipment created</span>
+              <span className="font-medium text-black">
+                {order.shipmentCreatedAt
+                  ? new Date(order.shipmentCreatedAt).toLocaleString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : order.syncState === "synced" && order.waybill
+                    ? new Date(order.updatedAt || order.createdAt).toLocaleString(
+                        "en-IN",
+                        {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }
+                      )
+                    : "—"}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#666666]">Last updated</span>
+              <span className="font-medium text-black">
+                {order.updatedAt
+                  ? new Date(order.updatedAt).toLocaleString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "—"}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#666666]">Sync state</span>
+              <span className="font-medium text-black capitalize">
+                {order.syncState || "—"}
               </span>
             </div>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            onClick={openEditForm}
+            disabled={busyAction !== null}
+            className="btn-navy-outline text-sm disabled:opacity-50"
+          >
+            Edit Delivery &amp; Package Details
+          </button>
+
           {!order.waybill && (
             <button
               onClick={() =>
@@ -627,14 +875,20 @@ export default function OrderDetailPage() {
                     `/api/admin/orders/${order._id}/track`,
                     "GET",
                     (data) => {
-                      if (data.trackingUrl) {
-                        setShipmentState((prev) => ({
-                          ...prev,
-                          trackingUrl: data.trackingUrl,
-                        }));
-                        window.open(
-                          order.trackingUrl || data.trackingUrl,
-                          "_blank"
+                      if (data.entries && data.entries.length > 0) {
+                        setTrackHistory(data.entries);
+                      }
+                      if (data.latest) {
+                        setOrder((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                lastScan:
+                                  data.latest?.scan || data.latest?.status,
+                                shipmentStatus:
+                                  data.shipmentStatus || prev.shipmentStatus,
+                              }
+                            : prev
                         );
                         setToast(
                           data.latest?.status
@@ -664,6 +918,338 @@ export default function OrderDetailPage() {
             </a>
           )}
         </div>
+
+        {showEditForm && (
+          <div className="mt-5 pt-5 border-t border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-heading font-semibold text-black">
+                Edit Delivery &amp; Package Details
+              </h4>
+              <button
+                onClick={() => setShowEditForm(false)}
+                className="text-sm text-[#666666] hover:text-black"
+              >
+                Close
+              </button>
+            </div>
+
+            {order.waybill && (
+              <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-xl p-3.5 mb-4">
+                This order is already manifested with Delhivery (AWB{" "}
+                {order.waybill}). Customer, phone, email and package weight are
+                locked — Delhivery holds the original values for that AWB. Only
+                package description and dimensions can be changed here, for the
+                local record. Tracking remains authoritative for shipment
+                status.
+              </div>
+            )}
+
+            {editError && (
+              <div className="bg-[#DC2626]/5 border border-[#DC2626]/20 text-[#DC2626] text-sm rounded-xl p-3.5 mb-4">
+                {editError}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-xs font-medium text-[#666666] mb-1">
+                  Customer name
+                </label>
+                <input
+                  value={editForm.customerName}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, customerName: e.target.value })
+                  }
+                  disabled={Boolean(order.waybill)}
+                  className="input-field text-sm disabled:bg-gray-100"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#666666] mb-1">
+                  Phone
+                </label>
+                <input
+                  value={editForm.phone}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, phone: e.target.value })
+                  }
+                  disabled={Boolean(order.waybill)}
+                  className="input-field text-sm disabled:bg-gray-100"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#666666] mb-1">
+                  Email
+                </label>
+                <input
+                  value={editForm.email}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, email: e.target.value })
+                  }
+                  disabled={Boolean(order.waybill)}
+                  className="input-field text-sm disabled:bg-gray-100"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+              <div className="sm:col-span-1">
+                <label className="block text-xs font-medium text-[#666666] mb-1">
+                  Address line 1
+                </label>
+                <input
+                  value={editForm.address.line1}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      address: { ...editForm.address, line1: e.target.value },
+                    })
+                  }
+                  className="input-field text-sm"
+                />
+              </div>
+              <div className="sm:col-span-1">
+                <label className="block text-xs font-medium text-[#666666] mb-1">
+                  Address line 2
+                </label>
+                <input
+                  value={editForm.address.line2}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      address: { ...editForm.address, line2: e.target.value },
+                    })
+                  }
+                  className="input-field text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#666666] mb-1">
+                  Pincode
+                </label>
+                <input
+                  value={editForm.address.pincode}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      address: { ...editForm.address, pincode: e.target.value },
+                    })
+                  }
+                  className="input-field text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#666666] mb-1">
+                  City
+                </label>
+                <input
+                  value={editForm.address.city}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      address: { ...editForm.address, city: e.target.value },
+                    })
+                  }
+                  className="input-field text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#666666] mb-1">
+                  State
+                </label>
+                <input
+                  value={editForm.address.state}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      address: { ...editForm.address, state: e.target.value },
+                    })
+                  }
+                  className="input-field text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
+              <div>
+                <label className="block text-xs font-medium text-[#666666] mb-1">
+                  Package weight (grams)
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={50000}
+                  value={editForm.shipmentWeightOverrideGrams}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      shipmentWeightOverrideGrams: e.target.value,
+                    })
+                  }
+                  disabled={Boolean(order.waybill)}
+                  placeholder={
+                    order.shippingWeightGrams
+                      ? `Current ${order.shippingWeightGrams}g`
+                      : "e.g. 600"
+                  }
+                  className="input-field text-sm disabled:bg-gray-100"
+                />
+                {!order.shippingWeightOverrideGrams &&
+                  order.shippingWeightGrams && (
+                    <p className="text-[11px] text-[#999999] mt-1">
+                      Product-derived weight is{" "}
+                      {(order.shippingWeightGrams / 1000).toFixed(2)} kg. Enter
+                      an override only if the actual packed weight differs.
+                    </p>
+                  )}
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#666666] mb-1">
+                  Package description
+                </label>
+                <input
+                  value={editForm.packageDescription}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      packageDescription: e.target.value,
+                    })
+                  }
+                  className="input-field text-sm"
+                />
+              </div>
+              <div className="sm:col-span-2 grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-[#666666] mb-1">
+                    L (cm)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={200}
+                    value={editForm.packageDimensions.lengthCm}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        packageDimensions: {
+                          ...editForm.packageDimensions,
+                          lengthCm: e.target.value,
+                        },
+                      })
+                    }
+                    className="input-field text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-[#666666] mb-1">
+                    B (cm)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={200}
+                    value={editForm.packageDimensions.breadthCm}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        packageDimensions: {
+                          ...editForm.packageDimensions,
+                          breadthCm: e.target.value,
+                        },
+                      })
+                    }
+                    className="input-field text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-[#666666] mb-1">
+                    H (cm)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={200}
+                    value={editForm.packageDimensions.heightCm}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        packageDimensions: {
+                          ...editForm.packageDimensions,
+                          heightCm: e.target.value,
+                        },
+                      })
+                    }
+                    className="input-field text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={saveEditForm}
+                disabled={savingEdit || busyAction !== null}
+                className="btn-gold text-sm disabled:opacity-50"
+              >
+                {savingEdit ? "Saving…" : "Save Details"}
+              </button>
+              <button
+                onClick={() => setShowEditForm(false)}
+                className="text-sm text-[#666666] hover:text-black"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {trackHistory.length > 0 && (
+          <div className="mt-5 pt-5 border-t border-gray-100">
+            <h4 className="font-heading font-semibold text-black mb-3">
+              Tracking history
+            </h4>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-[#666666] border-b border-gray-100">
+                    <th className="py-2 pr-3 font-medium">Date &amp; time</th>
+                    <th className="py-2 pr-3 font-medium">Event</th>
+                    <th className="py-2 font-medium">Location</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {trackHistory.map((entry, i) => (
+                    <tr
+                      key={i}
+                      className="border-b border-gray-50 last:border-0"
+                    >
+                      <td className="py-2.5 pr-3 text-[#666666] whitespace-nowrap">
+                        {entry.statusDateTime
+                          ? new Date(entry.statusDateTime).toLocaleString(
+                              "en-IN",
+                              {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )
+                          : "—"}
+                      </td>
+                      <td className="py-2.5 pr-3 text-black">
+                        {entry.scan || entry.scanType || "—"}
+                      </td>
+                      <td className="py-2.5 text-[#666666]">
+                        {entry.location || "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Update Status */}
@@ -676,8 +1262,12 @@ export default function OrderDetailPage() {
             className="input-field text-sm"
           >
             <option value="Processing">Processing</option>
-            <option value="Shipped">Shipped</option>
-            <option value="Delivered">Delivered</option>
+            <option value="Shipped" disabled={!order.waybill}>
+              Shipped{order.waybill ? "" : " (requires shipment)"}
+            </option>
+            <option value="Delivered" disabled={!order.waybill}>
+              Delivered{order.waybill ? "" : " (requires shipment)"}
+            </option>
             <option value="Cancelled">Cancelled</option>
           </select>
           <button
@@ -691,6 +1281,13 @@ export default function OrderDetailPage() {
             Current: {order.status}
           </span>
         </div>
+        {!order.waybill && (
+          <p className="text-xs text-[#999999] mt-3">
+            Shipped / Delivered are Delhivery-observed facts and can only be set
+            after a real shipment (AWB) exists. They will also update
+            automatically from real tracking via “Track Shipment”.
+          </p>
+        )}
       </div>
 
       {/* Print Invoice Styles */}

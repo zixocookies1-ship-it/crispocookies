@@ -46,12 +46,12 @@ export async function attemptAutoShipment(
   if (order.paymentStatus !== "paid") {
     return { ok: false, code: "ORDER_NOT_PAID", error: "Order is not paid yet." };
   }
-  if (order.waybill && order.shipmentStatus) {
+  if (order.waybill) {
     order.syncState = "synced";
     order.syncAttemptedAt = new Date();
     return {
       ok: true,
-      waybill: order.waybill,
+      waybill: String(order.waybill),
       code: "SHIPMENT_ALREADY_EXISTS",
       error: "Shipment already created for this order.",
     };
@@ -66,21 +66,26 @@ export async function attemptAutoShipment(
     }>);
 
     // Prefer the weight that was actually used for the checkout shipping
-    // quote so sync never depends on product records being unchanged.
+    // quote so sync never depends on product records being unchanged. An
+    // admin-entered package weight override wins over everything.
     const storedWeight =
       typeof order.shippingWeightGrams === "number"
         ? order.shippingWeightGrams
         : 0;
     const resolvedWeight = totalWeightGrams(lines);
+    const overrideWeight =
+      typeof order.shipmentWeightOverrideGrams === "number" &&
+      order.shipmentWeightOverrideGrams > 0
+        ? order.shipmentWeightOverrideGrams
+        : 0;
     const weightGrams =
-      storedWeight > 0 ? storedWeight : resolvedWeight > 0 ? resolvedWeight : 0;
-    if (weightGrams <= 0) {
-      throw new DelhiveryError("Order has no shipping weight", {
-        status: 422,
-        code: "MISSING_WEIGHT",
-        safeMessage: "Update product shipping weights in the admin panel.",
-      });
-    }
+      overrideWeight > 0
+        ? overrideWeight
+        : storedWeight > 0
+          ? storedWeight
+          : resolvedWeight > 0
+            ? resolvedWeight
+            : 0;
 
     const response = await createDelhiveryShipment({
       orderId: order.orderId,
@@ -91,6 +96,10 @@ export async function attemptAutoShipment(
       lines,
       totalAmount: order.total,
       weightGrams,
+      packageDescription:
+        typeof order.packageDescription === "string"
+          ? order.packageDescription
+          : undefined,
     });
 
     const pkg = response.packages?.[0];

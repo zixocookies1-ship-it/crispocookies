@@ -13,7 +13,10 @@ interface Order {
   total: number;
   paymentStatus: string;
   status: string;
+  waybill?: string | null;
+  shipmentStatus?: string | null;
   createdAt: string;
+  updatedAt?: string;
 }
 
 interface MissingPayment {
@@ -280,6 +283,7 @@ export default function OrdersPage() {
                 <th className="py-3 px-4 font-medium">Total</th>
                 <th className="py-3 px-4 font-medium">Payment</th>
                 <th className="py-3 px-4 font-medium">Status</th>
+                <th className="py-3 px-4 font-medium">AWB</th>
                 <th className="py-3 px-4 font-medium">Date</th>
                 <th className="py-3 px-4 font-medium">View</th>
               </tr>
@@ -321,6 +325,9 @@ export default function OrdersPage() {
                       <span className={statusBadge(order.status)}>
                         {order.status}
                       </span>
+                    </td>
+                    <td className="py-4 px-4 font-mono text-xs text-[#666666]">
+                      {order.waybill || "—"}
                     </td>
                     <td className="py-4 px-4 text-[#666666] text-xs">
                       {new Date(order.createdAt).toLocaleDateString("en-IN")}

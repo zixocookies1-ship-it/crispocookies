@@ -379,7 +379,7 @@ export default function SettingsPage() {
                       <span className="text-black/70">API token</span>
                       <span className="font-medium text-black">
                         {delhiveryHealth.apiTokenConfigured
-                          ? `Set (${delhiveryHealth.apiTokenMasked})`
+                          ? "Configured"
                           : "Missing — DELHIVERY_API_TOKEN"}
                       </span>
                     </div>
@@ -476,16 +476,18 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* Save Button */}
-      <div className="flex justify-end pb-8">
-        <button
-          onClick={saveSettings}
-          disabled={saving}
-          className="btn-gold px-8 py-3 text-sm font-medium disabled:opacity-50"
-        >
-          {saving ? "Saving..." : "Save Settings"}
-        </button>
-      </div>
+      {/* Save Button — everything except Delhivery (that tab is server-env controlled) */}
+      {activeTab !== "Delhivery" && (
+        <div className="flex justify-end pb-8">
+          <button
+            onClick={saveSettings}
+            disabled={saving}
+            className="btn-gold px-8 py-3 text-sm font-medium disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Save Settings"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

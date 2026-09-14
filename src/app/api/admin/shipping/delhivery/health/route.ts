@@ -26,7 +26,6 @@ export async function GET() {
   await connectDB();
 
   const config = getDelhiveryConfigStatus();
-  const token = process.env.DELHIVERY_API_TOKEN;
   const pickupLocation = getPickupLocation();
   const originPincode = getOriginPincode();
 
@@ -43,9 +42,6 @@ export async function GET() {
     originPincodeConfigured: config.originPincodeConfigured,
     originPincode: config.originPincodeConfigured ? originPincode : null,
     apiTokenConfigured: config.tokenConfigured,
-    apiTokenMasked: token
-      ? `${token.slice(0, 6)}…${token.slice(-4)}`
-      : null,
     missing: config.missing,
   });
 }

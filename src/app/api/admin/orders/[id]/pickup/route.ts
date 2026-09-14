@@ -42,6 +42,20 @@ export async function POST(
     return NextResponse.json({ success: true, pickupId: result.pickupId });
   } catch (error) {
     console.error("POST /api/admin/orders/[id]/pickup error:", error);
+    if (error instanceof Error && "safeMessage" in error) {
+      const delhiveryError = error as unknown as {
+        safeMessage: string;
+        code?: string;
+        status?: number;
+      };
+      return NextResponse.json(
+        {
+          error: delhiveryError.safeMessage || "Failed to request pickup",
+          code: delhiveryError.code,
+        },
+        { status: delhiveryError.status || 500 }
+      );
+    }
     return NextResponse.json(
       { error: "Failed to request pickup" },
       { status: 500 }

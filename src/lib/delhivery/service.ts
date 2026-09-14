@@ -239,6 +239,8 @@ export async function createDelhiveryShipment(opts: {
   totalAmount: number;
   /** Optional override for the shipment weight when a stored order weight exists. */
   weightGrams?: number;
+  /** Admin-entered package/box description; falls back to the line summary. */
+  packageDescription?: string;
 }): Promise<DelhiveryShipmentResponse> {
   const pickupLocation = getPickupLocation();
   if (!pickupLocation) {
@@ -291,6 +293,10 @@ export async function createDelhiveryShipment(opts: {
     });
   }
 
+  const productsDesc =
+    opts.packageDescription?.trim() ||
+    opts.lines.map((l) => `${l.qty} × ${l.name}`).join(", ");
+
   const shipment: DelhiveryShipmentRequest = {
     name: opts.customerName,
     add: [opts.address.line1, opts.address.line2].filter(Boolean).join(", "),
@@ -306,7 +312,7 @@ export async function createDelhiveryShipment(opts: {
     weight: String(totalGrams),
     quantity: String(opts.lines.reduce((s, l) => s + l.qty, 0)),
     total_amount: String(Math.round(opts.totalAmount)),
-    products_desc: opts.lines.map((l) => `${l.qty} × ${l.name}`).join(", "),
+    products_desc: productsDesc,
     fragile_shipment: "true",
     plastic_packaging: "true",
   };

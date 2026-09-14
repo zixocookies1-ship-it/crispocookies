@@ -59,6 +59,16 @@ export interface IOrder extends Document {
   shippingWeightGrams?: number;
   /** Shipment cost charged (already inside deliveryCharge/total). */
   shippingCost?: number;
+  /** Admin-entered package weight in grams (overrides product-derived weight). */
+  shipmentWeightOverrideGrams?: number;
+  /** Admin-entered package/box description for the shipment. */
+  packageDescription?: string;
+  /** Admin-entered package dimensions in centimetres (pre-shipment only). */
+  packageDimensions?: {
+    lengthCm?: number;
+    breadthCm?: number;
+    heightCm?: number;
+  };
   waybill?: string;
   shipmentStatus?: string;
   /** Latest Delhivery scan status text (e.g. "Manifested"). */
@@ -139,6 +149,13 @@ const OrderSchema = new Schema<IOrder>({
   deliveryProvider: { type: String },
   shippingWeightGrams: { type: Number, default: 0 },
   shippingCost: { type: Number, default: 0 },
+  shipmentWeightOverrideGrams: { type: Number, default: null },
+  packageDescription: { type: String, default: "" },
+  packageDimensions: {
+    lengthCm: { type: Number },
+    breadthCm: { type: Number },
+    heightCm: { type: Number },
+  },
   waybill: { type: String },
   shipmentStatus: { type: String },
   lastScan: { type: String },

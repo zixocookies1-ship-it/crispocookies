@@ -74,7 +74,10 @@ export async function GET(request: NextRequest) {
         typeof o.orderStatus === "string"
           ? o.orderStatus.charAt(0).toUpperCase() + o.orderStatus.slice(1)
           : o.orderStatus,
+      waybill: o.waybill || null,
+      shipmentStatus: o.shipmentStatus || null,
       createdAt: o.createdAt,
+      updatedAt: o.updatedAt || o.createdAt,
     }));
 
     return NextResponse.json({
