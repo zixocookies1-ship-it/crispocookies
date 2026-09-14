@@ -5,7 +5,6 @@ import { DELIVERY_CHARGE } from "@/lib/pricing-math";
 import {
   isDelhiveryConfigured,
   checkPincodeServiceability,
-  estimateShippingRate,
   resolveShipmentLines,
   totalWeightGrams,
   DelhiveryError,
