@@ -69,6 +69,8 @@ export interface IOrder extends Document {
     breadthCm?: number;
     heightCm?: number;
   };
+  /** "S" Surface / "E" Express; overrides the server-wide DELHIVERY_SHIPPING_MODE for this order only. */
+  shippingModeOverride?: "S" | "E";
   waybill?: string;
   shipmentStatus?: string;
   /** Latest Delhivery scan status text (e.g. "Manifested"). */
@@ -156,6 +158,7 @@ const OrderSchema = new Schema<IOrder>({
     breadthCm: { type: Number },
     heightCm: { type: Number },
   },
+  shippingModeOverride: { type: String, enum: ["S", "E"], default: null },
   waybill: { type: String },
   shipmentStatus: { type: String },
   lastScan: { type: String },

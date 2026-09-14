@@ -241,6 +241,8 @@ export async function createDelhiveryShipment(opts: {
   weightGrams?: number;
   /** Admin-entered package/box description; falls back to the line summary. */
   packageDescription?: string;
+  /** Per-order shipping mode override; defaults to DELHIVERY_SHIPPING_MODE. */
+  shippingMode?: "S" | "E";
 }): Promise<DelhiveryShipmentResponse> {
   const pickupLocation = getPickupLocation();
   if (!pickupLocation) {
@@ -308,7 +310,8 @@ export async function createDelhiveryShipment(opts: {
     order: opts.orderId,
     order_date: formatDelhiveryDate(opts.orderedAt),
     payment_mode: "Pre-paid",
-    shipping_mode: getShippingMode() === "E" ? "Express" : "Surface",
+    shipping_mode:
+      (opts.shippingMode ?? getShippingMode()) === "E" ? "Express" : "Surface",
     weight: String(totalGrams),
     quantity: String(opts.lines.reduce((s, l) => s + l.qty, 0)),
     total_amount: String(Math.round(opts.totalAmount)),
@@ -476,6 +479,111 @@ export async function requestPickup(opts: {
     );
   }
   return { pickupId: response.pickup_id };
+}
+
+export interface PickupLocationCheck {
+  /** The configured DELHIVERY_PICKUP_LOCATION value. */
+  configured?: string;
+  /**
+   * true when Delhivery actually returned its registered pickup-location
+   * list and we were able to compare names. If the API is unreachable or
+   * returns an unexpected shape this stays false so we never falsely
+   * accuse a valid location.
+   */
+  verified: boolean;
+  /** The exact registered pickup-location names Delhivery returned. */
+  registered: string[];
+  /** Exactly one of the registered names matches the configured value. */
+  match: boolean;
+  /** Customer-safe reason when verification was impossible. */
+  error?: string;
+}
+
+/**
+ * Validates the configured DELHIVERY_PICKUP_LOCATION against the locations
+ * actually registered in the connected Delhivery account.
+ *
+ * Delhivery's create-shipment / pickup APis reference a pickup location by
+ * its exact registered NAME (not a postal address). If the env var is set to
+ * an unregistered name (e.g. a full street address), shipments fail. This
+ * lists what Delhivery knows so the admin can paste the exact registered
+ * name. Throws a DelhiveryError only if the API call itself fails.
+ */
+export async function checkPickupLocationRegistration(): Promise<PickupLocationCheck> {
+  const configured = getPickupLocation();
+  if (!configured) {
+    return {
+      configured: undefined,
+      verified: false,
+      registered: [],
+      match: false,
+      error: "DELHIVERY_PICKUP_LOCATION is not set on this server.",
+    };
+  }
+  try {
+    // GET /api/v1/pickup-location/ lists the pickup locations registered to
+    // the token's client account. API errors are mapped by delhiveryFetch.
+    const payload = await delhiveryFetch<unknown>("/api/v1/pickup-location/");
+    const registered = normalizePickupLocationNames(payload);
+    if (registered.length === 0) {
+      return {
+        configured,
+        verified: false,
+        registered: [],
+        match: false,
+        error:
+          "Delhivery returned no registered pickup locations for this token. Verify the token's client account has pickup locations set up.",
+      };
+    }
+    const match = registered.some(
+      (name) => name.trim().toLowerCase() === configured.trim().toLowerCase()
+    );
+    return {
+      configured,
+      verified: true,
+      registered,
+      match,
+      error: match
+        ? undefined
+        : "Pickup location is not recognized/valid by Delhivery.",
+    };
+  } catch (error) {
+    const safe = error instanceof DelhiveryError ? error.safeMessage : error instanceof Error ? error.message : "Unknown error";
+    return {
+      configured,
+      verified: false,
+      registered: [],
+      match: false,
+      error: `Could not verify pickup location with Delhivery: ${safe}`,
+    };
+  }
+}
+
+/**
+ * Delhivery returns the location list either as a bare array or wrapped in a
+ * "pickup_location" / "data" array. Each entry may be a string name or an
+ * object with name/pickup_location. Tolerate the shapes so a running
+ * production never falses out on a harmless response format.
+ */
+function normalizePickupLocationNames(payload: unknown): string[] {
+  const raw = Array.isArray(payload)
+    ? payload
+    : (payload as Record<string, unknown> | null)?.pickup_location ??
+      (payload as Record<string, unknown> | null)?.data;
+  if (!Array.isArray(raw)) return [];
+  const names = raw
+    .map((entry) => {
+      if (typeof entry === "string") return entry;
+      if (entry && typeof entry === "object") {
+        const obj = entry as Record<string, unknown>;
+        const value = obj.name ?? obj.pickup_location;
+        return typeof value === "string" ? value : "";
+      }
+      return "";
+    })
+    .map((name) => name.trim())
+    .filter((name) => name.length > 0);
+  return Array.from(new Set(names));
 }
 
 export interface TrackEntry {

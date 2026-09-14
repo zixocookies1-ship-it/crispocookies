@@ -58,6 +58,7 @@ interface OrderData {
   pickedUpAt?: string;
   shippingWeightGrams?: number;
   shippingWeightOverrideGrams?: number;
+  shippingModeOverride?: string;
   packageDescription?: string;
   packageDimensions?: {
     lengthCm?: number;
@@ -115,6 +116,7 @@ export default function OrderDetailPage() {
     email: "",
     address: { line1: "", line2: "", city: "", state: "", pincode: "" },
     shipmentWeightOverrideGrams: "",
+    shippingMode: "",
     packageDescription: "",
     packageDimensions: { lengthCm: "", breadthCm: "", heightCm: "" },
   });
@@ -136,6 +138,7 @@ export default function OrderDetailPage() {
         order.shippingWeightOverrideGrams != null
           ? String(order.shippingWeightOverrideGrams)
           : "",
+      shippingMode: order.shippingModeOverride || "",
       packageDescription: order.packageDescription || "",
       packageDimensions: {
         lengthCm:
@@ -189,6 +192,12 @@ export default function OrderDetailPage() {
           editForm.shipmentWeightOverrideGrams.trim() === ""
             ? null
             : editForm.shipmentWeightOverrideGrams;
+        if (
+          editForm.shippingMode === "S" ||
+          editForm.shippingMode === "E"
+        ) {
+          payload.shippingMode = editForm.shippingMode;
+        }
       }
       const res = await fetch(`/api/admin/orders/${order._id}`, {
         method: "PATCH",
@@ -694,7 +703,11 @@ export default function OrderDetailPage() {
             <div className="flex justify-between">
               <span className="text-[#666666]">Shipping mode</span>
               <span className="font-medium text-black">
-                {order.delhiveryEnv?.shippingMode || "—"}
+                {order.shippingModeOverride === "E"
+                  ? "Express (override)"
+                  : order.shippingModeOverride === "S"
+                    ? "Surface (override)"
+                    : order.delhiveryEnv?.shippingMode || "—"}
               </span>
             </div>
             <div className="flex justify-between">
@@ -1117,6 +1130,27 @@ export default function OrderDetailPage() {
                   }
                   className="input-field text-sm"
                 />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#666666] mb-1">
+                  Shipping mode
+                </label>
+                <select
+                  value={editForm.shippingMode}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, shippingMode: e.target.value })
+                  }
+                  disabled={Boolean(order.waybill)}
+                  className="input-field text-sm disabled:bg-gray-100"
+                >
+                  <option value="">Server default (Surface)</option>
+                  <option value="S">Surface</option>
+                  <option value="E">Express</option>
+                </select>
+                <p className="text-[11px] text-[#999999] mt-1">
+                  Used only when the shipment is created. Leave as server
+                  default unless the courier service needs differently.
+                </p>
               </div>
               <div className="sm:col-span-2 grid grid-cols-3 gap-3">
                 <div>

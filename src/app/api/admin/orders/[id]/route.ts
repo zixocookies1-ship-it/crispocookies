@@ -97,6 +97,8 @@ interface EditableShippingFields {
     breadthCm?: number | null;
     heightCm?: number | null;
   };
+  /** "S" Surface / "E" Express; only settable before a shipment exists. */
+  shippingMode?: "S" | "E";
 }
 
 export async function PATCH(
@@ -260,6 +262,16 @@ export async function PATCH(
         heightCm: num(d.heightCm),
       };
     }
+    if (edited.shippingMode !== undefined) {
+      const mode = String(edited.shippingMode).toUpperCase();
+      if (mode !== "S" && mode !== "E") {
+        return NextResponse.json(
+          { error: "Shipping mode must be S (Surface) or E (Express)" },
+          { status: 400 }
+        );
+      }
+      proposed.shippingModeOverride = mode as "S" | "E";
+    }
 
     // Shipment-affecting edits (customer, phone, weight) are locked post-manifest.
     if (manifestLocked) {
@@ -267,13 +279,14 @@ export async function PATCH(
         "customerName",
         "phone",
         "email",
+        "shippingModeOverride",
         "shipmentWeightOverrideGrams",
       ].filter((k) => k in proposed);
       if (affected.length > 0) {
         return NextResponse.json(
           {
             error:
-              "This order is already manifested with Delhivery. Customer, phone and package weight are locked (Delhivery holds the original); only package description and dimensions can still be edited locally.",
+              "This order is already manifested with Delhivery. Customer, phone, email, shipping mode and package weight are locked (Delhivery holds the original); only package description and dimensions can still be edited locally.",
             code: "MANIFEST_LOCKED",
             role: "manifest",
           },

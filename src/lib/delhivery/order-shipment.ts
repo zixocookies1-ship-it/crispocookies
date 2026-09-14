@@ -100,6 +100,10 @@ export async function attemptAutoShipment(
         typeof order.packageDescription === "string"
           ? order.packageDescription
           : undefined,
+      shippingMode:
+        order.shippingModeOverride === "E" || order.shippingModeOverride === "S"
+          ? order.shippingModeOverride
+          : undefined,
     });
 
     const pkg = response.packages?.[0];

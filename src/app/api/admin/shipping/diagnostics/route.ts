@@ -11,6 +11,7 @@ import {
   isDelhiveryConfigured,
   checkPincodeServiceability,
   estimateShippingRate,
+  checkPickupLocationRegistration,
 } from "@/lib/delhivery";
 
 /**
@@ -76,11 +77,34 @@ export async function GET() {
     serviceabilityCheck = { error: "DELHIVERY_ORIGIN_PINCODE missing/invalid" };
     checks.serviceability = serviceabilityCheck;
   }
+
+  // Validates DELHIVERY_PICKUP_LOCATION against what is actually registered
+  // in the connected Delhivery account (a full postal address is NOT a valid
+  // pickup-location name and would fail every create-shipment).
+  const pickupCheck = await checkPickupLocationRegistration();
+  checks.pickupLocation = {
+    configured: pickupCheck.configured ?? undefined,
+    registered: pickupCheck.registered,
+    match: pickupCheck.match,
+    error: pickupCheck.error ?? undefined,
+  };
+
   report.checks = checks;
-  report.status =
-    serviceabilityCheck.error || rateCheck.error
-      ? "Credentials reach Delhivery but something is wrong (see checks) — e.g. token invalid, origin pincode unserviceable, or origin not linked to the token's client."
-      : "OK — token is live and the origin pincode is serviceable. Check pickup location name and GST fields at the create/shipment step.";
+
+  if (pickupCheck.verified && !pickupCheck.match) {
+    report.status =
+      "Pickup location is not recognized/valid by Delhivery. Set DELHIVERY_PICKUP_LOCATION to the exact registered name listed under checks → pickupLocation → registered, then redeploy. Shipments will keep failing until it matches.";
+  } else if (serviceabilityCheck.error || rateCheck.error) {
+    report.status =
+      "Credentials reach Delhivery but something is wrong (see checks) — e.g. token invalid, origin pincode unserviceable, or origin not linked to the token's client.";
+  } else if (!pickupCheck.verified || pickupCheck.error) {
+    report.status = `Credentials reach Delhivery but the pickup location could not be verified — ${
+      pickupCheck.error || "unknown reason"
+    }`;
+  } else {
+    report.status =
+      "OK — token is live, the origin pincode is serviceable, and the configured pickup location matches a registered Delhivery location. Check GST/HSN fields at the create/shipment step.";
+  }
 
   return NextResponse.json(report);
 }
