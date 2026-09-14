@@ -278,6 +278,7 @@ export async function POST(request: NextRequest) {
       }>,
       subtotal: totals.finalSubtotal,
       subtotalBeforeDiscount: totals.originalSubtotal,
+      catalogSubtotal: totals.catalogSubtotal,
       discount: totals.offerDiscount,
       promotion: totals.promotion
         ? {

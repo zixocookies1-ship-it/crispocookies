@@ -16,6 +16,8 @@ export interface AutoShipmentResult {
   /** Machine-readable error/success code surfaced to the admin API + UI. */
   code?: string;
   error?: string;
+  /** Customer-safe explanation for the admin UI (falls back to error). */
+  safeMessage?: string;
 }
 
 /**
@@ -106,8 +108,9 @@ export async function attemptAutoShipment(
           : undefined,
     });
 
-    const pkg = response.packages?.[0];
-    const waybill = pkg?.waybill || response.upload_wbn;
+    // createDelhiveryShipment returns ONLY a real packages[].waybill or throws.
+    // It never fabricates an AWB from the UPL… upload_wbn batch reference.
+    const waybill = response.waybill;
     if (!waybill) {
       throw new DelhiveryError("Delhivery did not return a waybill for the shipment", {
         status: 422,
@@ -117,7 +120,7 @@ export async function attemptAutoShipment(
     }
 
     order.waybill = String(waybill);
-    order.shipmentId = response.upload_wbn ? String(response.upload_wbn) : "";
+    order.shipmentId = response.shipmentId ? String(response.shipmentId) : "";
     order.shipmentStatus = "Manifested";
     order.shipmentCreatedAt = new Date();
     order.trackingUrl = buildDhlTrackingUrl(String(waybill));
@@ -134,6 +137,12 @@ export async function attemptAutoShipment(
       orderId: String(order._id),
     });
 
+    console.log("[delhivery] auto-shipment created", {
+      orderId: order.orderId,
+      waybill,
+      shipmentId: order.shipmentId || undefined,
+    });
+
     return { ok: true, waybill: String(waybill), code: "SHIPMENT_CREATED" };
   } catch (error) {
     const isDelhiveryError = error instanceof DelhiveryError;
@@ -142,6 +151,9 @@ export async function attemptAutoShipment(
       : error instanceof Error
         ? error.message
         : "Shipment creation failed";
+    const safeMessage = isDelhiveryError
+      ? error.safeMessage
+      : message;
     const code = isDelhiveryError
       ? error.code || "DELHIVERY_API_ERROR"
       : "SHIPMENT_CREATION_FAILED";
@@ -159,6 +171,6 @@ export async function attemptAutoShipment(
       type: "order",
       orderId: String(order._id),
     }).catch(() => {});
-    return { ok: false, code, error: message };
+    return { ok: false, code, error: message, safeMessage };
   }
 }

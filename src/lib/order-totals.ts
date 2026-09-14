@@ -67,6 +67,12 @@ export interface TotalsSnapshot {
   items: StoredItem[];
   promotion: ActivePromotion | null;
   originalSubtotal: number; // catalog (pre-offer) subtotal
+  /**
+   * MRP catalog subtotal (Σ base × qty). The authoritative "Subtotal" every
+   * frontend should render — the launch-offer discount is derived from the
+   * same base so discount can never exceed it.
+   */
+  catalogSubtotal: number; // MRP/reference catalog subtotal
   offerDiscount: number; // launch-offer discount
   finalSubtotal: number; // after offer, before coupon
   eligibleSubtotal: number; // catalog value of coupon-eligible lines
@@ -262,6 +268,7 @@ export async function calculateOrderTotals(opts: {
     items,
     promotion,
     originalSubtotal: finalTotals.originalSubtotal,
+    catalogSubtotal: finalTotals.catalogSubtotal,
     offerDiscount: finalTotals.discount,
     finalSubtotal: finalTotals.finalSubtotal,
     eligibleSubtotal: coupon ? eligibleSubtotal : 0,

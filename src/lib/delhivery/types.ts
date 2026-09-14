@@ -80,10 +80,28 @@ export interface DelhiveryShipmentResponse {
   prepaid_count?: number;
   cod_count?: number;
   packages?: DelhiveryShipmentPackage[];
+  /**
+   * Upload-batch reference. When present it is ALWAYS prefixed "UPL…". It is
+   * NOT an AWB — a waybill is never an "UPL…" value. Storing this as the
+   * shipment waybill made "shipped" states fake; it is kept only as the
+   * Delhivery batch/shipment id.
+   */
   upload_wbn?: string;
+  /** Human-readable rejection reason (create failures carry success:false + rmk). */
+  rmk?: string;
   /** Often present when the request is rejected (e.g. invalid pickup location). */
-  error?: string | Array<unknown> | Record<string, unknown>;
+  error?: boolean | string | Array<unknown> | Record<string, unknown>;
   nearest?: string;
+}
+
+/** Normalized outcome of createDelhiveryShipment with a real AWB or a throw. */
+export interface DelhiveryShipmentResult {
+  /** The real AWB assigned by Delhivery (packages[0].waybill). */
+  waybill: string;
+  /** Delhivery upload-batch id when returned (UPL… reference, not an AWB). */
+  shipmentId?: string;
+  /** Raw Delhivery response for audit/logging. */
+  raw: DelhiveryShipmentResponse;
 }
 
 export interface DelhiveryPickupResponse {

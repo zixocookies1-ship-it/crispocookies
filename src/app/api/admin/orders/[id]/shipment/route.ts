@@ -9,6 +9,7 @@ import { attemptAutoShipment, DelhiveryError } from "@/lib/delhivery";
 const STATUS_BY_CODE: Record<string, number> = {
   DELHIVERY_NOT_CONFIGURED: 503,
   PICKUP_LOCATION_NOT_CONFIGURED: 503,
+  PICKUP_LOCATION_INVALID: 422,
   ORDER_NOT_PAID: 422,
   INVALID_CUSTOMER_ADDRESS: 422,
   INVALID_PINCODE: 422,
@@ -46,6 +47,7 @@ export async function POST(
           success: false,
           code: result.code || "SHIPMENT_CREATION_FAILED",
           error: result.error || "Shipment creation failed",
+          safeMessage: result.safeMessage || result.error || undefined,
         },
         { status }
       );
@@ -71,6 +73,7 @@ export async function POST(
           success: false,
           code: error.code || "DELHIVERY_API_ERROR",
           error: error.message,
+          safeMessage: error.safeMessage,
         },
         { status }
       );

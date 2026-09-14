@@ -118,15 +118,38 @@ export async function delhiveryFetch<T>(
   const timeoutMs = options.timeoutMs ?? 15000;
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
+  // Delhivery's create-shipment API reads the request body as a raw
+  // "format=json&data=<json>" STRING. Sending a JSON object with
+  // Content-Type: application/json makes it reject with "format key missing
+  // in POST". Callers pass a string when they need the raw form; objects are
+  // sent as JSON (rates, serviceability, tracking, pickup requests).
+
+  // Build the body and content-type up-front with explicit if-branches so
+  // TypeScript narrows options.body fully in each branch (the nested
+  // rawBody-ternary form does not propagate the typeof narrowing and fails
+  // with "Type '{}' is not assignable to 'BodyInit'").
+  let requestBody: BodyInit | undefined;
+  let contentType: string;
+  if (options.body === undefined) {
+    requestBody = undefined;
+    contentType = "application/json";
+  } else if (typeof options.body === "string") {
+    requestBody = options.body;
+    contentType = "text/plain";
+  } else {
+    requestBody = JSON.stringify(options.body);
+    contentType = "application/json";
+  }
+
   try {
     const res = await fetch(`${getDelhiveryBaseUrl()}${path}`, {
       method: options.method ?? "GET",
       headers: {
         Authorization: `Token ${token}`,
-        "Content-Type": "application/json",
+        "Content-Type": contentType,
         Accept: "application/json",
       },
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      body: requestBody,
       signal: controller.signal,
       cache: "no-store",
     });
@@ -194,15 +217,35 @@ function summarizeResponseBody(
 ): string {
   if (json && typeof json === "object") {
     const obj = json as Record<string, unknown>;
-    const candidate =
-      obj.error ??
-      obj.message ??
-      obj.Error ??
-      obj.Message ??
-      obj.reason ??
-      obj.detail;
-    if (typeof candidate === "string" && candidate.trim()) {
-      return candidate.slice(0, 300);
+    // Delhivery create-shipment errors arrive with success:false, error:true
+    // and the real reason in "rmk" (+ per-package remarks when applicable).
+    const candidates = [
+      obj.rmk,
+      obj.error,
+      obj.errors,
+      obj.message,
+      obj.Error,
+      obj.Message,
+      obj.reason,
+      obj.detail,
+    ];
+    for (const candidate of candidates) {
+      if (typeof candidate === "string" && candidate.trim()) {
+        return candidate.slice(0, 300);
+      }
+      if (Array.isArray(candidate)) {
+        const joined = candidate
+          .map((entry) =>
+            typeof entry === "string"
+              ? entry
+              : entry && typeof entry === "object"
+                ? JSON.stringify(entry)
+                : ""
+          )
+          .filter(Boolean)
+          .join(" · ");
+        if (joined) return joined.slice(0, 300);
+      }
     }
     const trimmed = JSON.stringify(json);
     return trimmed ? trimmed.slice(0, 300) : text.slice(0, 300);

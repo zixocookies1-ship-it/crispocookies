@@ -92,6 +92,11 @@ export default function OrderDetailPage() {
   const [updating, setUpdating] = useState(false);
   const [newStatus, setNewStatus] = useState("");
   const [toast, setToast] = useState("");
+  const [toastTone, setToastTone] = useState<"success" | "error">("success");
+  const showToast = (message: string, tone: "success" | "error" = "success") => {
+    setToast(message);
+    setToastTone(tone);
+  };
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [shipmentState, setShipmentState] = useState<{
     waybill?: string;
@@ -311,11 +316,21 @@ export default function OrderDetailPage() {
               ? "Delhivery rejected the API token — check it in Admin → Settings → Delhivery."
               : data.code === "PICKUP_LOCATION_NOT_CONFIGURED"
                 ? "Delhivery pickup location is not configured. Add it in Admin → Settings → Delhivery."
-                : data.code === "INVALID_CUSTOMER_ADDRESS" ||
-                    data.code === "INVALID_PINCODE"
-                  ? "The delivery address is invalid. Fix it, then press Create Shipment again."
-                  : data.error || "Request failed";
-        setToast(friendly);
+                : data.code === "PICKUP_LOCATION_INVALID" ||
+                    data.code === "DELHIVERY_PICKUP_LOCATION_INVALID"
+                  ? "The Delhivery pickup location name is invalid. It must exactly match the warehouse registered at Delhivery (Admin → Settings → Delhivery)."
+                  : data.code === "INVALID_CUSTOMER_ADDRESS" ||
+                      data.code === "INVALID_PINCODE"
+                    ? "The delivery address is invalid. Fix it, then press Create Shipment again."
+                    : (data.safeMessage as string) ||
+                          typeof data.error !== "string"
+                        ? (data.safeMessage as string) ||
+                          (typeof data.error === "string"
+                            ? data.error
+                            : "") ||
+                          "Request failed"
+                        : "Request failed";
+        showToast(friendly, "error");
         return;
       }
       if (action === "create") {
@@ -411,7 +426,13 @@ export default function OrderDetailPage() {
   return (
     <>
       {toast && (
-        <div className="fixed top-4 right-4 bg-[#16A34A] text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2 no-print">
+        <div
+          className={`fixed top-4 right-4 ${
+            toastTone === "error"
+              ? "bg-[#DC2626]"
+              : "bg-[#16A34A]"
+          } text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2 no-print`}
+        >
           <span>{toast}</span>
           <button onClick={() => setToast("")} className="ml-2 text-white/80 hover:text-white">✕</button>
         </div>

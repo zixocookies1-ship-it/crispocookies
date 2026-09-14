@@ -59,6 +59,8 @@ export interface PendingOrderData {
   }>;
   subtotal: number;
   subtotalBeforeDiscount: number;
+  /** MRP catalog subtotal (Σ base × qty) — display-only "Subtotal". */
+  catalogSubtotal: number;
   discount: number;
   promotion?: IOrder["promotion"];
   couponDiscount: number;

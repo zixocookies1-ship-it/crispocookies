@@ -16,6 +16,7 @@ import type {
   DelhiveryShipmentPackage,
   DelhiveryShipmentRequest,
   DelhiveryShipmentResponse,
+  DelhiveryShipmentResult,
   DelhiveryTrackResponse,
 } from "./types";
 
@@ -243,7 +244,7 @@ export async function createDelhiveryShipment(opts: {
   packageDescription?: string;
   /** Per-order shipping mode override; defaults to DELHIVERY_SHIPPING_MODE. */
   shippingMode?: "S" | "E";
-}): Promise<DelhiveryShipmentResponse> {
+}): Promise<DelhiveryShipmentResult> {
   const pickupLocation = getPickupLocation();
   if (!pickupLocation) {
     throw new DelhiveryError("DELHIVERY_PICKUP_LOCATION is not configured", {
@@ -287,12 +288,38 @@ export async function createDelhiveryShipment(opts: {
       safeMessage: "The delivery pincode is invalid. Fix it in the admin panel.",
     });
   }
-  if (!/^[0-9+\- ]{7,15}$/.test(opts.phone ?? "")) {
+  const phone = normalizeIndianPhone(opts.phone ?? "");
+  if (!/^\d{10}$/.test(phone)) {
     throw new DelhiveryError("Order phone number is invalid", {
       status: 422,
       code: "INVALID_CUSTOMER_ADDRESS",
       safeMessage: "The delivery phone number is invalid. Fix it in the admin panel.",
     });
+  }
+
+  // Pre-validate the configured pickup location name against the locations
+  // actually registered for this token. Delhivery rejects a create request
+  // with success:false when pickup_location.name is not an exact registered
+  // warehouse name — surfacing that BEFORE the API call yields an actionable
+  // error instead of a generic "shipment rejected". Only enforced when
+  // Delhivery actually returned its location list (verified) so a transient
+  // list failure never blocks a valid shipment.
+  const pickupCheck = await checkPickupLocationRegistration();
+  if (pickupCheck.verified && !pickupCheck.match) {
+    const hint =
+      pickupCheck.registered.length > 0
+        ? ` Delhivery has these registered: ${pickupCheck.registered
+            .slice(0, 5)
+            .join(" · ")}.`
+        : "";
+    throw new DelhiveryError(
+      `DELHIVERY_PICKUP_LOCATION "${pickupLocation}" is not a registered pickup location for this account.${hint}`,
+      {
+        status: 422,
+        code: "PICKUP_LOCATION_INVALID",
+        safeMessage: `The Delhivery pickup location name is invalid or not registered for this account. Update it in Admin → Settings → Delhivery.${hint}`,
+      }
+    );
   }
 
   const productsDesc =
@@ -303,7 +330,7 @@ export async function createDelhiveryShipment(opts: {
     name: opts.customerName,
     add: [opts.address.line1, opts.address.line2].filter(Boolean).join(", "),
     pin: opts.address.pincode,
-    phone: opts.phone,
+    phone,
     city: opts.address.city,
     state: opts.address.state,
     country: "India",
@@ -325,29 +352,50 @@ export async function createDelhiveryShipment(opts: {
   if (process.env.DELHIVERY_HSN_CODE) {
     shipment.hsn_code = process.env.DELHIVERY_HSN_CODE;
   }
+  const requestPayload = {
+    shipments: [shipment],
+    pickup_location: { name: pickupLocation },
+  };
 
+  console.log("[delhivery] create shipment", {
+    orderId: opts.orderId,
+    pickupLocation,
+    originPincode: getOriginPincode(),
+    shippingMode: shipment.shipping_mode,
+    weightGrams: totalGrams,
+    paymentMode: shipment.payment_mode,
+    lineCount: opts.lines.length,
+  });
+
+  // Delhivery requires the raw "format=json&data=<json>" body (text/plain).
+  // A JSON-encoded object body is rejected with "format key missing in POST".
   const response = await delhiveryFetch<DelhiveryShipmentResponse>(
     "/api/cmu/create.json",
     {
       method: "POST",
-      body: {
-        format: "json",
-        data: {
-          shipments: [shipment],
-          pickup_location: { name: pickupLocation },
-        },
-      },
+      body: `format=json&data=${JSON.stringify(requestPayload)}`,
     }
   );
 
   const pkg = response?.packages?.[0];
-  if (!response || (!response.success && !response.packages)) {
-    // Delhivery replies HTTP 200 with success:false + the real reason here.
+  logCreateResponse(response, opts.orderId);
+
+  const rejected =
+    !response ||
+    response.success === false ||
+    response.error === true ||
+    (response.error &&
+      typeof response.error !== "boolean" &&
+      (Array.isArray(response.error) ? response.error.length > 0 : true));
+  if (rejected) {
     const reason = extractShipmentError(response, pkg);
+    // Include the exact Delhivery reason (rmk/errors/remarks) verbatim in the
+    // admin-facing message so the real cause is never hidden behind a generic
+    // "API 400".
     throw new DelhiveryError(`Delhivery rejected the shipment${reason}`, {
       status: 422,
       code: "DELHIVERY_API_ERROR",
-      safeMessage: "Could not create the courier shipment. Check the order address and try again.",
+      safeMessage: `Could not create the courier shipment.${reason ? ` Delhivery said: ${reason.replace(/^: /, "")}` : ""} Check the pickup location and order details, then retry.`,
     });
   }
   if (pkg && typeof pkg.status === "string" && pkg.status.toLowerCase() !== "success") {
@@ -357,11 +405,64 @@ export async function createDelhiveryShipment(opts: {
       {
         status: 422,
         code: "DELHIVERY_API_ERROR",
-        safeMessage: "Delhivery did not accept the shipment. Check the pickup location and order details.",
+        safeMessage: `Delhivery did not accept the shipment.${reason ? ` Delhivery said: ${reason.replace(/^: /, "")}` : ""}`,
       }
     );
   }
-  return response;
+  // The ONLY real waybill is packages[].waybill. upload_wbn ("UPL…") is a
+  // batch reference — treating it as an AWB fabricated "shipped" states.
+  const waybill =
+    pkg?.waybill && !/^UPL/i.test(pkg.waybill) ? pkg.waybill : undefined;
+  if (!waybill) {
+    const reason = extractShipmentError(response, pkg);
+    throw new DelhiveryError(
+      `Delhivery did not return a waybill for the shipment${reason}`,
+      {
+        status: 422,
+        code: "DELHIVERY_API_ERROR",
+        safeMessage: "Delhivery did not return a tracking number. The shipment was NOT created — retry, or contact Delhivery support if this persists.",
+      }
+    );
+  }
+
+  return {
+    waybill,
+    shipmentId: response.upload_wbn || undefined,
+    raw: response,
+  };
+}
+
+/** Normalize an Indian phone to 10 digits: strip +91/0 prefixes, spaces, dashes. */
+function normalizeIndianPhone(raw: string): string {
+  let digits = (raw || "").replace(/\D/g, "");
+  if (digits.length === 12 && digits.startsWith("91")) digits = digits.slice(2);
+  else if (digits.length === 11 && digits.startsWith("0")) digits = digits.slice(1);
+  return digits;
+}
+
+/**
+ * Log the create-shipment response with the waybill and any Delhivery reason
+ * (rmk/remarks) — never logs the full payload/order PII.
+ */
+function logCreateResponse(
+  response: DelhiveryShipmentResponse | null | undefined,
+  orderId: string
+): void {
+  if (!response) {
+    console.warn("[delhivery] create shipment returned an empty response", {
+      orderId,
+    });
+    return;
+  }
+  console.log("[delhivery] create shipment response", {
+    orderId,
+    success: response.success,
+    error: response.error,
+    rmk: typeof response.rmk === "string" ? response.rmk.slice(0, 200) : undefined,
+    uploadWbn: response.upload_wbn,
+    packageCount: Array.isArray(response.packages) ? response.packages.length : 0,
+    waybill: response.packages?.[0]?.waybill,
+  });
 }
 
 /** Best-effort extraction of the exact reason Delhivery put in the body. */
@@ -377,6 +478,7 @@ function extractShipmentError(
       bits.push(JSON.stringify(value).slice(0, 200));
     }
   };
+  push(response?.rmk);
   push(response?.error);
   push(response?.nearest);
   for (const remark of pkg?.remarks ?? []) push(remark);

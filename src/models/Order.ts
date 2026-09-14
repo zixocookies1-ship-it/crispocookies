@@ -26,6 +26,11 @@ export interface IOrder extends Document {
   subtotal: number;
   /** Original (pre-discount) product subtotal. */
   subtotalBeforeDiscount: number;
+  /**
+   * MRP catalog subtotal (Σ base × qty) — the authoritative "Subtotal" for
+   * display. Discount is derived from the same base, so discount ≤ this.
+   */
+  catalogSubtotal: number;
   /** Launch-offer discount applied to this order (0 when none). */
   discount: number;
   /** Snapshot of the promotion that produced the discount. */
@@ -118,6 +123,7 @@ const OrderSchema = new Schema<IOrder>({
   ],
   subtotal: { type: Number, required: true },
   subtotalBeforeDiscount: { type: Number, default: 0 },
+  catalogSubtotal: { type: Number, default: 0 },
   discount: { type: Number, default: 0 },
   promotion: {
     name: { type: String },

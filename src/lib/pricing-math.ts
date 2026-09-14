@@ -38,6 +38,8 @@ export function applyDiscount(
 export interface PricedLine {
   unitPrice: number;
   qty: number;
+  /** Reference base used for the discount (MRP when present, else unit price). */
+  base: number;
   unitDiscount: number;
   unitFinal: number;
   lineDiscount: number;
@@ -51,12 +53,19 @@ export function priceLine(
   promo: ActivePromotion | null,
   referencePrice?: number
 ): PricedLine {
-  const { discount, final } = promo
+  const { discount, final, base } = promo
     ? applyDiscount(unitPrice, promo.discountValue, referencePrice)
-    : { discount: 0, final: unitPrice };
+    : (() => {
+        const base =
+          referencePrice && referencePrice > unitPrice
+            ? referencePrice
+            : unitPrice;
+        return { discount: 0, final: unitPrice, base };
+      })();
   return {
     unitPrice,
     qty,
+    base,
     unitDiscount: discount,
     unitFinal: final,
     lineDiscount: discount * qty,
@@ -96,6 +105,12 @@ export function computeCouponDiscount(opts: {
 export interface OrderTotals {
   /** Sum of original (pre-discount) line totals the customer sees. */
   originalSubtotal: number;
+  /**
+   * Catalog subtotal (Σ base × qty, where base is the MRP when present).
+   * The label a store should show as "Subtotal" — the launch-offer discount
+   * is derived from the same base, so discount ≤ catalogSubtotal always.
+   */
+  catalogSubtotal: number;
   /** Total launch-offer discount applied. */
   discount: number;
   /** Final product total after launch-offer discount (before coupon). */
@@ -121,6 +136,7 @@ export function computeOrderTotals(
 ): OrderTotals {
   const charge = overrides?.charge ?? DELIVERY_CHARGE;
   const originalSubtotal = lines.reduce((s, l) => s + l.unitPrice * l.qty, 0);
+  const catalogSubtotal = lines.reduce((s, l) => s + l.base * l.qty, 0);
   const discount = lines.reduce((s, l) => s + l.lineDiscount, 0);
   // Each line already carries its promo-discounted unit final (the percentage
   // is calculated off the MRP). Sum the per-line totals for the payable
@@ -135,6 +151,7 @@ export function computeOrderTotals(
   const deliveryCharge = charge;
   return {
     originalSubtotal,
+    catalogSubtotal,
     discount,
     finalSubtotal,
     couponDiscount,
