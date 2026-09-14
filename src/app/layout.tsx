@@ -21,6 +21,11 @@ export const metadata: Metadata = {
   title: "Crispo Cookies — Baked with Love, Delivered Fresh",
   description:
     "Premium artisan cookies baked fresh daily. Classic chocolate chip, buttery crunch, oatmeal delights and more. Order online for fast delivery.",
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png", sizes: "512x512" }],
+    shortcut: "/favicon.png",
+    apple: [{ url: "/favicon.png", type: "image/png", sizes: "512x512" }],
+  },
 };
 
 export default function RootLayout({
