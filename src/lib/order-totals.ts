@@ -1,4 +1,4 @@
-import { connectDB } from "./mongodb";
+﻿import { connectDB } from "./mongodb";
 import Product from "@/models/Product";
 import { getActivePromotion, priceLines } from "./pricing";
 import {
@@ -16,7 +16,6 @@ import {
 import {
   isDelhiveryConfigured,
   checkPincodeServiceability,
-  estimateShippingRate,
 } from "./delhivery";
 
 /**
@@ -25,7 +24,7 @@ import {
  * coupon validity or discount values from the browser. Product prices are
  * re-fetched from the database on every call.
  *
- * A flat ₹100 delivery charge applies to every order — there is no
+ * A flat â‚¹100 delivery charge applies to every order â€” there is no
  * free-delivery threshold. Minimum-order-value is evaluated on the catalog
  * subtotal so the rule is stable regardless of any temporary launch offer.
  */
@@ -68,8 +67,8 @@ export interface TotalsSnapshot {
   promotion: ActivePromotion | null;
   originalSubtotal: number; // catalog (pre-offer) subtotal
   /**
-   * MRP catalog subtotal (Σ base × qty). The authoritative "Subtotal" every
-   * frontend should render — the launch-offer discount is derived from the
+   * MRP catalog subtotal (Î£ base Ã— qty). The authoritative "Subtotal" every
+   * frontend should render â€” the launch-offer discount is derived from the
    * same base so discount can never exceed it.
    */
   catalogSubtotal: number; // MRP/reference catalog subtotal
@@ -230,18 +229,13 @@ export async function calculateOrderTotals(opts: {
           400
         );
       }
-      if (totalWeightGrams > 0) {
-        const estimate = await estimateShippingRate({
-          toPincode: deliveryPincode,
-          weightGrams: totalWeightGrams,
-        });
-        deliveryCharge = estimate.amount;
-        deliveryProvider = "delhivery";
-      }
+      // Delivery charge is a fixed â‚¹100 for every order â€” never reduced or
+      // increased by the live Delhivery rate. Keep only the serviceability
+      // gate; do NOT replace deliveryCharge with a Delhivery estimate.
     } catch (error) {
       if (error instanceof CouponError) throw error;
       console.warn(
-        "[order-totals] Delhivery rate unavailable — using flat delivery",
+        "[order-totals] Delhivery rate unavailable â€” using flat delivery",
         { message: error instanceof Error ? error.message : String(error) }
       );
       deliveryCharge = DELIVERY_CHARGE;

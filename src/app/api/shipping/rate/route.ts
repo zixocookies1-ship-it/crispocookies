@@ -91,17 +91,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const estimate = await estimateShippingRate({
-      toPincode: pincode,
-      weightGrams,
-    });
-
+    // Delivery charge is a fixed ₹100 for every order — never reduced or
+    // increased by the live Delhivery rate. Keep the pincode serviceability
+    // gate and the weight validation, but always quote the flat amount so the
+    // customer never sees a weight-based price for the same ₹100 delivery.
     return NextResponse.json({
       pincode,
-      mode: "delhivery",
+      mode: "flat",
       serviceable: true,
-      amount: estimate.amount,
-      weightGrams: estimate.chargeableWeightGrams,
+      amount: DELIVERY_CHARGE,
+      weightGrams,
     });
   } catch (error) {
     console.error("[shipping/rate] Delhivery failed", {
