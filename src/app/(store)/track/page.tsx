@@ -19,7 +19,8 @@ interface TrackData {
 }
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
-  processing: { label: "Order Confirmed", color: "text-gold" },
+  processing: { label: "Order Placed", color: "text-gold" },
+  confirmed: { label: "Order Confirmed", color: "text-gold" },
   shipped: { label: "Shipped", color: "text-gold" },
   delivered: { label: "Delivered", color: "text-green" },
   cancelled: { label: "Cancelled", color: "text-red" },

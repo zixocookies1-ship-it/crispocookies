@@ -271,7 +271,7 @@ export async function finalizeOrderPayment(input: {
     {
       $set: {
         paymentStatus: "paid",
-        orderStatus: "processing",
+        orderStatus: "confirmed",
         razorpayPaymentId: input.razorpayPaymentId,
         razorpaySignature: input.razorpaySignature ?? "",
         updatedAt: new Date(),

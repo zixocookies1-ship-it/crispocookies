@@ -307,7 +307,7 @@ export async function POST(request: NextRequest) {
     razorpayPaymentId: razorpay_payment_id,
     razorpaySignature: razorpay_signature,
     paymentStatus: "paid",
-    orderStatus: "processing",
+    orderStatus: "confirmed",
   });
 
   // ---------------------------------------------------------------

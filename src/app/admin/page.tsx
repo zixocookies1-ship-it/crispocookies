@@ -97,6 +97,7 @@ export default function DashboardPage() {
   const statusBadge = (status: string) => {
     const styles: Record<string, string> = {
       Processing: "badge-blue",
+      Confirmed: "badge-gold",
       Shipped: "badge-indigo",
       Delivered: "badge-green",
       Cancelled: "badge-grey",

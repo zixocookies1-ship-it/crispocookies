@@ -12,7 +12,13 @@ import {
   getShippingMode,
 } from "@/lib/delhivery";
 
-const ORDER_STATUSES = ["processing", "shipped", "delivered", "cancelled"] as const;
+const ORDER_STATUSES = [
+  "processing",
+  "confirmed",
+  "shipped",
+  "delivered",
+  "cancelled",
+] as const;
 
 export async function GET(
   _request: NextRequest,

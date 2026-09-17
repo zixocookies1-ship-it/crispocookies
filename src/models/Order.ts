@@ -57,7 +57,12 @@ export interface IOrder extends Document {
   razorpayPaymentId: string;
   razorpaySignature: string;
   paymentStatus: "pending" | "paid" | "failed";
-  orderStatus: "processing" | "shipped" | "delivered" | "cancelled";
+  orderStatus:
+    | "processing"
+    | "confirmed"
+    | "shipped"
+    | "delivered"
+    | "cancelled";
   /** Delhivery One integrations (all server-side). */
   deliveryProvider?: string;
   /** Total shipping weight of the order in grams. */
@@ -151,7 +156,7 @@ const OrderSchema = new Schema<IOrder>({
   },
   orderStatus: {
     type: String,
-    enum: ["processing", "shipped", "delivered", "cancelled"],
+    enum: ["processing", "confirmed", "shipped", "delivered", "cancelled"],
     default: "processing",
   },
   deliveryProvider: { type: String },

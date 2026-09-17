@@ -403,6 +403,7 @@ export default function OrderDetailPage() {
   const statusBadge = (status: string) => {
     const styles: Record<string, string> = {
       Processing: "badge-blue",
+      Confirmed: "badge-gold",
       Shipped: "badge-indigo",
       Delivered: "badge-green",
       Cancelled: "badge-grey",
@@ -1317,6 +1318,7 @@ export default function OrderDetailPage() {
             className="input-field text-sm"
           >
             <option value="Processing">Processing</option>
+            <option value="Confirmed">Confirmed</option>
             <option value="Shipped" disabled={!order.waybill}>
               Shipped{order.waybill ? "" : " (requires shipment)"}
             </option>

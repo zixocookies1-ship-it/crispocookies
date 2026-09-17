@@ -166,6 +166,7 @@ export default function OrdersPage() {
   const statusBadge = (status: string) => {
     const styles: Record<string, string> = {
       Processing: "badge-blue",
+      Confirmed: "badge-gold",
       Shipped: "badge-indigo",
       Delivered: "badge-green",
       Cancelled: "badge-grey",
@@ -191,6 +192,7 @@ export default function OrdersPage() {
         >
           <option value="">All Status</option>
           <option value="Processing">Processing</option>
+          <option value="Confirmed">Confirmed</option>
           <option value="Shipped">Shipped</option>
           <option value="Delivered">Delivered</option>
           <option value="Cancelled">Cancelled</option>
