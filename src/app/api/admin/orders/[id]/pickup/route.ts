@@ -27,6 +27,19 @@ export async function POST(
         { status: 400 }
       );
     }
+    if (order.pickedUp) {
+      return NextResponse.json(
+        {
+          error: `A pickup has already been requested for this shipment${
+            order.pickedUpAt
+              ? ` on ${new Date(order.pickedUpAt).toLocaleDateString("en-IN")}`
+              : ""
+          }.`,
+          code: "PICKUP_ALREADY_REQUESTED",
+        },
+        { status: 409 }
+      );
+    }
 
     const packageCount = (order.items || []).reduce(
       (sum: number, item: { qty?: number }) => sum + (Number(item.qty) || 0),
@@ -39,18 +52,29 @@ export async function POST(
     order.pickedUpAt = new Date();
     await order.save();
 
-    return NextResponse.json({ success: true, pickupId: result.pickupId });
+    return NextResponse.json({
+      success: true,
+      pickupId: result.pickupId,
+      pickupDate: result.pickupDate,
+      pickupTime: result.pickupTime,
+      pickupLocation: result.pickupLocation,
+    });
   } catch (error) {
     console.error("POST /api/admin/orders/[id]/pickup error:", error);
     if (error instanceof Error && "safeMessage" in error) {
       const delhiveryError = error as unknown as {
+        message?: string;
         safeMessage: string;
         code?: string;
         status?: number;
       };
       return NextResponse.json(
         {
-          error: delhiveryError.safeMessage || "Failed to request pickup",
+          error:
+            delhiveryError.message ||
+            delhiveryError.safeMessage ||
+            "Failed to request pickup",
+          safeMessage: delhiveryError.safeMessage,
           code: delhiveryError.code,
         },
         { status: delhiveryError.status || 500 }

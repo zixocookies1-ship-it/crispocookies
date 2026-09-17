@@ -4,12 +4,29 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import Order from "@/models/Order";
-import { fetchShippingLabelPdf } from "@/lib/delhivery";
+import { fetchShippingLabelPdf, DelhiveryError } from "@/lib/delhivery";
+
+function jsonError(
+  error: string,
+  status: number,
+  details?: string
+): Response {
+  return new Response(
+    JSON.stringify({
+      success: false,
+      error,
+      status,
+      ...(details ? { details } : {}),
+    }),
+    { status, headers: { "Content-Type": "application/json" } }
+  );
+}
 
 /**
- * Streams the A4 shipping-label PDF straight from Delhivery (the
- * /api/p/packing_slip endpoint returns a raw PDF, not JSON) so the browser
- * can open/print it. Requires an existing waybill.
+ * Streams the A4 shipping-label PDF from Delhivery (the /api/p/packing_slip
+ * endpoint returns raw PDF bytes, not JSON) so the browser can open/print it.
+ * Requires an existing waybill. The Delhivery token is only ever used
+ * server-side here.
  */
 export async function GET(
   _request: NextRequest,
@@ -18,26 +35,16 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
-      // Keep the cleanup contract of the route: a 401 must not leak PDF bytes.
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+      return jsonError("Unauthorized", 401);
     }
     await connectDB();
 
     const order = await Order.findById(params.id);
     if (!order) {
-      return new Response(JSON.stringify({ error: "Order not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
+      return jsonError("Order not found", 404);
     }
     if (!order.waybill) {
-      return new Response(
-        JSON.stringify({ error: "No shipment exists for this order yet" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+      return jsonError("No shipment exists for this order yet", 400);
     }
 
     const pdf = await fetchShippingLabelPdf(order.waybill);
@@ -46,17 +53,30 @@ export async function GET(
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `inline; filename="crispo-awb-${order.waybill}.pdf"`,
+        "Content-Disposition": `inline; filename="delhivery-label-${order.waybill}.pdf"`,
         "Cache-Control": "private, no-store",
       },
     });
   } catch (error) {
+    if (error instanceof DelhiveryError) {
+      // Preserve Delhivery's original HTTP status and return a safe, actionable
+      // message. The raw detail is only logged / passed as `details`.
+      console.error("GET /api/admin/orders/[id]/label Delhivery error:", {
+        status: error.status,
+        code: error.code,
+        message: error.message,
+      });
+      const status = error.status >= 400 && error.status < 600 ? error.status : 502;
+      return jsonError(error.safeMessage, status, error.message.slice(0, 500));
+    }
+
     console.error("GET /api/admin/orders/[id]/label error:", error);
     const message =
       error instanceof Error ? error.message : "Failed to fetch shipping label";
-    return new Response(JSON.stringify({ error: message.slice(0, 500) }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return jsonError(
+      "Could not fetch the shipping label from Delhivery.",
+      500,
+      message.slice(0, 500)
+    );
   }
 }

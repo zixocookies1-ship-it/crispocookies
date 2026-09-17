@@ -487,7 +487,41 @@ function extractShipmentError(
   return "";
 }
 
-/** Fetch the A4 shipping-label PDF directly (the packing-slip route returns raw PDF, not JSON). */
+/** Map a Delhivery HTTP status to an admin-safe, actionable message. */
+function labelSafeMessage(status: number): string {
+  if (status === 400) {
+    return "Delhivery rejected the label request. Please check the shipment/AWB.";
+  }
+  if (status === 401 || status === 403) {
+    return "Delhivery API authentication failed. Check the API token in Admin → Settings → Delhivery.";
+  }
+  if (status === 404) {
+    return "Shipping label was not found for this AWB.";
+  }
+  if (status === 429) {
+    return "Delivery service is rate-limiting requests. Try again shortly.";
+  }
+  if (status >= 500) {
+    return "Delhivery is temporarily unavailable. Please try again.";
+  }
+  return "Could not fetch the shipping label from Delhivery.";
+}
+
+/**
+ * Fetch the A4 shipping-label PDF directly.
+ *
+ * Endpoint (documented Delhivery Package Slip / Shipping Label API):
+ *   GET {base}/api/p/packing_slip?wbns=<AWB>&pdf=True
+ *   Authorization: Token <token>
+ *   Content-Type: application/json
+ *
+ * IMPORTANT: Delhivery's API gateway performs content negotiation. Sending
+ * `Accept: application/pdf` makes it reject the request with HTTP 400
+ * "Could not satisfy the request Accept header." The documented request uses
+ * `Accept: application/json` / `Content-Type: application/json` and the
+ * endpoint still streams the raw PDF bytes. This function reads the body as
+ * binary regardless.
+ */
 export async function fetchShippingLabelPdf(waybill: string): Promise<Buffer> {
   assertDelhiveryConfigured();
   const token = process.env.DELHIVERY_API_TOKEN as string;
@@ -499,32 +533,64 @@ export async function fetchShippingLabelPdf(waybill: string): Promise<Buffer> {
       {
         headers: {
           Authorization: `Token ${token}`,
-          Accept: "application/pdf",
+          // Delhivery's content negotiation rejects `Accept: application/pdf`.
+          // The documented headers below return the PDF stream successfully.
+          Accept: "application/json",
+          "Content-Type": "application/json",
         },
         signal: controller.signal,
         cache: "no-store",
       }
     );
+
+    // Always read the raw bytes first — the success body is a PDF, but error
+    // bodies (and some 200 responses) are JSON.
     const buffer = Buffer.from(await res.arrayBuffer());
+
     if (!res.ok) {
+      const bodyText = buffer.toString("utf8").trim();
       throw new DelhiveryError(
-        `Delhivery label API ${res.status}: ${buffer.toString("utf8").slice(0, 300) || "no label PDF"}`,
-        { status: res.status, safeMessage: "Could not fetch the shipping label from Delhivery." }
+        `Delhivery label API ${res.status}: ${bodyText.slice(0, 300) || "no label PDF"}`,
+        { status: res.status, safeMessage: labelSafeMessage(res.status) }
       );
     }
+
     if (buffer.length === 0) {
       throw new DelhiveryError("Delhivery returned an empty label PDF", {
         status: 422,
-        safeMessage: "Delhivery returned an empty label PDF. The label may not be ready yet.",
+        safeMessage:
+          "Delhivery returned an empty label PDF. The label may not be ready yet.",
       });
     }
+
+    // A successfully generated label is a PDF. If Delhivery answers 200 with a
+    // JSON body (e.g. {"packages": [], "packages_found": 0}) the AWB is wrong or
+    // the shipment is not manifested yet — surface that instead of streaming
+    // JSON to the browser as a "PDF".
+    const contentType = (res.headers.get("content-type") || "").toLowerCase();
+    const looksLikePdf =
+      contentType.includes("pdf") ||
+      buffer.subarray(0, 4).toString("latin1") === "%PDF";
+    if (!looksLikePdf) {
+      const text = buffer.toString("utf8").trim().slice(0, 300);
+      throw new DelhiveryError(
+        `Delhivery did not return a PDF for AWB ${waybill}: ${text || "unknown response"}`,
+        {
+          status: 422,
+          code: "LABEL_NOT_READY",
+          safeMessage:
+            "Shipping label is not available until the Delhivery shipment is manifested.",
+        }
+      );
+    }
+
     return buffer;
   } catch (error) {
     if (error instanceof DelhiveryError) throw error;
     if (error instanceof Error && error.name === "AbortError") {
       throw new DelhiveryError("Delhivery label request timed out", {
         status: 0,
-        safeMessage: "Label request timed out. Try again.",
+        safeMessage: "Delivery service timed out. Please try again.",
       });
     }
     throw new DelhiveryError(
@@ -536,10 +602,43 @@ export async function fetchShippingLabelPdf(waybill: string): Promise<Buffer> {
   }
 }
 
+/**
+ * Calendar date (YYYY-MM-DD) `offsetDays` from now in the Asia/Kolkata (IST)
+ * business timezone that Delhivery's pickup executives operate in. India has
+ * no DST, so a fixed +05:30 shift is exact. Reading the UTC fields after the
+ * shift yields the IST wall-clock date.
+ */
+function istDateString(offsetDays = 0): string {
+  const shifted = new Date(
+    Date.now() +
+      (5 * 60 + 30) * 60 * 1000 +
+      offsetDays * 24 * 60 * 60 * 1000
+  );
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${shifted.getUTCFullYear()}-${pad(shifted.getUTCMonth() + 1)}-${pad(
+    shifted.getUTCDate()
+  )}`;
+}
+
+/** Delhivery expects hh:mm:ss; tolerate hh:mm and fall back to 10:00:00. */
+function normalizePickupTime(value: string | undefined): string {
+  const raw = (value || "").trim();
+  if (/^\d{2}:\d{2}:\d{2}$/.test(raw)) return raw;
+  if (/^\d{2}:\d{2}$/.test(raw)) return `${raw}:00`;
+  return "10:00:00";
+}
+
 export async function requestPickup(opts: {
   pickupLocation?: string;
   packageCount: number;
-}): Promise<{ pickupId: number | string }> {
+}): Promise<{
+  pickupId: number | string;
+  pickupDate: string;
+  pickupTime: string;
+  pickupLocation: string;
+}> {
+  assertDelhiveryConfigured();
+
   const pickupLocation = opts.pickupLocation?.trim() || getPickupLocation();
   if (!pickupLocation) {
     throw new DelhiveryError("DELHIVERY_PICKUP_LOCATION is not configured", {
@@ -548,24 +647,93 @@ export async function requestPickup(opts: {
       safeMessage: "Pickup location is not configured on the server.",
     });
   }
-  const pickupDate = new Date(Date.now() + 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
-  const pickupTime = process.env.DELHIVERY_PICKUP_TIME || "10:00:00";
 
-  const response = await delhiveryFetch<{
+  // Delhivery references a pickup location by its exact registered warehouse
+  // NAME. Mirror the create-shipment pre-check so a wrong/inactive name yields
+  // an actionable error instead of a bare 400. Only enforced when Delhivery
+  // actually returned its location list (verified) so a transient list failure
+  // never blocks a valid pickup.
+  const pickupCheck = await checkPickupLocationRegistration();
+  if (pickupCheck.verified && !pickupCheck.match) {
+    const hint =
+      pickupCheck.registered.length > 0
+        ? ` Delhivery has these registered: ${pickupCheck.registered
+            .slice(0, 5)
+            .join(" · ")}.`
+        : "";
+    throw new DelhiveryError(
+      `DELHIVERY_PICKUP_LOCATION "${pickupLocation}" is not a registered pickup location for this account.${hint}`,
+      {
+        status: 422,
+        code: "PICKUP_LOCATION_INVALID",
+        safeMessage: `The Delhivery pickup location name is invalid or not registered for this account. Update it in Admin → Settings → Delhivery.${hint}`,
+      }
+    );
+  }
+
+  // Schedule for the next business day in IST. The previous "now + 24h" in UTC
+  // produced *today's* date during the early-morning IST window (00:00–05:29),
+  // which Delhivery rejects for same-day/past pickup dates.
+  const pickupDate = istDateString(1);
+  const pickupTime = normalizePickupTime(process.env.DELHIVERY_PICKUP_TIME);
+  const expectedPackageCount = Math.max(1, Math.round(opts.packageCount) || 1);
+
+  const body = {
+    pickup_time: pickupTime,
+    pickup_date: pickupDate,
+    pickup_location: pickupLocation,
+    expected_package_count: expectedPackageCount,
+  };
+
+  let response: {
     pickup_id?: number;
     error?: string | Array<unknown> | Record<string, unknown>;
     request_response?: { reason?: string };
-  }>("/fm/request/new/", {
-    method: "POST",
-    body: {
-      pickup_time: pickupTime,
-      pickup_date: pickupDate,
-      pickup_location: pickupLocation,
-      expected_package_count: opts.packageCount,
-    },
+  };
+  try {
+    response = await delhiveryFetch<typeof response>("/fm/request/new/", {
+      method: "POST",
+      body,
+    });
+  } catch (error) {
+    if (error instanceof DelhiveryError) {
+      const detail = (error.message || "").toLowerCase();
+      if (detail.includes("already") && detail.includes("pickup")) {
+        throw new DelhiveryError(error.message, {
+          status: error.status || 400,
+          code: "PICKUP_ALREADY_EXISTS",
+          safeMessage:
+            "A pickup request already exists for this pickup location. Wait for it to complete, or cancel the existing request.",
+        });
+      }
+      if (detail.includes("auto pickup") || detail.includes("auto-pickup")) {
+        throw new DelhiveryError(error.message, {
+          status: error.status || 400,
+          code: "PICKUP_AUTO_ENABLED",
+          safeMessage:
+            "Automatic pickup is enabled for this Delhivery account, so a pickup request is not needed.",
+        });
+      }
+      if (detail.includes("not active") || detail.includes("inactive")) {
+        throw new DelhiveryError(error.message, {
+          status: error.status || 400,
+          code: "PICKUP_LOCATION_INACTIVE",
+          safeMessage:
+            "The Delhivery pickup location is inactive. Ask Delhivery to activate the warehouse or choose another registered location.",
+        });
+      }
+    }
+    throw error;
+  }
+
+  console.log("[delhivery] pickup request", {
+    pickupLocation,
+    pickupDate,
+    pickupTime,
+    packageCount: expectedPackageCount,
+    pickupId: response?.pickup_id ?? null,
   });
+
   if (!response || response.pickup_id == null) {
     const reason =
       (typeof response?.error === "string" && response.error) ||
@@ -580,7 +748,7 @@ export async function requestPickup(opts: {
       }
     );
   }
-  return { pickupId: response.pickup_id };
+  return { pickupId: response.pickup_id, pickupDate, pickupTime, pickupLocation };
 }
 
 export interface PickupLocationCheck {

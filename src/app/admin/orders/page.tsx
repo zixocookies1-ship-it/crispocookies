@@ -44,10 +44,12 @@ export default function OrdersPage() {
   const [error, setError] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [paymentFilter, setPaymentFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
   const perPage = 10;
   const [missing, setMissing] = useState<MissingPayment[]>([]);
   const [reconciling, setReconciling] = useState(false);
@@ -111,6 +113,7 @@ export default function OrdersPage() {
         limit: String(perPage),
       });
       if (search) params.set("search", search);
+      if (paymentFilter) params.set("paymentStatus", paymentFilter);
       if (statusFilter) params.set("status", statusFilter);
       if (dateFrom) params.set("from", dateFrom);
       if (dateTo) params.set("to", dateTo);
@@ -120,12 +123,13 @@ export default function OrdersPage() {
       const data = await res.json();
       setOrders(data.orders || []);
       setTotalPages(data.totalPages || 1);
+      setTotalOrders(data.total || 0);
     } catch {
       setError(true);
     } finally {
       setLoading(false);
     }
-  }, [page, search, statusFilter, dateFrom, dateTo]);
+  }, [page, search, statusFilter, paymentFilter, dateFrom, dateTo]);
 
   useEffect(() => {
     fetchOrders();
@@ -156,11 +160,32 @@ export default function OrdersPage() {
 
   const paymentBadge = (status: string) => {
     const styles: Record<string, string> = {
-      Paid: "badge-green",
-      Failed: "badge-red",
-      Pending: "badge-amber",
+      paid: "badge-green",
+      failed: "badge-red",
+      pending: "badge-amber",
+      refunded: "badge-indigo",
     };
-    return styles[status] || "badge-grey";
+    return styles[String(status).toLowerCase()] || "badge-grey";
+  };
+
+  const paymentFilterLabels: Record<string, string> = {
+    paid: "Paid",
+    pending: "Payment Pending",
+    failed: "Payment Failed",
+    refunded: "Refunded",
+  };
+
+  const hasActiveFilters = Boolean(
+    search || statusFilter || paymentFilter || dateFrom || dateTo
+  );
+
+  const clearFilters = () => {
+    setSearch("");
+    setStatusFilter("");
+    setPaymentFilter("");
+    setDateFrom("");
+    setDateTo("");
+    setPage(1);
   };
 
   const statusBadge = (status: string) => {
@@ -185,6 +210,18 @@ export default function OrdersPage() {
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           className="input-field text-sm"
         />
+        <select
+          value={paymentFilter}
+          onChange={(e) => { setPaymentFilter(e.target.value); setPage(1); }}
+          className="input-field text-sm"
+          title="Payment Status"
+        >
+          <option value="">All Orders</option>
+          <option value="paid">Paid</option>
+          <option value="pending">Payment Pending</option>
+          <option value="failed">Payment Failed</option>
+          <option value="refunded">Refunded</option>
+        </select>
         <select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
@@ -214,6 +251,34 @@ export default function OrdersPage() {
         <button onClick={exportCSV} className="btn-navy-outline text-sm whitespace-nowrap">
           Export CSV
         </button>
+        {hasActiveFilters && (
+          <button
+            onClick={clearFilters}
+            className="btn-navy-outline text-sm whitespace-nowrap"
+          >
+            Clear Filters
+          </button>
+        )}
+      </div>
+
+      {/* Active payment filter summary + count */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+        <p className="text-sm text-[#666666]">
+          Payment Status:{" "}
+          <span className="font-medium text-black">
+            {paymentFilter ? paymentFilterLabels[paymentFilter] : "All Orders"}
+          </span>{" "}
+          ·{" "}
+          <span className="font-semibold text-black">
+            {totalOrders} orders
+          </span>
+        </p>
+        {paymentFilter === "refunded" && (
+          <p className="text-xs text-[#666666]">
+            Refunds aren&apos;t tracked by the current payment schema, so this
+            list is expected to be empty.
+          </p>
+        )}
       </div>
 
       {/* Payment reconciliation */}
@@ -320,7 +385,7 @@ export default function OrdersPage() {
                     </td>
                     <td className="py-4 px-4">
                       <span className={paymentBadge(order.paymentStatus)}>
-                        {order.paymentStatus}
+                        {String(order.paymentStatus).toUpperCase()}
                       </span>
                     </td>
                     <td className="py-4 px-4">

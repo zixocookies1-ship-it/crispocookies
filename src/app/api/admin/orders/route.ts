@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
     const status = searchParams.get("status");
+    const paymentStatus = searchParams.get("paymentStatus");
     const fromDate = searchParams.get("from") || searchParams.get("fromDate");
     const toDate = searchParams.get("to") || searchParams.get("toDate");
     const page = parseInt(searchParams.get("page") || "1", 10);
@@ -35,6 +36,25 @@ export async function GET(request: NextRequest) {
 
     if (status) {
       filter.orderStatus = status;
+    }
+
+    // Payment status is filtered server-side against the authoritative
+    // `paymentStatus` field, which is only set to "paid" after the server-side
+    // Razorpay signature + amount verification in finalizeOrderPayment().
+    if (paymentStatus) {
+      const normalized = paymentStatus.toLowerCase();
+      if (
+        normalized === "paid" ||
+        normalized === "pending" ||
+        normalized === "failed"
+      ) {
+        filter.paymentStatus = normalized;
+      } else if (normalized === "refunded") {
+        // The Order schema only tracks pending/paid/failed. Refund state is
+        // not represented anywhere in the existing payment data, so this
+        // matches nothing rather than inventing an unsupported status.
+        filter.paymentStatus = "refunded";
+      }
     }
 
     if (fromDate || toDate) {

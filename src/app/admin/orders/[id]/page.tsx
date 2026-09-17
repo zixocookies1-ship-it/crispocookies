@@ -309,6 +309,10 @@ export default function OrderDetailPage() {
       });
       const data = await res.json();
       if (!res.ok) {
+        const backendError =
+          typeof data.error === "string" && data.error.trim()
+            ? data.error.trim()
+            : "";
         const friendly =
           data.code === "DELHIVERY_NOT_CONFIGURED"
             ? "Shipping is not configured on this server (missing env vars). Add them in Admin → Settings → Delhivery."
@@ -322,14 +326,20 @@ export default function OrderDetailPage() {
                   : data.code === "INVALID_CUSTOMER_ADDRESS" ||
                       data.code === "INVALID_PINCODE"
                     ? "The delivery address is invalid. Fix it, then press Create Shipment again."
-                    : (data.safeMessage as string) ||
-                          typeof data.error !== "string"
-                        ? (data.safeMessage as string) ||
-                          (typeof data.error === "string"
-                            ? data.error
-                            : "") ||
-                          "Request failed"
-                        : "Request failed";
+                    : data.code === "PICKUP_ALREADY_EXISTS" ||
+                        data.code === "PICKUP_ALREADY_REQUESTED"
+                      ? backendError ||
+                        "A pickup has already been requested for this shipment."
+                      : data.code === "PICKUP_AUTO_ENABLED"
+                        ? backendError ||
+                          "Automatic pickup is enabled for this Delhivery account, so a pickup request is not needed."
+                        : data.code === "PICKUP_LOCATION_INACTIVE"
+                          ? backendError ||
+                            "The Delhivery pickup location is inactive. Ask Delhivery to activate the warehouse."
+                          : backendError ||
+                            (typeof data.safeMessage === "string" &&
+                              data.safeMessage.trim()) ||
+                            "Request failed";
         showToast(friendly, "error");
         return;
       }
@@ -360,11 +370,60 @@ export default function OrderDetailPage() {
             : `Shipment created — AWB ${data.waybill}`
         );
       } else if (action === "pickup") {
-        setToast(`Pickup requested — ID ${data.pickupId}`);
+        const when = data.pickupDate
+          ? ` for ${data.pickupDate}${data.pickupTime ? ` ${data.pickupTime}` : ""}`
+          : "";
+        setToast(`Pickup requested — ID ${data.pickupId}${when}`);
       }
       onSuccess?.(data);
     } catch {
       setToast("Something went wrong");
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  const openLabel = async () => {
+    if (!order) return;
+    setBusyAction("label");
+    // Open the tab synchronously inside the click gesture so popup blockers
+    // allow it; it is navigated to the PDF once the blob is ready.
+    const newTab = window.open("", "_blank");
+    try {
+      const res = await fetch(`/api/admin/orders/${order._id}/label`);
+      if (!res.ok) {
+        if (newTab) newTab.close();
+        let message = "Could not fetch the shipping label from Delhivery.";
+        try {
+          const data = await res.json();
+          if (data && typeof data.error === "string" && data.error.trim()) {
+            message = data.error;
+          }
+        } catch {
+          // Non-JSON (unexpected) error body — keep the generic message.
+        }
+        showToast(message, "error");
+        return;
+      }
+
+      const blob = await res.blob();
+      if (blob.size === 0) {
+        if (newTab) newTab.close();
+        showToast("Delhivery returned an empty label. Please try again.", "error");
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      if (newTab) {
+        newTab.location.href = url;
+      } else {
+        window.open(url, "_blank");
+      }
+      // Give the new tab time to load before releasing the object URL.
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch {
+      if (newTab) newTab.close();
+      showToast("Could not fetch the shipping label. Please try again.", "error");
     } finally {
       setBusyAction(null);
     }
@@ -412,16 +471,13 @@ export default function OrderDetailPage() {
   };
 
   const paymentBadge = (status: string) => {
-    const normalized =
-      status.length > 0
-        ? status.charAt(0).toUpperCase() + status.slice(1)
-        : status;
     const styles: Record<string, string> = {
-      Paid: "badge-green",
-      Failed: "badge-red",
-      Pending: "badge-amber",
+      paid: "badge-green",
+      failed: "badge-red",
+      pending: "badge-amber",
+      refunded: "badge-indigo",
     };
-    return styles[normalized] || "badge-grey";
+    return styles[String(status).toLowerCase()] || "badge-grey";
   };
 
   return (
@@ -881,13 +937,11 @@ export default function OrderDetailPage() {
           {order.waybill && (
             <>
               <button
-                onClick={() =>
-                  window.open(`/api/admin/orders/${order._id}/label`, "_blank")
-                }
+                onClick={openLabel}
                 disabled={busyAction !== null}
                 className="btn-navy-outline text-sm disabled:opacity-50"
               >
-                Print / View Label
+                {busyAction === "label" ? "Loading Label…" : "Print / View Label"}
               </button>
 
               <button
