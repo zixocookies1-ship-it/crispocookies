@@ -4,6 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect, ReactNode } from "react";
 import NotificationDropdown from "@/components/admin/notification-dropdown";
+import Image from "next/image";
 
 const NAV_ITEMS = [
   { label: "Dashboard", icon: "📊", href: "/admin" },
@@ -96,7 +97,13 @@ export default function AdminLayoutInner({
           ${sidebarOpen ? "w-[260px]" : "w-16"}`}
       >
         <div className="h-16 flex items-center px-4 border-b border-[#E5E5E5]">
-          <span className="text-2xl flex-shrink-0">🍪</span>
+          <Image
+            src="/logo.jpeg"
+            alt="Crispo Cookies"
+            width={36}
+            height={36}
+            className="h-9 w-9 object-contain flex-shrink-0"
+          />
           {sidebarOpen && (
             <span className="ml-2 font-body font-bold text-lg whitespace-nowrap text-black">
               Crispo Admin

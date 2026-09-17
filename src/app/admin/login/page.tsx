@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -59,7 +60,13 @@ export default function AdminLoginPage() {
 
       <div className="card w-full max-w-md p-8">
         <div className="text-center mb-8">
-          <div className="text-5xl mb-3">🍪</div>
+          <Image
+            src="/logo.jpeg"
+            alt="Crispo Cookies"
+            width={96}
+            height={96}
+            className="h-24 w-24 object-contain mx-auto mb-4"
+          />
           <h1 className="font-heading text-3xl text-black mb-1">
             Crispo
           </h1>
