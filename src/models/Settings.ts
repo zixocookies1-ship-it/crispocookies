@@ -20,7 +20,7 @@ const SettingsSchema = new Schema<ISettings>({
   contactPhone: { type: String, default: "" },
   address: { type: String, default: "" },
   freeDeliveryAbove: { type: Number, default: 499 },
-  deliveryCharge: { type: Number, default: 49 },
+  deliveryCharge: { type: Number, default: 100 },
   instagram: { type: String, default: "" },
   facebook: { type: String, default: "" },
   whatsapp: { type: String, default: "" },
