@@ -3,7 +3,7 @@
  * Safe to import from BOTH client and server bundles (no DB, no env access).
  */
 
-export const DELIVERY_CHARGE = 100;
+export const DELIVERY_CHARGE = 40;
 
 export interface ActivePromotion {
   id: string;
@@ -147,7 +147,7 @@ export function computeOrderTotals(
     Math.max(0, Math.round(overrides?.couponDiscount ?? 0)),
     finalSubtotal
   );
-  // Flat ₹100 delivery charge on every order (no free-delivery threshold).
+  // Flat ₹40 delivery charge on every order (no free-delivery threshold).
   const deliveryCharge = charge;
   return {
     originalSubtotal,

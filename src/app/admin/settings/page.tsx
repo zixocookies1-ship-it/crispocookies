@@ -53,7 +53,7 @@ export default function SettingsPage() {
     contactPhone: "",
     address: "",
     freeDeliveryAbove: 500,
-    deliveryCharge: 100,
+    deliveryCharge: 40,
     razorpayKeyId: "",
     razorpayKeySecret: "",
     instagram: "",

@@ -24,7 +24,7 @@ import {
  * coupon validity or discount values from the browser. Product prices are
  * re-fetched from the database on every call.
  *
- * A flat â‚¹100 delivery charge applies to every order â€” there is no
+ * A flat â‚¹40 delivery charge applies to every order â€” there is no
  * free-delivery threshold. Minimum-order-value is evaluated on the catalog
  * subtotal so the rule is stable regardless of any temporary launch offer.
  */
@@ -229,7 +229,7 @@ export async function calculateOrderTotals(opts: {
           400
         );
       }
-      // Delivery charge is a fixed â‚¹100 for every order â€” never reduced or
+      // Delivery charge is a fixed â‚¹40 for every order â€” never reduced or
       // increased by the live Delhivery rate. Keep only the serviceability
       // gate; do NOT replace deliveryCharge with a Delhivery estimate.
     } catch (error) {

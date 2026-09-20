@@ -142,7 +142,7 @@ export default function CheckoutPage() {
     coupon?.discountAmount ?? 0,
     previewBeforeCoupon
   );
-  const previewDelivery = shipping.amount ?? 100;
+  const previewDelivery = shipping.amount ?? 40;
   const previewTotal = previewBeforeCoupon - previewCouponAmount + previewDelivery;
 
   // Storefront identity for coupon-safe customer checks (guest checkout uses

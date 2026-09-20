@@ -14,7 +14,7 @@ const sections = [
   },
   {
     h: "Delivery",
-    p: "Products are baked fresh and dispatched within 24 hours. Typical delivery takes 2–3 working days depending on your location. A flat delivery charge of ₹100 applies to every order. Please share a complete address and reachable phone number at checkout.",
+    p: "Products are baked fresh and dispatched within 24 hours. Typical delivery takes 2–3 working days depending on your location. A flat delivery charge of ₹40 applies to every order. Please share a complete address and reachable phone number at checkout.",
   },
   {
     h: "Freshness & storage",

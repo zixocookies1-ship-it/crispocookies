@@ -82,7 +82,7 @@ export default function CartPage() {
   const promoDiscount = linePricing.reduce((s, l) => s + l.lineDiscount, 0);
   const beforeCoupon = Math.max(0, subtotal - promoDiscount);
   const couponAmount = Math.min(coupon?.discountAmount ?? 0, beforeCoupon);
-  const delivery = 100;
+  const delivery = 40;
   const total = beforeCoupon - couponAmount + delivery;
 
   // Revalidate the applied coupon whenever the cart changes (qty/item) so a
@@ -273,7 +273,7 @@ export default function CartPage() {
                 <div className="flex justify-between text-xs mb-1.5">
                   <span className="text-muted">Delivery</span>
                   <span className="text-cream font-semibold">
-                    ₹100 flat on every order
+                    ₹40 flat on every order
                   </span>
                 </div>
                 <div className="h-2 rounded-full bg-gold/12 overflow-hidden">
