@@ -236,6 +236,19 @@ export default function StoreHomePage() {
         </div>
       </section>
 
+      {/* ─── FSSAI LICENSE ─── */}
+      <section className="bg-cocoa pb-14 lg:pb-20 sm:px-6" aria-label="FSSAI license">
+        <div className="container-tight">
+          <Image
+            src="/fssi.png"
+            alt="Crispo Cookies — FSSAI licensed baker"
+            width={1588}
+            height={522}
+            className="w-full h-auto rounded-2xl ring-1 ring-gold/15 shadow-lift"
+          />
+        </div>
+      </section>
+
       <BenefitsSection />
 
       {/* ─── OUR STORY ─── */}
