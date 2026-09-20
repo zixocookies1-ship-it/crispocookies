@@ -220,18 +220,6 @@ export default function StoreHomePage() {
                 Explore Cookies
               </Link>
             </div>
-
-            <a
-              href="tel:+917569831560"
-              className="inline-flex items-center gap-2.5 text-cremel/90 hover:text-gold-soft transition-colors"
-            >
-              <span className="flex h-9 w-9 items-center justify-center rounded-full border border-gold/30 bg-gold/10">
-                <Phone size={15} className="text-gold-soft" />
-              </span>
-              <span className="font-body text-sm sm:text-base font-semibold tracking-wide">
-                +91 75698 31560
-              </span>
-            </a>
           </div>
         </div>
       </section>
