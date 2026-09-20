@@ -135,7 +135,7 @@ export default function CheckoutPage() {
 
   // Client-side preview only — create-order/verify-payment recompute these
   // authoritative totals on the server before any money moves.
-  const previewSubtotal = linePricing.reduce((s, l) => s + l.base * l.item.qty, 0);
+  const previewSubtotal = linePricing.reduce((s, l) => s + l.original * l.item.qty, 0);
   const previewOffer = linePricing.reduce((s, l) => s + l.lineDiscount, 0);
   const previewBeforeCoupon = Math.max(0, previewSubtotal - previewOffer);
   const previewCouponAmount = Math.min(

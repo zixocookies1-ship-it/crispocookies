@@ -78,7 +78,7 @@ export default function CartPage() {
     };
   });
 
-  const subtotal = linePricing.reduce((s, l) => s + l.base * l.item.qty, 0);
+  const subtotal = linePricing.reduce((s, l) => s + l.original * l.item.qty, 0);
   const promoDiscount = linePricing.reduce((s, l) => s + l.lineDiscount, 0);
   const beforeCoupon = Math.max(0, subtotal - promoDiscount);
   const couponAmount = Math.min(coupon?.discountAmount ?? 0, beforeCoupon);
@@ -244,7 +244,7 @@ export default function CartPage() {
                   <div className="text-right">
                     {line.discount > 0 && (
                       <p className="text-[11px] text-muted">
-                        {formatPrice(line.base)} × {line.item.qty}
+                        {formatPrice(line.original)} × {line.item.qty}
                         {line.lineDiscount > 0 && (
                           <span className="text-[#16A34A] font-semibold ml-1">
                             −{formatPrice(line.lineDiscount)}
