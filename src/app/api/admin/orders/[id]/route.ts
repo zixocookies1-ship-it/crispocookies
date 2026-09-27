@@ -11,6 +11,7 @@ import {
   getOriginPincode,
   getShippingMode,
 } from "@/lib/delhivery";
+import { runLocalPostPaymentEffects } from "@/lib/razorpay-payment";
 
 const ORDER_STATUSES = [
   "processing",
@@ -19,6 +20,8 @@ const ORDER_STATUSES = [
   "delivered",
   "cancelled",
 ] as const;
+
+const PAYMENT_STATUSES = ["pending", "paid", "failed"] as const;
 
 export async function GET(
   _request: NextRequest,
@@ -161,6 +164,44 @@ export async function PATCH(
         );
       }
       order.orderStatus = next as (typeof ORDER_STATUSES)[number];
+    }
+
+    // -----------------------------------------------------------------
+    // Payment status override — optional; the admin updates it only
+    // when they want to. Changing to "paid" runs the same post-payment
+    // bookkeeping (coupon, customer, notification, stock) as the
+    // Razorpay verify/webhook path, because fulfillment must not depend
+    // on a browser callback. Setting "failed" or "pending" is a plain
+    // status change.
+    // -----------------------------------------------------------------
+    if (body.paymentStatus !== undefined) {
+      const next = String(body.paymentStatus);
+      if (!(PAYMENT_STATUSES as readonly string[]).includes(next)) {
+        return NextResponse.json(
+          { error: "Invalid payment status", role: "paymentStatus" },
+          { status: 400 }
+        );
+      }
+      const previous = order.paymentStatus;
+      if (next === "paid" && previous !== "paid") {
+        order.paymentStatus = "paid";
+        order.orderStatus = "confirmed";
+        order.paymentVerifiedAt = new Date();
+        // Best-effort bookkeeping; failures are retried by the cron.
+        try {
+          await runLocalPostPaymentEffects(order);
+        } catch (error) {
+          console.error(
+            "[admin] post-payment effects threw for manual payment update",
+            {
+              orderId: order.orderId,
+              message: error instanceof Error ? error.message : String(error),
+            }
+          );
+        }
+      } else {
+        order.paymentStatus = next as (typeof PAYMENT_STATUSES)[number];
+      }
     }
 
     // -----------------------------------------------------------------

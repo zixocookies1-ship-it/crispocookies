@@ -284,12 +284,18 @@ export async function finalizeOrderPayment(input: {
     return { ok: false, code: "ORDER_NOT_FOUND" };
   }
 
-  // Already settled: nothing left to do, and never re-run the bookkeeping.
-  if (existing.paymentStatus === "paid") {
+  // Already settled or refunded: nothing left to do, and never re-run
+  // the bookkeeping. A refunded order must not be re-marked paid by a
+  // late callback or webhook.
+  if (
+    existing.paymentStatus === "paid" ||
+    existing.paymentStatus === "refunded"
+  ) {
     console.log("[razorpay-payment] duplicate callback detected", {
       orderId: existing.orderId,
       razorpayOrderId: input.razorpayOrderId,
       source: input.source,
+      paymentStatus: existing.paymentStatus,
     });
     return {
       ok: true,

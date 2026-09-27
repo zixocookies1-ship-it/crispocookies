@@ -103,7 +103,7 @@ export interface IOrder extends Document {
     }>;
     updatedAt?: Date;
   };
-  paymentStatus: "pending" | "paid" | "failed";
+  paymentStatus: "pending" | "paid" | "failed" | "refunded";
   orderStatus:
     | "processing"
     | "confirmed"

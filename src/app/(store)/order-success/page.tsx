@@ -20,7 +20,7 @@ interface ReceiptItem {
 interface Receipt {
   found: boolean;
   orderId: string;
-  paymentStatus: "pending" | "paid" | "failed";
+  paymentStatus: "pending" | "paid" | "failed" | "refunded";
   orderStatus: string;
   verifiedAt: string | null;
   placedAt: string | null;
@@ -46,7 +46,7 @@ interface Receipt {
 interface PendingState {
   found: true;
   orderId: string;
-  paymentStatus: "pending" | "paid" | "failed";
+  paymentStatus: "pending" | "paid" | "failed" | "refunded";
   orderStatus: string;
   placedAt: string | null;
   receiptAvailable: false;

@@ -77,7 +77,7 @@ interface OrderData {
   };
   shippingCost?: number;
   total: number;
-  paymentStatus: string;
+  paymentStatus: "pending" | "paid" | "failed" | "refunded";
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
   status: string;
@@ -101,6 +101,33 @@ export default function OrderDetailPage() {
   const [error, setError] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [newStatus, setNewStatus] = useState("");
+  const [paymentEdit, setPaymentEdit] = useState("");
+  const [paymentUpdating, setPaymentUpdating] = useState(false);
+
+  const updatePaymentStatus = async () => {
+    if (!order || !paymentEdit || paymentEdit === order.paymentStatus) return;
+    setPaymentUpdating(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${order._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentStatus: paymentEdit }),
+      });
+      if (res.ok) {
+        const refreshed = await fetch(`/api/admin/orders/${order._id}`);
+        if (refreshed.ok) setOrder(await refreshed.json());
+        setToast(`Payment status updated to ${paymentEdit}`);
+        setPaymentEdit("");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setToast(data.error || "Failed to update payment status");
+      }
+    } catch {
+      setToast("Something went wrong");
+    } finally {
+      setPaymentUpdating(false);
+    }
+  };
   const [toast, setToast] = useState("");
   const [toastTone, setToastTone] = useState<"success" | "error">("success");
   const showToast = (message: string, tone: "success" | "error" = "success") => {
@@ -597,9 +624,30 @@ export default function OrderDetailPage() {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-[#666666]">Payment Status</span>
+            <div className="flex items-center gap-2">
               <span className={paymentBadge(order.paymentStatus)}>
                 {order.paymentStatus}
               </span>
+              <select
+                value={paymentEdit}
+                onChange={(e) => setPaymentEdit(e.target.value)}
+                disabled={paymentUpdating || busyAction !== null}
+                className="input-field text-xs py-1 px-2"
+              >
+                <option value="">change…</option>
+                <option value="pending">PENDING</option>
+                <option value="paid">PAID</option>
+                <option value="failed">FAILED</option>
+                <option value="refunded">REFUNDED</option>
+              </select>
+              <button
+                onClick={updatePaymentStatus}
+                disabled={!paymentEdit || paymentEdit === order.paymentStatus || paymentUpdating}
+                className="btn-gold text-xs px-3 py-1 disabled:opacity-50"
+              >
+                {paymentUpdating ? "Saving…" : "Save"}
+              </button>
+            </div>
             </div>
           </div>
         </div>
