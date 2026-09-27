@@ -17,8 +17,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { fetchProducts, StoreProduct } from "@/lib/storefront";
-import { getActivePromotion } from "@/lib/promotion";
-import { ActivePromotion } from "@/lib/pricing-math";
+import { useActivePromotion } from "@/lib/use-active-promotion";
 import { ProductCardSkeleton } from "@/components/skeleton";
 import ProductCard from "@/components/product-card";
 import BenefitsSection from "@/components/benefits-section";
@@ -48,6 +47,8 @@ const whyFeatures = [
 ];
 
 // Hero banner videos — hero 2 shows first, hero 1 second.
+// The second clip is only attached once the user shows intent, so the initial
+// page load downloads one video instead of two.
 const HERO_BANNERS = [
   { src: "/hero-2.mp4", label: "The Bake" },
   { src: "/hero-1.mp4", label: "Our Story" },
@@ -66,8 +67,9 @@ export default function StoreHomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [promotion, setPromotion] = useState<ActivePromotion | null>(null);
+  const promotion = useActivePromotion();
   const [activeBanner, setActiveBanner] = useState(0);
+  const [bannerMounted, setBannerMounted] = useState<boolean[]>([true, false]);
   const bannerRefs = useRef<(HTMLVideoElement | null)[]>([null, null]);
 
   useEffect(() => {
@@ -76,6 +78,17 @@ export default function StoreHomePage() {
     }, 8000);
     return () => clearInterval(interval);
   }, []);
+
+  // Attach the next clip the first time the carousel rotates to it, so the
+  // landing page never downloads both videos during the first paint.
+  useEffect(() => {
+    setBannerMounted((prev) => {
+      if (prev[activeBanner]) return prev;
+      const next = [...prev];
+      next[activeBanner] = true;
+      return next;
+    });
+  }, [activeBanner]);
 
   useEffect(() => {
     const current = bannerRefs.current[activeBanner];
@@ -103,18 +116,6 @@ export default function StoreHomePage() {
     };
   }, [attempt]);
 
-  useEffect(() => {
-    let cancelled = false;
-    getActivePromotion()
-      .then((promo) => {
-        if (!cancelled) setPromotion(promo);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   const cookieProducts = products.filter(
     (p) => p.category?.name.toLowerCase() === "cookies"
   );
@@ -126,26 +127,29 @@ export default function StoreHomePage() {
     <>
       {/* ─── BANNER CAROUSEL ─── */}
       <section className="crispo-banner" aria-label="Featured banner">
-        {HERO_BANNERS.map((banner, i) => (
-          <video
-            key={banner.src}
-            ref={(el) => {
-              bannerRefs.current[i] = el;
-            }}
-            className={cn(
-              "crispo-banner__media transition-opacity duration-[900ms]",
-              activeBanner === i ? "opacity-100" : "opacity-0"
-            )}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload={i === 0 ? "auto" : "metadata"}
-            aria-hidden="true"
-          >
-            <source src={banner.src} type="video/mp4" />
-          </video>
-        ))}
+        {HERO_BANNERS.map((banner, i) => {
+          if (i > 0 && !bannerMounted[i]) return null;
+          return (
+            <video
+              key={banner.src}
+              ref={(el) => {
+                bannerRefs.current[i] = el;
+              }}
+              className={cn(
+                "crispo-banner__media transition-opacity duration-[900ms]",
+                activeBanner === i ? "opacity-100" : "opacity-0"
+              )}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload={i === 0 ? "auto" : "metadata"}
+              aria-hidden="true"
+            >
+              <source src={banner.src} type="video/mp4" />
+            </video>
+          );
+        })}
         <div
           className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-cocoa/40"
           aria-hidden="true"
@@ -157,7 +161,15 @@ export default function StoreHomePage() {
               role="tab"
               aria-selected={activeBanner === i}
               aria-label={`Show ${banner.label} banner`}
-              onClick={() => setActiveBanner(i)}
+              onClick={() => {
+                setBannerMounted((prev) => {
+                  if (prev[i]) return prev;
+                  const next = [...prev];
+                  next[i] = true;
+                  return next;
+                });
+                setActiveBanner(i);
+              }}
               className={cn(
                 "crispo-banner__dot",
                 activeBanner === i && "is-active"
@@ -185,7 +197,7 @@ export default function StoreHomePage() {
             {promotion && (
               <span className="mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gold/15 text-gold-soft text-[10px] font-bold tracking-[0.2em] uppercase">
                 <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" aria-hidden="true" />
-                Launch Offer — {promotion.discountValue}% OFF
+                {promotion.name} — {promotion.discountValue}% OFF
               </span>
             )}
 
@@ -344,8 +356,13 @@ export default function StoreHomePage() {
                 <span className="h-px flex-1 bg-gold/25" aria-hidden="true" />
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
-                {cookieProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                {cookieProducts.map((product, i) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    promotion={promotion}
+                    priority={i < 4}
+                  />
                 ))}
               </div>
             </>
@@ -362,7 +379,7 @@ export default function StoreHomePage() {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
                 {brownieProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard key={product.id} product={product} promotion={promotion} />
                 ))}
               </div>
             </>

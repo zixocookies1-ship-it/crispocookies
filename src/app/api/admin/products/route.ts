@@ -5,7 +5,15 @@ import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import Product from "@/models/Product";
 import "@/models/Category";
-import { slugify } from "@/lib/helpers";
+import { slugify, escapeRegExp } from "@/lib/helpers";
+import { normalizeProductInput } from "@/lib/product-input";
+
+function toTrimmedSlug(value: unknown): string {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .slice(0, 200);
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,15 +35,22 @@ export async function GET(request: NextRequest) {
     const filter: Record<string, unknown> = {};
 
     if (search) {
-      filter.name = { $regex: search, $options: "i" };
+      filter.name = { $regex: escapeRegExp(search.slice(0, 64)), $options: "i" };
     }
 
     if (category) {
       filter.category = category;
     }
 
-    if (isActive !== null && isActive !== undefined && isActive !== "") {
-      filter.isActive = isActive === "true";
+    // The admin UI sends "status"; older builds sent "isActive". Accept both
+    // so the Active/Draft filter is never silently ignored.
+    const statusFilter = searchParams.get("status");
+    const activeFilter =
+      statusFilter !== null && statusFilter !== undefined && statusFilter !== ""
+        ? statusFilter
+        : isActive;
+    if (activeFilter !== null && activeFilter !== undefined && activeFilter !== "") {
+      filter.isActive = activeFilter === "true";
     }
 
     const [products, total] = await Promise.all([
@@ -72,7 +87,7 @@ export async function POST(request: NextRequest) {
 
     await connectDB();
 
-    const body = await request.json();
+    const body = (await request.json()) as Record<string, unknown>;
     const { name } = body;
 
     if (!name) {
@@ -82,14 +97,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    body.slug = slugify(name);
-
-    const existing = await Product.findOne({ slug: body.slug });
-    if (existing) {
-      body.slug = `${body.slug}-${Date.now()}`;
+    // Whitelist + validate instead of forwarding the raw body: this is what
+    // keeps `variants[].mrp` from being stripped by Mongoose strict mode and
+    // maps the form's `description` onto the `fullDescription` field.
+    const doc = normalizeProductInput(body, { mode: "create" });
+    if (!doc) {
+      return NextResponse.json(
+        { error: "Product name and at least one variant are required" },
+        { status: 400 }
+      );
     }
 
-    const product = await Product.create(body);
+    if (typeof body.slug === "string" && body.slug.trim()) {
+      doc.slug = toTrimmedSlug(body.slug);
+    } else {
+      doc.slug = slugify(String(name));
+    }
+
+    const existing = await Product.findOne({ slug: doc.slug as string });
+    if (existing) {
+      doc.slug = `${doc.slug}-${Date.now()}`;
+    }
+
+    const product = await Product.create(doc);
 
     return NextResponse.json(product, { status: 201 });
   } catch (error) {

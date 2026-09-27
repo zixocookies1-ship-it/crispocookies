@@ -68,7 +68,6 @@ export async function POST(request: NextRequest) {
 
   let razorpayOrderId = "";
   let razorpayPaymentId = "";
-  let amountPaise: number | undefined;
 
   const payment = body?.payload?.payment?.entity;
   const order = body?.payload?.order?.entity;
@@ -76,13 +75,9 @@ export async function POST(request: NextRequest) {
   if (payment && typeof payment === "object") {
     razorpayOrderId = String(payment.order_id ?? "");
     razorpayPaymentId = String(payment.id ?? "");
-    if (typeof payment.amount === "number") amountPaise = payment.amount;
   }
   if (order && typeof order === "object") {
     razorpayOrderId = razorpayOrderId || String(order.id ?? "");
-    if (amountPaise === undefined && typeof order.amount_paid === "number") {
-      amountPaise = order.amount_paid;
-    }
   }
 
   if (!razorpayOrderId) {
@@ -92,24 +87,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true });
   }
 
+  console.log("[razorpay-webhook] event received", {
+    event,
+    razorpayOrderId,
+    razorpayPaymentId,
+  });
+
   await connectDB();
 
-  // order.paid carries no payment id — the payment is authoritative, so fetch
-  // it server-side rather than trusting anything from the webhook body.
+  // order.paid carries no payment id. Resolve it from the gateway rather than
+  // trusting the webhook body, and only accept a CAPTURED payment — an
+  // authorised-but-uncaptured payment is not money the customer actually paid
+  // and must never mark an order as paid.
   if (!razorpayPaymentId) {
     try {
       const razorpay = getRazorpay();
       const payments = await razorpay.orders.fetchPayments(razorpayOrderId);
       const captured = Array.isArray(payments.items)
-        ? payments.items.find(
-            (p) => p.status === "captured" || p.status === "authorized"
-          )
+        ? payments.items.find((p) => p.status === "captured")
         : undefined;
       if (captured) {
         razorpayPaymentId = String(captured.id ?? "");
-        if (amountPaise === undefined && typeof captured.amount === "number") {
-          amountPaise = captured.amount;
-        }
       }
     } catch (error) {
       console.error(
@@ -120,16 +118,17 @@ export async function POST(request: NextRequest) {
   }
 
   if (!razorpayPaymentId) {
-    console.error("[razorpay-webhook] no payment id resolvable", {
+    // Transient: the payment entity may not be visible yet. Ask Razorpay to
+    // retry instead of acknowledging a captured payment we could not apply.
+    console.error("[razorpay-webhook] no captured payment resolvable", {
       razorpayOrderId,
     });
-    return NextResponse.json({ received: true });
+    return NextResponse.json({ error: "Retry later" }, { status: 500 });
   }
 
   const result = await finalizeOrderPayment({
     razorpayOrderId,
     razorpayPaymentId,
-    expectedAmountPaise: amountPaise,
     source: "webhook",
   });
 
@@ -138,21 +137,33 @@ export async function POST(request: NextRequest) {
       razorpayOrderId,
       razorpayPaymentId,
       orderId: result.orderId,
+      alreadyFinalized: Boolean(result.alreadyFinalized),
       event,
     });
     return NextResponse.json({ received: true, orderId: result.orderId });
   }
 
-  if (result.code === "GATEWAY_UNREACHABLE") {
-    // Transient — let Razorpay retry.
+  // Transient conditions must not be acknowledged, or Razorpay stops retrying
+  // and captured money never reaches the admin panel.
+  if (
+    result.code === "GATEWAY_UNREACHABLE" ||
+    result.code === "FINALIZE_RACE" ||
+    result.code === "ORDER_NOT_FOUND"
+  ) {
+    console.error("[razorpay-webhook] retryable failure", {
+      razorpayOrderId,
+      razorpayPaymentId,
+      code: result.code,
+    });
     return NextResponse.json({ error: "Retry later" }, { status: 500 });
   }
 
-  // Permanently unfinalizable here: alert the admin so a manual reconcile can
-  // happen (Razorpay already charged the customer, no local record exists).
+  // Permanently unfinalizable here (bad signature, amount mismatch, payment not
+  // captured). Alert the admin so a manual reconcile can happen — the customer
+  // was charged at Razorpay and no local order reflects it.
   try {
     await Notification.create({
-      message: `Paid Razorpay order ${razorpayOrderId} has no local order (${result.code}) — reconcile manually`,
+      message: `Paid Razorpay order ${razorpayOrderId} could not be applied (${result.code}) — reconcile manually`,
       type: "payment",
     });
   } catch (error) {

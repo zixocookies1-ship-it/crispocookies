@@ -9,6 +9,9 @@ interface TrackData {
   found: boolean;
   orderId?: string;
   status?: string;
+  paymentStatus?: string;
+  /** false while the payment is unconfirmed — nothing has shipped yet. */
+  trackingAvailable?: boolean;
   shipmentStatus?: string;
   lastScan?: string | null;
   lastScanTime?: string | null;
@@ -112,7 +115,16 @@ function TrackContent() {
             </div>
           )}
 
-          {data?.found && (
+          {data?.found && data.trackingAvailable === false && (
+            <div className="mt-6 rounded-2xl bg-cacao border border-gold/12 p-5 text-sm text-muted">
+              This order is not confirmed yet, so there is nothing to track.
+              {data.paymentStatus === "failed"
+                ? " The payment was not completed."
+                : " The payment is still being confirmed."}
+            </div>
+          )}
+
+          {data?.found && data.trackingAvailable !== false && (
             <div className="mt-6 space-y-5">
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div>

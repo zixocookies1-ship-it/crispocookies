@@ -4,7 +4,7 @@ import { getRazorpay } from "@/lib/razorpay";
 import { connectDB } from "@/lib/mongodb";
 import { calculateOrderTotals } from "@/lib/order-totals";
 import { CouponError } from "@/lib/coupons";
-import { createPendingOrder } from "@/lib/razorpay-payment";
+import { createPendingOrder, attachRazorpayOrderId, failPendingOrder, cancelOrphanGatewayOrder } from "@/lib/razorpay-payment";
 
 interface CartItem {
   productId: string;
@@ -61,6 +61,8 @@ export async function POST(request: NextRequest) {
     deliveryPincode?: string;
     customerName?: string;
     address?: CheckoutAddress;
+    /** Idempotency key so a double click cannot open two gateway orders. */
+    checkoutAttemptId?: string;
   };
 
   try {
@@ -72,6 +74,7 @@ export async function POST(request: NextRequest) {
       deliveryPincode?: string;
       customerName?: string;
       address?: CheckoutAddress;
+      checkoutAttemptId?: string;
     };
   } catch {
     return NextResponse.json(
@@ -159,7 +162,9 @@ export async function POST(request: NextRequest) {
       couponCode: payload?.couponCode || null,
       customerEmail: email,
       customerPhone: phone,
-      deliveryPincode: payload?.deliveryPincode || null,
+      // Serviceability must be checked against the pincode the parcel is
+      // actually shipped to, not a separately supplied value.
+      deliveryPincode: payload.address.pincode,
     });
   } catch (error) {
     if (error instanceof CouponError) {
@@ -214,50 +219,13 @@ export async function POST(request: NextRequest) {
     currency: "INR",
   });
 
-  let order;
-  try {
-    const razorpay = getRazorpay();
-    order = await razorpay.orders.create({
-      amount: amountInPaise,
-      currency: "INR",
-      receipt: `receipt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-    });
-  } catch (error) {
-    console.error("[create-order] Razorpay order creation failed", {
-      payload: sanitizeRazorpayError(error),
-      keyIdSet,
-      secretSet,
-      keyIdPrefix,
-    });
-    const misconfigured =
-      error instanceof Error &&
-      error.message.includes("environment variables");
-    return NextResponse.json(
-      {
-        success: false,
-        error: misconfigured
-          ? "Razorpay is not configured on the server. Contact support."
-          : "Payment could not be initialized. Please try again.",
-      },
-      { status: 500 }
-    );
-  }
-
-  console.log("[create-order] Razorpay order created", {
-    orderId: order.id,
-    amount: order.amount,
-    currency: order.currency,
-  });
-
-  // ------------------------------------------------------------------
-  // Durable snapshot: persist the PENDING order BEFORE the customer can
-  // reach the payment modal. If the browser callback is ever lost, the
-  // Razorpay webhook recovers by finalizing this exact record.
-  // ------------------------------------------------------------------
   let pendingOrder;
   try {
     pendingOrder = await createPendingOrder({
-      razorpayOrderId: String(order.id),
+      checkoutAttemptId:
+        typeof payload?.checkoutAttemptId === "string"
+          ? payload.checkoutAttemptId.slice(0, 64)
+          : undefined,
       customerName,
       email,
       phone,
@@ -274,6 +242,10 @@ export async function POST(request: NextRequest) {
         image?: string;
         variant: string;
         qty: number;
+        mrp?: number;
+        unitPrice?: number;
+        basePrice?: number;
+        offerDiscount?: number;
         price: number;
       }>,
       subtotal: totals.finalSubtotal,
@@ -298,8 +270,126 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("[create-order] failed to persist pending order", {
       message: error instanceof Error ? error.message : String(error),
-      razorpayOrderId: order.id,
     });
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Payment could not be initialized. Please try again.",
+      },
+      { status: 500 }
+    );
+  }
+
+  // A retried request for the same checkout attempt reuses the same local
+  // order. If a gateway order is already attached, hand that one straight back
+  // instead of opening a second one.
+  if (pendingOrder.razorpayOrderId) {
+    console.log("[create-order] reusing existing gateway order", {
+      orderId: pendingOrder.orderId,
+      razorpayOrderId: pendingOrder.razorpayOrderId,
+    });
+    let existingGatewayAmount = 0;
+    let existingCurrency = "INR";
+    try {
+      const razorpay = getRazorpay();
+      const existingOrder = await razorpay.orders.fetch(
+        pendingOrder.razorpayOrderId
+      );
+      existingGatewayAmount = Number(existingOrder.amount) || 0;
+      existingCurrency = existingOrder.currency;
+    } catch {
+      existingGatewayAmount = amountInPaise;
+    }
+
+    if (existingGatewayAmount === amountInPaise) {
+      return NextResponse.json({
+        success: true,
+        orderId: pendingOrder.razorpayOrderId,
+        amount: existingGatewayAmount,
+        currency: existingCurrency,
+        keyId: process.env.RAZORPAY_KEY_ID,
+        internalOrderId: pendingOrder.orderId,
+        subtotal,
+        subtotalBeforeDiscount: totals.originalSubtotal,
+        discount: totals.offerDiscount,
+        couponDiscount: totals.couponDiscount,
+        eligibleSubtotal: totals.eligibleSubtotal,
+        coupon: totals.coupon,
+        deliveryCharge,
+        deliveryProvider: totals.deliveryProvider,
+        shippingWeightGrams: totals.shippingWeightGrams,
+        total,
+        items: totals.items,
+      });
+    }
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          "A payment for this checkout is already in progress. Please complete it or refresh the page.",
+      },
+      { status: 409 }
+    );
+  }
+
+  // ------------------------------------------------------------------
+  // The durable snapshot already exists, so a gateway failure can no longer
+  // move money without a local order behind it.
+  // ------------------------------------------------------------------
+  let order;
+  try {
+    const razorpay = getRazorpay();
+    order = await razorpay.orders.create({
+      amount: amountInPaise,
+      currency: "INR",
+      receipt: pendingOrder.orderId.slice(0, 40),
+    });
+  } catch (error) {
+    console.error("[create-order] Razorpay order creation failed", {
+      payload: sanitizeRazorpayError(error),
+      keyIdSet,
+      secretSet,
+      keyIdPrefix,
+      orderId: pendingOrder.orderId,
+    });
+    await failPendingOrder(
+      String(pendingOrder._id),
+      "razorpay order creation failed"
+    );
+    const misconfigured =
+      error instanceof Error &&
+      error.message.includes("environment variables");
+    return NextResponse.json(
+      {
+        success: false,
+        error: misconfigured
+          ? "Razorpay is not configured on the server. Contact support."
+          : "Payment could not be initialized. Please try again.",
+      },
+      { status: 500 }
+    );
+  }
+
+  console.log("[create-order] Razorpay order created", {
+    orderId: order.id,
+    amount: order.amount,
+    currency: order.currency,
+    internalOrderId: pendingOrder.orderId,
+  });
+
+  const attached = await attachRazorpayOrderId(
+    String(pendingOrder._id),
+    String(order.id)
+  );
+  if (!attached) {
+    // The gateway order exists but we could not bind it to the local order, so
+    // close it and fail the local order. Leaving it open would allow a payment
+    // with no local order behind it.
+    await cancelOrphanGatewayOrder(String(order.id));
+    await failPendingOrder(
+      String(pendingOrder._id),
+      "could not attach razorpay order id"
+    );
     return NextResponse.json(
       {
         success: false,

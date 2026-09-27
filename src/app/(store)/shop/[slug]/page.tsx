@@ -11,11 +11,10 @@ import {
   fetchProducts,
   StoreProduct,
   formatINR,
-  discountOf,
 } from "@/lib/storefront";
 import { useCartStore } from "@/store/useCartStore";
-import { getActivePromotion, unitPriceWithDiscount } from "@/lib/promotion";
-import { ActivePromotion } from "@/lib/pricing-math";
+import { displayPricing } from "@/lib/pricing-math";
+import { useActivePromotion } from "@/lib/use-active-promotion";
 import { toast } from "sonner";
 import ProductCard from "@/components/product-card";
 import BenefitsSection from "@/components/benefits-section";
@@ -46,19 +45,7 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<"description" | "ingredients">("description");
   const [imgFailed, setImgFailed] = useState(false);
-  const [promotion, setPromotion] = useState<ActivePromotion | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    getActivePromotion()
-      .then((promo) => {
-        if (!cancelled) setPromotion(promo);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const promotion = useActivePromotion();
 
   useEffect(() => {
     let cancelled = false;
@@ -73,15 +60,18 @@ export default function ProductDetailPage() {
 
     (async () => {
       try {
-        const data = await fetchProductBySlug(slug);
+        // Both requests are independent, so run them together instead of
+        // waiting for the product before starting the catalog request. The
+        // catalog fetch is also shared/cached with the rest of the storefront.
+        const [data, all] = await Promise.all([
+          fetchProductBySlug(slug),
+          fetchProducts().catch(() => [] as StoreProduct[]),
+        ]);
         if (cancelled) return;
         setProduct(data);
-        const all = await fetchProducts();
-        if (!cancelled) {
-          setRelated(
-            all.filter((p) => p.id !== data.id && p.category?.slug === data.category?.slug).slice(0, 4)
-          );
-        }
+        setRelated(
+          all.filter((p) => p.id !== data.id && p.category?.slug === data.category?.slug).slice(0, 4)
+        );
       } catch (e) {
         if (cancelled) return;
         if ((e as { notFound?: boolean }).notFound) setNotFound(true);
@@ -145,15 +135,18 @@ export default function ProductDetailPage() {
 
   const images = product.images;
   const variant = product.variants[selectedVariant] || product.variants[0];
-  const discount = variant ? discountOf(variant) : 0;
   const stock = variant?.stock ?? 0;
   const outOfStock = stock <= 0;
   const lowStock = stock > 0 && stock <= 10;
 
-  const promoPricing = variant
-    ? unitPriceWithDiscount(variant.price, promotion, variant.mrp)
-    : null;
-  const promoActive = !!promotion && !!promoPricing && promoPricing.discount > 0;
+  // One canonical calculation, identical to the product card, the cart and the
+  // server-side order total.
+  const pricing = displayPricing(
+    variant?.price ?? 0,
+    variant?.mrp,
+    promotion
+  );
+  const promoActive = !!promotion && pricing.discount > 0;
 
   const highlights = product.tags
     .map((t) => highlightLabel[t])
@@ -253,14 +246,10 @@ export default function ProductDetailPage() {
                     {product.badge}
                   </span>
                 )}
-                {promoActive ? (
-                  <span className="bg-[#E11D48] text-white text-[11px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full">
-                    {promotion!.discountValue}% OFF
+                {pricing.hasDiscount && (
+                  <span className="discount-chip px-2.5 py-1">
+                    {pricing.discountPct}% OFF
                   </span>
-                ) : (
-                  discount > 0 && (
-                    <span className="discount-chip px-2.5 py-1">{discount}% OFF</span>
-                  )
                 )}
               </div>
 
@@ -322,38 +311,25 @@ export default function ProductDetailPage() {
 
             <div className="flex items-center gap-3 mb-2 flex-wrap">
               <span className="font-heading text-4xl font-bold text-gold-soft">
-                {promoActive
-                  ? formatINR(promoPricing!.final)
-                  : formatINR(variant?.price ?? 0)}
+                {formatINR(pricing.offerPrice)}
               </span>
-              {promoActive ? (
+              {pricing.hasDiscount && (
                 <>
                   <span className="text-faded text-lg line-through">
-                    {formatINR(promoPricing!.base)}
+                    MRP {formatINR(pricing.mrp)}
                   </span>
-                  <span className="bg-[#E11D48] text-white text-xs font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full">
-                    {promotion!.discountValue}% OFF
+                  <span className="discount-chip px-2.5 py-1">
+                    {pricing.discountPct}% OFF
                   </span>
                 </>
-              ) : (
-                variant?.mrp &&
-                variant.mrp > variant.price && (
-                  <>
-                    <span className="text-faded text-lg line-through">
-                      {formatINR(variant.mrp)}
-                    </span>
-                    {discount > 0 && (
-                      <span className="discount-chip px-2.5 py-1">{discount}% OFF</span>
-                    )}
-                  </>
-                )
               )}
             </div>
 
             {promoActive && (
               <div className="flex items-center gap-2 mb-6 bg-red/10 border border-red/25 rounded-xl px-4 py-2.5 text-sm text-red font-semibold w-fit">
                 <span className="w-1.5 h-1.5 rounded-full bg-red animate-pulse" aria-hidden="true" />
-                Launch Offer — {promotion!.discountValue}% OFF applied at checkout
+                {promotion?.name} — {promotion.discountValue}% OFF applied at
+                checkout
               </div>
             )}
 
@@ -515,7 +491,7 @@ export default function ProductDetailPage() {
           <h2 className="font-heading text-2xl font-bold text-cream mb-8">You May Also Like</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5">
             {related.map((p) => (
-              <ProductCard key={p.id} product={p} />
+              <ProductCard key={p.id} product={p} promotion={promotion} />
             ))}
           </div>
         </section>

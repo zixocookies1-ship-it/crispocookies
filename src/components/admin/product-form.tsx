@@ -6,7 +6,10 @@ import { slugify } from "@/lib/helpers";
 
 interface Variant {
   weight: string;
+  /** Selling price — the amount charged before any offer or coupon. */
   price: string;
+  /** MRP / reference price. Optional; must be >= the selling price. */
+  mrp: string;
   stock: string;
   shippingWeightGrams: string;
 }
@@ -24,9 +27,16 @@ interface ProductData {
   tags: string[];
   isActive: boolean;
   shortDescription: string;
-  description: string;
+  fullDescription?: string;
+  description?: string;
   images: string[];
-  variants: { weight: string; price: number; stock: number; shippingWeightGrams?: number }[];
+  variants: {
+    weight: string;
+    price: number;
+    mrp?: number;
+    stock: number;
+    shippingWeightGrams?: number;
+  }[];
   ingredients: string;
 }
 
@@ -50,15 +60,18 @@ export default function ProductForm({ product }: Props) {
   const [tags, setTags] = useState<string[]>(product?.tags || []);
   const [isActive, setIsActive] = useState(product?.isActive ?? true);
   const [shortDescription, setShortDescription] = useState(product?.shortDescription || "");
-  const [description, setDescription] = useState(product?.description || "");
+  const [description, setDescription] = useState(
+    product?.description || product?.fullDescription || ""
+  );
   const [images, setImages] = useState<string[]>(product?.images || []);
   const [variants, setVariants] = useState<Variant[]>(
     product?.variants?.map((v) => ({
       weight: v.weight,
       price: String(v.price),
+      mrp: v.mrp ? String(v.mrp) : "",
       stock: String(v.stock),
       shippingWeightGrams: String(v.shippingWeightGrams ?? ""),
-    })) || [{ weight: "", price: "", stock: "", shippingWeightGrams: "" }]
+    })) || [{ weight: "", price: "", mrp: "", stock: "", shippingWeightGrams: "" }]
   );
   const [ingredients, setIngredients] = useState(product?.ingredients || "");
   const [uploading, setUploading] = useState(false);
@@ -86,7 +99,10 @@ export default function ProductForm({ product }: Props) {
   };
 
   const addVariant = () => {
-    setVariants([...variants, { weight: "", price: "", stock: "", shippingWeightGrams: "" }]);
+    setVariants([
+      ...variants,
+      { weight: "", price: "", mrp: "", stock: "", shippingWeightGrams: "" },
+    ]);
   };
 
   const removeVariant = (index: number) => {
@@ -143,6 +159,15 @@ export default function ProductForm({ product }: Props) {
         "Shipping weight (g) is required for every variant — it is used to calculate delivery charges";
     }
 
+    // The MRP is the reference a "% off" offer is calculated from, so it must
+    // never be lower than the selling price.
+    const badMrp = variants.find(
+      (v) => v.mrp && Number(v.mrp) < Number(v.price)
+    );
+    if (badMrp) {
+      newErrors.variants = `MRP must be greater than or equal to the selling price (${badMrp.weight})`;
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -165,6 +190,7 @@ export default function ProductForm({ product }: Props) {
         .map((v) => ({
           weight: v.weight,
           price: Number(v.price),
+          mrp: v.mrp ? Number(v.mrp) : undefined,
           stock: Number(v.stock) || 0,
           shippingWeightGrams: Number(v.shippingWeightGrams) || 0,
         })),
@@ -374,6 +400,10 @@ export default function ProductForm({ product }: Props) {
       {/* Section 4: Variants */}
       <div className="card rounded-2xl p-6">
         <h3 className="font-heading font-bold text-black text-lg mb-4">Variants *</h3>
+        <p className="text-xs text-[#666666] mb-3">
+          Selling price is what the customer is charged. MRP is the reference the
+          % offer is calculated from and must be at least the selling price.
+        </p>
         {errors.variants && <p className="text-xs text-[#DC2626] mb-3">{errors.variants}</p>}
         <div className="space-y-3">
           {variants.map((variant, i) => (
@@ -390,8 +420,17 @@ export default function ProductForm({ product }: Props) {
                 value={variant.price}
                 onChange={(e) => updateVariant(i, "price", e.target.value)}
                 className="input-field flex-1 min-w-[100px]"
-                placeholder="Price (₹)"
+                placeholder="Selling price (₹)"
                 min="0"
+              />
+              <input
+                type="number"
+                value={variant.mrp}
+                onChange={(e) => updateVariant(i, "mrp", e.target.value)}
+                className="input-field flex-1 min-w-[100px]"
+                placeholder="MRP (₹)"
+                min="0"
+                title="Reference price the '% off' offer is calculated from. Leave blank if the selling price is the highest price."
               />
               <input
                 type="number"

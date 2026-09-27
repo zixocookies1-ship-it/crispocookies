@@ -56,6 +56,14 @@ export interface StoredItem {
   image: string;
   variant: string;
   qty: number;
+  /** MRP at the time of purchase. Undefined for legacy rows. */
+  mrp?: number;
+  /** Selling price before the launch offer (Σ base × qty → unit). */
+  unitPrice?: number;
+  /** Reference/base the offer percentage was applied to. */
+  basePrice?: number;
+  /** Launch-offer discount for ONE unit, as charged at purchase time. */
+  offerDiscount?: number;
   /** Unit price the customer actually paid (after launch offer). */
   price: number;
 }
@@ -112,6 +120,48 @@ export async function calculateOrderTotals(opts: {
     throw new CouponError("Too many items in order", 400);
   }
 
+  // Validate and merge duplicate product+variant lines BEFORE hitting the
+  // database. Without this, repeated lines were each stock-checked on their own,
+  // so two lines of qty 3 against stock 5 both passed and the order oversold.
+  const merged = new Map<string, { productId: string; variant: string; qty: number }>();
+  for (const item of opts.rawItems) {
+    if (
+      typeof item?.productId !== "string" ||
+      !item.productId ||
+      typeof item?.variant !== "string" ||
+      !item.variant ||
+      !Number.isInteger(item.qty) ||
+      item.qty <= 0
+    ) {
+      throw new CouponError("Invalid item data", 400);
+    }
+
+    const key = `${item.productId}::${item.variant}`;
+    const current = merged.get(key);
+    const qty = (current?.qty ?? 0) + item.qty;
+    if (qty > MAX_QTY_PER_ITEM) {
+      throw new CouponError(
+        `Maximum ${MAX_QTY_PER_ITEM} units per product per order`,
+        400
+      );
+    }
+    merged.set(key, { productId: item.productId, variant: item.variant, qty });
+  }
+
+  const mergedItems = Array.from(merged.values());
+
+  // One round trip for the whole cart instead of one findById per line.
+  // Inactive/unpublished products are excluded so a stale cart can never
+  // order something that has been removed from the storefront.
+  const productDocs = await Product.find({
+    _id: { $in: mergedItems.map((i) => i.productId) },
+    isActive: true,
+  })
+    .select("name images category variants")
+    .lean();
+
+  const productById = new Map(productDocs.map((p) => [String(p._id), p]));
+
   const resolved: ResolvedLine[] = [];
   const eligibilityLines: Array<{
     productId: string;
@@ -120,20 +170,8 @@ export async function calculateOrderTotals(opts: {
     qty: number;
   }> = [];
 
-  for (const item of opts.rawItems) {
-    if (
-      typeof item?.productId !== "string" ||
-      !item.productId ||
-      typeof item?.variant !== "string" ||
-      !item.variant ||
-      !Number.isInteger(item.qty) ||
-      item.qty <= 0 ||
-      item.qty > MAX_QTY_PER_ITEM
-    ) {
-      throw new CouponError("Invalid item data", 400);
-    }
-
-    const product = await Product.findById(item.productId).lean();
+  for (const item of mergedItems) {
+    const product = productById.get(item.productId);
     if (!product) throw new CouponError("Product not found", 400);
 
     const variant = product.variants?.find(
@@ -248,12 +286,20 @@ export async function calculateOrderTotals(opts: {
     charge: deliveryCharge,
   });
 
+  // Immutable per-item price snapshot. Everything the order summary, the
+  // customer confirmation and the admin UI display is derived from these
+  // values, so a later catalog price/promotion change can never rewrite what
+  // a historical order says it cost.
   const items = resolved.map((line, i) => ({
     productId: line.productId,
     name: line.name,
     image: line.image,
     variant: line.variant,
     qty: line.qty,
+    mrp: line.mrp,
+    unitPrice: line.unitPrice,
+    basePrice: pricedLines[i].base,
+    offerDiscount: pricedLines[i].unitDiscount,
     price: pricedLines[i].unitFinal,
   }));
 

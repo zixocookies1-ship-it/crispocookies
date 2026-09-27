@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import Order from "@/models/Order";
 import { getRazorpay } from "@/lib/razorpay";
-import { finalizeOrderPayment } from "@/lib/razorpay-payment";
+import { finalizeOrderPayment, resumePostPaymentEffects } from "@/lib/razorpay-payment";
 
 interface MissingEntry {
   razorpayOrderId: string;
@@ -35,7 +35,7 @@ export async function GET() {
       const res = await razorpay.payments.all({ count: 100 });
       payments = Array.isArray(res.items)
         ? res.items
-            .filter((p) => p.status === "captured" || p.status === "authorized")
+            .filter((p) => p.status === "captured")
             .map((p) => ({
               id: String(p.id ?? ""),
               order_id: String(p.order_id ?? ""),
@@ -53,23 +53,56 @@ export async function GET() {
       );
     }
 
-    const missing: MissingEntry[] = [];
-    for (const p of payments) {
-      if (!p.order_id) continue;
-      const exists = await Order.findOne({ razorpayOrderId: p.order_id })
-        .lean()
-        .select({ _id: 1 });
-      if (!exists) {
-        missing.push({
-          razorpayOrderId: p.order_id,
-          razorpayPaymentId: p.id,
-          amountPaise: p.amount,
-          status: p.status,
-        });
-      }
-    }
+    // One query for every gateway order id instead of one findOne per payment.
+    const gatewayOrderIds = Array.from(
+      new Set(
+        payments.map((p) => p.order_id).filter((id) => Boolean(id))
+      )
+    );
+    const localOrderIds = gatewayOrderIds.length
+      ? await Order.find({ razorpayOrderId: { $in: gatewayOrderIds } })
+          .select({ razorpayOrderId: 1 })
+          .lean()
+      : [];
+    const known = new Set(
+      localOrderIds.map((o) => String(o.razorpayOrderId))
+    );
 
-    return NextResponse.json({ missing, total: missing.length });
+    const missing: MissingEntry[] = payments
+      .filter((p) => p.order_id && !known.has(p.order_id))
+      .map((p) => ({
+        razorpayOrderId: p.order_id,
+        razorpayPaymentId: p.id,
+        amountPaise: p.amount,
+        status: p.status,
+      }));
+
+    // Paid orders whose local bookkeeping never finished (function killed
+    // mid-run, transient database error). These are repairable without any
+    // customer action, so they are surfaced next to the unlinkable payments.
+    const incomplete = await Order.find({
+      paymentStatus: "paid",
+      $or: [
+        { "fulfillment.notification": { $in: ["pending", "failed"] } },
+        { "fulfillment.customer": { $in: ["pending", "failed"] } },
+        { "fulfillment.stock": { $in: ["pending", "failed", "attention"] } },
+        { "fulfillment.coupon": { $in: ["pending", "failed"] } },
+      ],
+    })
+      .sort({ createdAt: -1 })
+      .limit(25)
+      .lean()
+      .select({ _id: 1, orderId: 1, fulfillment: 1 });
+
+    return NextResponse.json({
+      missing,
+      total: missing.length,
+      incompleteFulfillment: incomplete.map((o) => ({
+        orderObjectId: String(o._id),
+        orderId: o.orderId,
+        fulfillment: o.fulfillment,
+      })),
+    });
   } catch (error) {
     console.error("[reconcile] GET failed", error);
     return NextResponse.json(
@@ -89,7 +122,8 @@ export async function POST(request: NextRequest) {
     let body: {
       razorpayOrderId?: string;
       razorpayPaymentId?: string;
-      amountPaise?: number;
+      orderObjectId?: string;
+      action?: "finalize" | "resume";
     };
     try {
       body = (await request.json()) as typeof body;
@@ -98,6 +132,23 @@ export async function POST(request: NextRequest) {
         { error: "Invalid request body" },
         { status: 400 }
       );
+    }
+
+    await connectDB();
+
+    // Repairing an already-paid order only needs the local id: the payment
+    // itself was verified when it was first marked paid, so the local
+    // bookkeeping is simply re-run through the idempotent fulfillment ledger.
+    if (body?.action === "resume") {
+      const orderObjectId = String(body?.orderObjectId ?? "");
+      if (!/^[a-f\d]{24}$/i.test(orderObjectId)) {
+        return NextResponse.json(
+          { error: "Missing orderObjectId" },
+          { status: 400 }
+        );
+      }
+      const resumed = await resumePostPaymentEffects(orderObjectId);
+      return NextResponse.json({ success: resumed, action: "resume" });
     }
 
     const razorpayOrderId = body?.razorpayOrderId;
@@ -109,13 +160,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await connectDB();
-
+    // The amount is deliberately NOT taken from the request. finalizeOrderPayment
+    // compares the gateway payment against the immutable total stored on the
+    // local order, so a reconciliation action can never mark a mismatched
+    // payment as paid.
     const result = await finalizeOrderPayment({
-      razorpayOrderId,
-      razorpayPaymentId,
-      expectedAmountPaise: body?.amountPaise,
-      source: "webhook",
+      razorpayOrderId: String(razorpayOrderId),
+      razorpayPaymentId: String(razorpayPaymentId),
+      source: "reconcile",
     });
 
     return NextResponse.json(result);

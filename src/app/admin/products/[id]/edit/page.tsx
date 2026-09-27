@@ -12,9 +12,17 @@ interface ProductData {
   tags: string[];
   isActive: boolean;
   shortDescription: string;
-  description: string;
+  fullDescription: string;
+  /** Set locally from `fullDescription`; the form reads `description`. */
+  description?: string;
   images: string[];
-  variants: { weight: string; price: number; stock: number }[];
+  variants: {
+    weight: string;
+    price: number;
+    mrp?: number;
+    stock: number;
+    shippingWeightGrams?: number;
+  }[];
   ingredients: string;
 }
 
@@ -27,9 +35,12 @@ export default function EditProductPage() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`/api/admin/products/${params.id}`);
-        if (!res.ok) throw new Error();
-        setProduct(await res.json());
+      const res = await fetch(`/api/admin/products/${params.id}`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      // The stored field is `fullDescription`; the form has always used
+      // `description`, so map it here rather than showing an empty textarea.
+      setProduct({ ...data, description: data.fullDescription ?? "" });
       } catch {
         setError(true);
       } finally {

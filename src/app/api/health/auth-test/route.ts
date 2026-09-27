@@ -1,11 +1,22 @@
-import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
+export const dynamic = "force-dynamic";
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
+import { authorizeInternalRequest } from "@/lib/internal-route-auth";
 import Admin from "@/models/Admin";
 
-export const dynamic = "force-dynamic";
+/**
+ * Admin-credential connectivity probe.
+ *
+ * Reports only whether a usable admin record can be read. It never performs a
+ * password comparison and never returns hash material, because this route is a
+ * credential oracle the moment those are exposed.
+ */
+export async function GET(request: NextRequest) {
+  const auth = await authorizeInternalRequest(request);
+  if (!auth.ok) return auth.response;
 
-export async function GET() {
   const result: Record<string, unknown> = {};
 
   try {
@@ -13,44 +24,38 @@ export async function GET() {
     await connectDB();
     result.step = "connected";
 
-    const email = "crispocookies@gmail.com";
-    const password = "Crispo@2026";
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      result.step = "no-session";
+      result.status = "FAIL";
+      return NextResponse.json(result, { status: 401 });
+    }
 
     result.step = "querying";
-    const admin = await Admin.findOne({ email, isActive: true }).lean<{
-      password: string;
-      _id: { toString(): string };
-      email: string;
-      name: string;
-      role: string;
-    }>();
-    result.adminFound = !!admin;
+    const admin = await Admin.findOne({
+      email: String(session.user?.email ?? "").toLowerCase(),
+      isActive: true,
+    })
+      .lean<{ _id: { toString(): string }; name: string; role: string }>()
+      .select({ _id: 1, name: 1, role: 1 });
 
     if (!admin) {
       result.step = "no-admin";
       result.status = "FAIL";
-      return NextResponse.json(result, { status: 500 });
-    }
-
-    result.step = "comparing";
-    result.hashPrefix = admin.password.substring(0, 10);
-    result.hashLength = admin.password.length;
-    const pwMatch = await bcrypt.compare(password, admin.password);
-    result.passwordMatch = pwMatch;
-    result.step = "done";
-
-    if (!pwMatch) {
-      result.status = "FAIL";
-      return NextResponse.json(result, { status: 500 });
+      return NextResponse.json(result, { status: 404 });
     }
 
     result.status = "OK";
-    result.user = { id: admin._id.toString(), email: admin.email, name: admin.name, role: admin.role };
+    result.step = "done";
+    result.user = {
+      id: admin._id.toString(),
+      name: admin.name,
+      role: admin.role,
+    };
     return NextResponse.json(result);
   } catch (err: unknown) {
     result.status = "ERROR";
     result.error = err instanceof Error ? err.message : String(err);
-    result.stack = err instanceof Error ? err.stack : undefined;
     return NextResponse.json(result, { status: 500 });
   }
 }

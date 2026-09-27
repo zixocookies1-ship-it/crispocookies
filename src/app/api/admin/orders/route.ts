@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import Order from "@/models/Order";
+import { escapeRegExp } from "@/lib/helpers";
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,10 +28,11 @@ export async function GET(request: NextRequest) {
     const filter: Record<string, unknown> = {};
 
     if (search) {
+      const safe = escapeRegExp(search.slice(0, 64));
       filter.$or = [
-        { orderId: { $regex: search, $options: "i" } },
-        { customerName: { $regex: search, $options: "i" } },
-        { phone: { $regex: search, $options: "i" } },
+        { orderId: { $regex: safe, $options: "i" } },
+        { customerName: { $regex: safe, $options: "i" } },
+        { phone: { $regex: safe, $options: "i" } },
       ];
     }
 

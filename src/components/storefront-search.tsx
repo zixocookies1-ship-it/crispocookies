@@ -5,6 +5,7 @@ import { Search, X, PackageSearch, RefreshCw } from "lucide-react";
 import { fetchProducts, StoreProduct } from "@/lib/storefront";
 import { ProductCardSkeleton } from "@/components/skeleton";
 import ProductCard from "@/components/product-card";
+import { useActivePromotion } from "@/lib/use-active-promotion";
 
 interface StorefrontSearchProps {
   open: boolean;
@@ -19,6 +20,7 @@ export default function StorefrontSearch({ open, onClose }: StorefrontSearchProp
   const [searched, setSearched] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const promotion = useActivePromotion();
 
   useEffect(() => {
     if (open) {
@@ -163,7 +165,7 @@ export default function StorefrontSearch({ open, onClose }: StorefrontSearchProp
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                 {results.map((p) => (
-                  <ProductCard key={p.id} product={p} />
+                  <ProductCard key={p.id} product={p} promotion={promotion} />
                 ))}
               </div>
             </>

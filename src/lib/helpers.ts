@@ -11,8 +11,25 @@ export function slugify(text: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+/**
+ * Human-readable, collision-resistant and non-sequential order reference.
+ * The timestamp keeps it sortable/recognisable; the random block keeps public
+ * tracking references unguessable (Date.now() alone was walkable).
+ */
 export function generateOrderId(): string {
-  return `CR${Date.now()}`;
+  const time = Date.now().toString(36).toUpperCase();
+  const rand = Array.from({ length: 6 }, () =>
+    Math.floor(Math.random() * 36)
+  )
+    .map((n) => n.toString(36))
+    .join("")
+    .toUpperCase();
+  return `CR${time}${rand}`;
+}
+
+/** Escape a user-supplied string before interpolating it into a $regex. */
+export function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 export function truncate(text: string, length: number): string {

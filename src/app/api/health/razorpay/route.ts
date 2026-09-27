@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
+import { authorizeInternalRequest } from "@/lib/internal-route-auth";
 import Product from "@/models/Product";
 
 function describeError(err: unknown): string {
@@ -29,14 +30,17 @@ function describeError(err: unknown): string {
   return String(err).slice(0, 400);
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const auth = await authorizeInternalRequest(request);
+  if (!auth.ok) return auth.response;
+
   const result: Record<string, unknown> = {
     timestamp: new Date().toISOString(),
     razorpayKeyIdSet: !!process.env.RAZORPAY_KEY_ID,
     razorpayKeySecretSet: !!process.env.RAZORPAY_KEY_SECRET,
     nextPublicKeySet: !!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
     razorpayKeyIdPrefix: process.env.RAZORPAY_KEY_ID?.substring(0, 7) || "NOT SET",
-    nextPublicKeyPrefix:
+    nextPublicKeyIdPrefix:
       process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.substring(0, 7) || "NOT SET",
     mode: process.env.RAZORPAY_KEY_ID?.startsWith("rzp_live_")
       ? "LIVE"
@@ -49,16 +53,14 @@ export async function GET() {
       process.env.RAZORPAY_KEY_ID !== process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
   };
 
+  // Credential check only. This used to create a real ₹100 Razorpay order on
+  // every unauthenticated hit, which polluted the live dashboard and let anyone
+  // probe the account. A read-only list call authenticates just as well.
   try {
     const { getRazorpay } = await import("@/lib/razorpay");
     const razorpay = getRazorpay();
-    const testOrder = await razorpay.orders.create({
-      amount: 100,
-      currency: "INR",
-      receipt: `health_check_${Date.now()}`,
-    });
+    await razorpay.orders.all({ count: 1 });
     result.authTest = "PASS";
-    result.testOrderId = testOrder.id;
   } catch (err) {
     result.authTest = "FAIL";
     result.authError = describeError(err);

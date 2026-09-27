@@ -1,4 +1,5 @@
 import { formatPrice } from "./helpers";
+import { displayPricing } from "./pricing-math";
 
 export interface StoreVariant {
   weight: string;
@@ -82,7 +83,10 @@ export function mapStoreProduct(raw: ApiProduct): StoreProduct {
     tags: raw.tags || [],
     variants,
     emoji: "",
-    badge: raw.tags?.includes("bestseller") ? "Bestseller" : "",
+    badge:
+      raw.tags?.some((t) => t?.toLowerCase() === "bestseller")
+        ? "Bestseller"
+        : "",
   };
   product.emoji = productEmoji(product);
   return product;
@@ -94,10 +98,7 @@ export function cheapestVariant(product: StoreProduct): StoreVariant | undefined
 }
 
 export function discountOf(variant: StoreVariant): number {
-  if (variant.mrp && variant.mrp > variant.price) {
-    return Math.round(((variant.mrp - variant.price) / variant.mrp) * 100);
-  }
-  return 0;
+  return displayPricing(variant.price, variant.mrp, null).discountPct;
 }
 
 export function formatINR(price: number): string {

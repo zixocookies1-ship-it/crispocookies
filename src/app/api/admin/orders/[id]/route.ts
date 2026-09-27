@@ -38,7 +38,10 @@ export async function GET(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    // Map stored items (name/qty/price) to the shape the admin UI consumes.
+    // Map stored items to the shape the admin UI consumes. The immutable
+    // price snapshot (MRP / base / offer discount / charged unit price) is
+    // forwarded so the admin sees exactly what the customer was charged, even
+    // after the catalog price or the promotion has changed.
     const items = (order.items || []).map(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (item: any) => ({
@@ -47,6 +50,10 @@ export async function GET(
         variant: item.variant || "",
         quantity: item.qty ?? 0,
         price: item.price ?? 0,
+        mrp: item.mrp ?? null,
+        unitPrice: item.unitPrice ?? null,
+        basePrice: item.basePrice ?? null,
+        offerDiscount: item.offerDiscount ?? null,
       })
     );
 

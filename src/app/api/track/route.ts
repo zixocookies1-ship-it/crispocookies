@@ -24,9 +24,27 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Service unavailable" }, { status: 500 });
   }
 
-  const order = await Order.findOne({ orderId }).lean();
+  // Only the fields the tracking screen renders — a full-document read on a
+  // public endpoint also risks accidentally serialising customer PII later.
+  const order = await Order.findOne({ orderId })
+    .lean()
+    .select(
+      "orderId orderStatus paymentStatus shipmentStatus lastScan lastScanTime " +
+        "createdAt deliveryCharge total trackingUrl waybill items name qty"
+    );
   if (!order) {
     return NextResponse.json({ found: false }, { status: 404 });
+  }
+
+  // Nothing is shipped until the payment is verified, so an unconfirmed order
+  // has no tracking to show (and its totals need not be exposed).
+  if (order.paymentStatus !== "paid") {
+    return NextResponse.json({
+      found: true,
+      orderId: order.orderId,
+      paymentStatus: order.paymentStatus,
+      trackingAvailable: false,
+    });
   }
 
   let shipmentStatus = order.shipmentStatus;
@@ -73,6 +91,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     found: true,
+    trackingAvailable: true,
     orderId: order.orderId,
     status: order.orderStatus,
     paymentStatus: order.paymentStatus,

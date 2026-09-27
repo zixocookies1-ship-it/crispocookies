@@ -9,7 +9,16 @@ interface OrderItem {
   productName: string;
   variant: string;
   quantity: number;
+  /** Unit price actually charged (after the launch offer). */
   price: number;
+  /** MRP / reference price at the time of purchase. */
+  mrp?: number | null;
+  /** Catalog selling price before the launch offer. */
+  unitPrice?: number | null;
+  /** The base the launch-offer percentage was applied to. */
+  basePrice?: number | null;
+  /** Launch-offer discount for one unit. */
+  offerDiscount?: number | null;
 }
 
 interface OrderData {
@@ -28,6 +37,7 @@ interface OrderData {
   items: OrderItem[];
   subtotal: number;
   subtotalBeforeDiscount?: number;
+  catalogSubtotal?: number;
   discount?: number;
   promotion?: {
     name: string;
@@ -632,12 +642,17 @@ export default function OrderDetailPage() {
                 <th className="pb-3 font-medium">Item</th>
                 <th className="pb-3 font-medium">Variant</th>
                 <th className="pb-3 font-medium text-center">Qty</th>
+                <th className="pb-3 font-medium text-right">MRP</th>
                 <th className="pb-3 font-medium text-right">Price</th>
                 <th className="pb-3 font-medium text-right">Total</th>
               </tr>
             </thead>
             <tbody>
-              {order.items.map((item, i) => (
+              {order.items.map((item, i) => {
+                const reference = item.mrp ?? item.basePrice ?? item.price;
+                const hasOffer =
+                  typeof reference === "number" && reference > item.price;
+                return (
                 <tr key={i} className="border-b border-gray-50 last:border-0">
                   <td className="py-3 flex items-center gap-3">
                     <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-sm">
@@ -647,26 +662,41 @@ export default function OrderDetailPage() {
                   </td>
                   <td className="py-3 text-[#666666]">{item.variant}</td>
                   <td className="py-3 text-center text-[#666666]">{item.quantity}</td>
-                  <td className="py-3 text-right text-[#666666]">{formatPrice(item.price)}</td>
+                  <td className="py-3 text-right text-[#666666]">
+                    {hasOffer ? (
+                      <span className="line-through">
+                        {formatPrice(reference)}
+                      </span>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  <td className="py-3 text-right text-[#666666]">
+                    {formatPrice(item.price)}
+                  </td>
                   <td className="py-3 text-right font-medium text-black">
                     {formatPrice(item.price * item.quantity)}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
 
-        {/* Totals */}
+        {/* Totals — the same order of operations the customer saw:
+            Subtotal (MRP) → launch offer → after offer → coupon → delivery. */}
         <div className="border-t border-gray-100 mt-4 pt-4 space-y-2 max-w-xs ml-auto text-sm">
           <div className="flex justify-between">
-            <span className="text-[#666666]">Subtotal</span>
-            <span className="text-black">{formatPrice(order.subtotal)}</span>
+            <span className="text-[#666666]">Subtotal (MRP)</span>
+            <span className="text-black">
+              {formatPrice(order.catalogSubtotal ?? order.subtotalBeforeDiscount ?? 0)}
+            </span>
           </div>
           {order.discount && order.discount > 0 ? (
             <div className="flex justify-between">
               <span className="text-[#666666]">
-                Discount
+                Offer
                 {order.promotion?.name
                   ? ` (${order.promotion.name})`
                   : ""}
@@ -676,6 +706,10 @@ export default function OrderDetailPage() {
               </span>
             </div>
           ) : null}
+          <div className="flex justify-between">
+            <span className="text-[#666666]">After offer</span>
+            <span className="text-black">{formatPrice(order.subtotal)}</span>
+          </div>
           {order.couponDiscount && order.couponDiscount > 0 ? (
             <>
               <div className="flex justify-between">

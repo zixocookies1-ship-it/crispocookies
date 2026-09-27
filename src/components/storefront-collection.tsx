@@ -5,6 +5,7 @@ import { PackageSearch, RefreshCw } from "lucide-react";
 import { fetchProducts, StoreProduct } from "@/lib/storefront";
 import { ProductCardSkeleton } from "@/components/skeleton";
 import ProductCard from "@/components/product-card";
+import { useActivePromotion } from "@/lib/use-active-promotion";
 
 interface StorefrontCollectionProps {
   eyebrow: string;
@@ -23,6 +24,7 @@ export default function StorefrontCollection({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const promotion = useActivePromotion();
 
   useEffect(() => {
     let cancelled = false;
@@ -92,7 +94,7 @@ export default function StorefrontCollection({
         {!loading && !error && list.length > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
             {list.map((p) => (
-              <ProductCard key={p.id} product={p} />
+              <ProductCard key={p.id} product={p} promotion={promotion} />
             ))}
           </div>
         )}

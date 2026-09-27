@@ -1,4 +1,4 @@
-import { ActivePromotion, applyDiscount } from "./pricing-math";
+import { ActivePromotion, displayPricing } from "./pricing-math";
 
 /**
  * Client-side promotion accessor used by announcement bar, hero badge,
@@ -49,7 +49,11 @@ export async function getActivePromotion(): Promise<ActivePromotion | null> {
   }
 }
 
-/** Convenience for components: discounted price pair for a unit price. */
+/**
+ * Convenience for components: discounted price pair for a unit price.
+ * Delegates to displayPricing so the cart, checkout and the product card can
+ * never disagree about the MRP, the base or the final amount.
+ */
 export function unitPriceWithDiscount(
   unitPrice: number,
   promotion: ActivePromotion | null,
@@ -60,15 +64,11 @@ export function unitPriceWithDiscount(
   discount: number;
   final: number;
 } {
-  const { discount, final, base } = promotion
-    ? applyDiscount(unitPrice, promotion.discountValue, referencePrice)
-    : {
-        discount: 0,
-        final: unitPrice,
-        base:
-          referencePrice && referencePrice > unitPrice
-            ? referencePrice
-            : unitPrice,
-      };
-  return { original: unitPrice, base, discount, final };
+  const pricing = displayPricing(unitPrice, referencePrice, promotion);
+  return {
+    original: pricing.sellingPrice,
+    base: pricing.base,
+    discount: pricing.discount,
+    final: pricing.offerPrice,
+  };
 }

@@ -169,3 +169,64 @@ export function priceLines(
 ): PricedLine[] {
   return lines.map((l) => priceLine(l.unitPrice, l.qty, promo, l.referencePrice));
 }
+
+export interface DisplayPricing {
+  /** MRP shown to the customer. Never lower than the selling price. */
+  mrp: number;
+  /** Catalog selling price before any active promotion. */
+  sellingPrice: number;
+  /** The number a percentage is actually calculated from (MRP when higher). */
+  base: number;
+  /** What the customer actually pays for one unit. */
+  offerPrice: number;
+  /** mrp (or base) − offerPrice. */
+  discount: number;
+  /** Discount percentage, rounded to a whole number. */
+  discountPct: number;
+  hasDiscount: boolean;
+}
+
+/**
+ * THE single source of truth for every "MRP / offer price / % off" label in
+ * the product card, product page, cart, checkout, confirmation and admin.
+ *
+ * Rules, in order:
+ *   1. The displayed MRP is never lower than the selling price.
+ *   2. With no active promotion the customer sees MRP → selling price.
+ *   3. With an active promotion the offer price is derived once, from the MRP,
+ *      and is never discounted a second time unless a coupon applies.
+ *   4. The percentage is always (base − offerPrice) / base, so the number on
+ *      the badge always matches the numbers next to it.
+ */
+export function displayPricing(
+  unitPrice: number,
+  mrp?: number | null,
+  promo?: ActivePromotion | null
+): DisplayPricing {
+  const sellingPrice = Math.max(0, Math.round(unitPrice || 0));
+  const reference =
+    typeof mrp === "number" && Number.isFinite(mrp) && mrp > sellingPrice
+      ? Math.round(mrp)
+      : sellingPrice;
+
+  const { unitFinal: offerPrice, base } = priceLine(
+    sellingPrice,
+    1,
+    promo ?? null,
+    reference
+  );
+
+  const discount = Math.max(0, base - offerPrice);
+  const discountPct =
+    base > 0 && discount > 0 ? Math.round((discount / base) * 100) : 0;
+
+  return {
+    mrp: reference,
+    sellingPrice,
+    base,
+    offerPrice,
+    discount,
+    discountPct,
+    hasDiscount: discount > 0,
+  };
+}

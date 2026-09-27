@@ -6,6 +6,15 @@ export interface IOrderItem {
   image: string;
   variant: string;
   qty: number;
+  /** MRP at purchase time (optional — legacy rows may not have it). */
+  mrp?: number;
+  /** Selling price per unit before the launch offer. */
+  unitPrice?: number;
+  /** Reference base the offer percentage was applied to. */
+  basePrice?: number;
+  /** Launch-offer discount per unit. */
+  offerDiscount?: number;
+  /** Unit price actually charged (after launch offer). */
   price: number;
 }
 
@@ -56,6 +65,44 @@ export interface IOrder extends Document {
   razorpayOrderId: string;
   razorpayPaymentId: string;
   razorpaySignature: string;
+  /** Server-side verification timestamp (set with paymentStatus -> paid). */
+  paymentVerifiedAt?: Date;
+  /** When the order was first persisted as a pending payment attempt. */
+  paymentInitiatedAt?: Date;
+  /**
+   * Client-generated idempotency key for one checkout attempt. Prevents a
+   * double click or a retried create-order request from opening two gateway
+   * orders for the same basket.
+   */
+  checkoutAttemptId?: string;
+  /**
+   * Per-step state for post-payment bookkeeping. Written after the atomic
+   * pending -> paid flip so an interrupted run can be resumed by the
+   * reconciliation cron instead of being silently dropped.
+   */
+  fulfillment?: {
+    coupon?: "pending" | "done" | "failed" | "skipped";
+    customer?: "pending" | "done" | "failed";
+    notification?: "pending" | "done" | "failed";
+    stock?: "pending" | "done" | "failed" | "attention";
+    shipment?: "pending" | "done" | "failed";
+    /**
+     * Per-line record of the stock decrement, so a resumed or duplicated
+     * post-payment run can never decrement the same variant twice.
+     */
+    stockLines?: Array<{
+      productId: string;
+      variant: string;
+      applied: boolean;
+      shortfall: number;
+      /**
+       * false while the line is only claimed and the outcome is still unknown.
+       * A settled line is never touched again; an unsettled one is retried.
+       */
+      settled: boolean;
+    }>;
+    updatedAt?: Date;
+  };
   paymentStatus: "pending" | "paid" | "failed";
   orderStatus:
     | "processing"
@@ -123,6 +170,10 @@ const OrderSchema = new Schema<IOrder>({
       image: { type: String },
       variant: { type: String },
       qty: { type: Number },
+      mrp: { type: Number },
+      unitPrice: { type: Number },
+      basePrice: { type: Number },
+      offerDiscount: { type: Number },
       price: { type: Number },
     },
   ],
@@ -149,6 +200,50 @@ const OrderSchema = new Schema<IOrder>({
   razorpayOrderId: { type: String, default: "" },
   razorpayPaymentId: { type: String, default: "" },
   razorpaySignature: { type: String, default: "" },
+  paymentVerifiedAt: { type: Date },
+  paymentInitiatedAt: { type: Date },
+  checkoutAttemptId: { type: String },
+  fulfillment: {
+    coupon: {
+      type: String,
+      enum: ["pending", "done", "failed", "skipped"],
+      default: "pending",
+    },
+    customer: {
+      type: String,
+      enum: ["pending", "done", "failed"],
+      default: "pending",
+    },
+    notification: {
+      type: String,
+      enum: ["pending", "done", "failed"],
+      default: "pending",
+    },
+    stock: {
+      type: String,
+      enum: ["pending", "done", "failed", "attention"],
+      default: "pending",
+    },
+    stockLines: {
+      type: [
+        {
+          _id: false,
+          productId: { type: String },
+          variant: { type: String },
+          applied: { type: Boolean, default: false },
+          shortfall: { type: Number, default: 0 },
+          settled: { type: Boolean, default: false },
+        },
+      ],
+      default: undefined,
+    },
+    shipment: {
+      type: String,
+      enum: ["pending", "done", "failed"],
+      default: "pending",
+    },
+    updatedAt: { type: Date },
+  },
   paymentStatus: {
     type: String,
     enum: ["pending", "paid", "failed"],
@@ -194,9 +289,36 @@ const OrderSchema = new Schema<IOrder>({
 // Indexes for admin dashboard + order lookups (sorts/filters must not COLLSCAN as volume grows)
 OrderSchema.index({ createdAt: -1 });
 OrderSchema.index({ paymentStatus: 1, createdAt: -1 });
-OrderSchema.index({ razorpayOrderId: 1 });
-OrderSchema.index({ razorpayPaymentId: 1 });
 OrderSchema.index({ waybill: 1 });
+OrderSchema.index({ email: 1, createdAt: -1 });
+// Reconciliation scans paid orders whose post-payment bookkeeping is unfinished.
+OrderSchema.index({ paymentStatus: 1, "fulfillment.notification": 1 });
+// Gateway identifiers must map to exactly one local order — this is the last
+// line of defence against a duplicated callback/webhook creating two orders.
+// Partial + non-empty: legacy documents default these fields to "", so a plain
+// unique index would collide across every pre-existing pending order.
+const nonEmptyString = {
+  $type: "string",
+  $gt: "",
+} as const;
+OrderSchema.index(
+  { razorpayOrderId: 1 },
+  { unique: true, partialFilterExpression: { razorpayOrderId: nonEmptyString } }
+);
+OrderSchema.index(
+  { razorpayPaymentId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { razorpayPaymentId: nonEmptyString },
+  }
+);
+OrderSchema.index(
+  { checkoutAttemptId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { checkoutAttemptId: nonEmptyString },
+  }
+);
 
 export default mongoose.models.Order ||
   mongoose.model<IOrder>("Order", OrderSchema);

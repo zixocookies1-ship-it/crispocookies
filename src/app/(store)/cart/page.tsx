@@ -7,8 +7,8 @@ import { Minus, Plus, X, ShoppingBag, Ticket } from "lucide-react";
 import { toast } from "sonner";
 import { useCartStore } from "@/store/useCartStore";
 import { formatPrice } from "@/lib/helpers";
-import { getActivePromotion, unitPriceWithDiscount } from "@/lib/promotion";
-import { ActivePromotion } from "@/lib/pricing-math";
+import { unitPriceWithDiscount } from "@/lib/promotion";
+import { useActivePromotion } from "@/lib/use-active-promotion";
 import {
   validateCouponOnServer,
   toAppliedCoupon,
@@ -43,24 +43,12 @@ export default function CartPage() {
   const removeCoupon = useCartStore((s) => s.removeCoupon);
   const updateQty = useCartStore((s) => s.updateQty);
   const removeItem = useCartStore((s) => s.removeItem);
-  const [promotion, setPromotion] = useState<ActivePromotion | null>(null);
+  const promotion = useActivePromotion();
   const [couponInput, setCouponInput] = useState("");
   const [applying, setApplying] = useState(false);
   const [revalidating, setRevalidating] = useState(false);
 
   useEffect(() => setMounted(true), []);
-
-  useEffect(() => {
-    let cancelled = false;
-    getActivePromotion()
-      .then((promo) => {
-        if (!cancelled) setPromotion(promo);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const linePricing = items.map((item) => {
     const pricing = unitPriceWithDiscount(
@@ -75,12 +63,17 @@ export default function CartPage() {
       lineTotal: pricing.final * item.qty,
       originalLineTotal: pricing.original * item.qty,
       lineDiscount: pricing.discount * item.qty,
+      catalogLineTotal: pricing.base * item.qty,
     };
   });
 
-  const subtotal = linePricing.reduce((s, l) => s + l.original * l.item.qty, 0);
+  // Mirrors computeOrderTotals() in pricing-math.ts exactly:
+  //   catalogSubtotal  = Σ (mrp ?? price) × qty   → the "Subtotal" the customer sees
+  //   offerDiscount    = Σ launch-offer discount
+  //   finalSubtotal    = Σ price actually charged  (coupon is applied on top)
+  const catalogSubtotal = linePricing.reduce((s, l) => s + l.catalogLineTotal, 0);
   const promoDiscount = linePricing.reduce((s, l) => s + l.lineDiscount, 0);
-  const beforeCoupon = Math.max(0, subtotal - promoDiscount);
+  const beforeCoupon = linePricing.reduce((s, l) => s + l.lineTotal, 0);
   const couponAmount = Math.min(coupon?.discountAmount ?? 0, beforeCoupon);
   const delivery = 40;
   const total = beforeCoupon - couponAmount + delivery;
@@ -244,7 +237,7 @@ export default function CartPage() {
                   <div className="text-right">
                     {line.discount > 0 && (
                       <p className="text-[11px] text-muted">
-                        {formatPrice(line.original)} × {line.item.qty}
+                        MRP {formatPrice(line.base)} × {line.item.qty}
                         {line.lineDiscount > 0 && (
                           <span className="text-[#16A34A] font-semibold ml-1">
                             −{formatPrice(line.lineDiscount)}
@@ -286,17 +279,27 @@ export default function CartPage() {
 
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-muted">Subtotal</span>
-                <span className="text-cream font-medium">{formatPrice(subtotal)}</span>
+                <span className="text-muted">Subtotal (MRP)</span>
+                <span className="text-cream font-medium">
+                  {formatPrice(catalogSubtotal)}
+                </span>
               </div>
               {promoDiscount > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted">Launch Offer ({promotion?.discountValue}% off)</span>
+                  <span className="text-muted">
+                    {promotion?.name} ({promotion?.discountValue}% off)
+                  </span>
                   <span className="text-[#16A34A] font-semibold">
                     −{formatPrice(promoDiscount)}
                   </span>
                 </div>
               )}
+              <div className="flex justify-between text-sm">
+                <span className="text-muted">After offer</span>
+                <span className="text-cream font-medium">
+                  {formatPrice(beforeCoupon)}
+                </span>
+              </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Delivery</span>
                 <span className="text-cream font-medium">

@@ -1,42 +1,21 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
 import { connectDB } from "@/lib/mongodb";
-import Order from "@/models/Order";
-import Customer from "@/models/Customer";
-import Notification from "@/models/Notification";
-import Product from "@/models/Product";
-import { getRazorpay } from "@/lib/razorpay";
-import { generateOrderId } from "@/lib/helpers";
-import { calculateOrderTotals } from "@/lib/order-totals";
-import { attemptAutoShipment } from "@/lib/delhivery";
 import { finalizeOrderPayment } from "@/lib/razorpay-payment";
-import {
-  CouponError,
-  couponCustomerKey,
-  claimCouponUsage,
-  recordCouponUsage,
-} from "@/lib/coupons";
 
-interface Address {
-  line1: string;
-  line2?: string;
-  city: string;
-  state: string;
-  pincode: string;
-}
-
-function isAddressLike(value: unknown): value is Address {
-  if (typeof value !== "object" || value === null) return false;
-  const a = value as Record<string, unknown>;
-  return (
-    typeof a.line1 === "string" &&
-    typeof a.city === "string" &&
-    typeof a.state === "string" &&
-    typeof a.pincode === "string"
-  );
-}
-
+/**
+ * Browser payment-verification endpoint.
+ *
+ * The browser only ever passes the three identifiers Razorpay hands back. It
+ * never passes an amount, a total, an item list or a coupon code, and it never
+ * creates an order: the order was already persisted as pending by
+ * /api/razorpay/create-order with a server-calculated price snapshot.
+ *
+ * Authentication of the callback and the actual confirmation both happen in
+ * finalizeOrderPayment, which verifies the HMAC signature and then confirms the
+ * payment entity with Razorpay before the order is flipped to paid. Calling
+ * this route twice, or calling it after the webhook already finalised, is safe.
+ */
 export async function POST(request: NextRequest) {
   if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
     console.error(
@@ -58,40 +37,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const {
-    razorpay_order_id,
-    razorpay_payment_id,
-    razorpay_signature,
-    customerName,
-    email,
-    phone,
-    address,
-    items,
-    couponCode,
-  } = body;
+  const razorpayOrderId = String(body.razorpay_order_id ?? "").trim();
+  const razorpayPaymentId = String(body.razorpay_payment_id ?? "").trim();
+  const razorpaySignature = String(body.razorpay_signature ?? "").trim();
 
-  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+  if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
     return NextResponse.json(
       { success: false, error: "Missing payment verification data" },
-      { status: 400 }
-    );
-  }
-
-  if (
-    typeof customerName !== "string" ||
-    typeof email !== "string" ||
-    typeof phone !== "string" ||
-    !isAddressLike(address)
-  ) {
-    return NextResponse.json(
-      { success: false, error: "Missing customer details" },
-      { status: 400 }
-    );
-  }
-
-  if (!Array.isArray(items) || items.length === 0) {
-    return NextResponse.json(
-      { success: false, error: "Missing order items" },
       { status: 400 }
     );
   }
@@ -103,23 +55,15 @@ export async function POST(request: NextRequest) {
       message: error instanceof Error ? error.message : String(error),
     });
     return NextResponse.json(
-      {
-        success: false,
-        error: "Payment verification temporarily unavailable",
-      },
+      { success: false, error: "Payment verification temporarily unavailable" },
       { status: 500 }
     );
   }
 
-  // -----------------------------------------------------------------
-  // Primary path: finalize the durable pending order persisted at
-  // create-order time. Atomic + idempotent — the webhook and the browser
-  // callback can both race here; only one wins the side effects.
-  // -----------------------------------------------------------------
   const finalized = await finalizeOrderPayment({
-    razorpayOrderId: String(razorpay_order_id),
-    razorpayPaymentId: String(razorpay_payment_id),
-    razorpaySignature: String(razorpay_signature),
+    razorpayOrderId,
+    razorpayPaymentId,
+    razorpaySignature,
     source: "verify",
   });
 
@@ -131,262 +75,25 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  // A pending order always exists for new orders. ORDER_NOT_FOUND means the
-  // payment predates the durable-snapshot model (or a very old page) — fall
-  // back to the legacy recalc-and-create path below.
-  if (finalized.code !== "ORDER_NOT_FOUND") {
-    console.error("[verify-payment] finalization rejected", {
+  const status =
+    finalized.code === "GATEWAY_UNREACHABLE"
+      ? 502
+      : finalized.code === "FINALIZE_RACE"
+        ? 500
+        : 400;
+
+  console.error("[verify-payment] payment verification failed", {
+    code: finalized.code,
+    razorpayOrderId,
+    razorpayPaymentId,
+  });
+
+  return NextResponse.json(
+    {
+      success: false,
+      error: "Payment could not be confirmed",
       code: finalized.code,
-      error: finalized.error,
-      razorpay_order_id,
-    });
-    const status =
-      finalized.code === "GATEWAY_UNREACHABLE"
-        ? 502
-        : finalized.code === "FINALIZE_RACE"
-          ? 500
-          : 400;
-    return NextResponse.json(
-      { success: false, error: "Payment could not be confirmed" },
-      { status }
-    );
-  }
-
-  // Idempotency: if this Razorpay order already produced an Order document,
-  // return the stored result rather than creating a duplicate or consuming
-  // coupon usage a second time.
-  const existing = await Order.findOne({ razorpayOrderId: razorpay_order_id });
-  if (existing) {
-    if (existing.paymentStatus === "paid") {
-      return NextResponse.json({ success: true, orderId: existing.orderId });
-    }
-    return NextResponse.json({ success: false, orderId: existing.orderId });
-  }
-
-  // -----------------------------------------------------------------
-  // 1. Recalculate the exact same authoritative totals using fresh DB
-  //    product prices and current coupon state. If the coupon expired,
-  //    was exhausted in the split-second between create-order and
-  //    verify, or the product prices changed, the totals will differ
-  //    from the Razorpay order amount and verification fails safely.
-  // -----------------------------------------------------------------
-  let totals;
-  try {
-    totals = await calculateOrderTotals({
-      rawItems: (items as Array<{
-        productId?: string;
-        variant?: string;
-        qty?: number;
-      }>).map((i) => ({
-        productId: String(i?.productId || ""),
-        variant: String(i?.variant || ""),
-        qty: Number(i?.qty),
-      })),
-      couponCode:
-        typeof couponCode === "string" && couponCode.trim()
-          ? couponCode.trim()
-          : null,
-      customerEmail: email,
-      customerPhone: phone,
-      deliveryPincode: (address as Address).pincode,
-    });
-  } catch (error) {
-    const message =
-      error instanceof CouponError
-        ? error.message
-        : "Could not recalculate order total";
-    console.error("[verify-payment] totals recalculation failed", {
-      message,
-      hasCoupon: !!couponCode,
-    });
-    return NextResponse.json(
-      { success: false, error: message },
-      { status: 400 }
-    );
-  }
-
-  // resolvedItems with the offer-discounted unit price (historical snapshot)
-  // already provided by the single centralised calculation.
-  const resolvedItems = totals.items;
-
-  // ---------------------------------------------------------------
-  // 2. Verify Razorpay payment signature + amount.
-  // ---------------------------------------------------------------
-  let razorpayOrder;
-  try {
-    const razorpay = getRazorpay();
-    razorpayOrder = await razorpay.orders.fetch(String(razorpay_order_id));
-  } catch (error) {
-    console.error(
-      "[verify-payment] could not fetch Razorpay order",
-      { message: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(
-      { success: false, error: "Could not verify payment with gateway" },
-      { status: 502 }
-    );
-  }
-
-  const hmac = crypto
-    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
-    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-    .digest("hex");
-
-  const signatureValid = hmac === razorpay_signature;
-  const amountMatches =
-    typeof razorpayOrder.amount_paid === "number" &&
-    razorpayOrder.amount_paid === Math.round(totals.total * 100);
-  const paid =
-    signatureValid &&
-    amountMatches &&
-    razorpayOrder.status === "paid";
-
-  if (!paid) {
-    console.error("[verify-payment] payment not confirmed", {
-      razorpay_order_id,
-      signatureValid,
-      amountMatches,
-      razorpayStatus: razorpayOrder.status,
-      serverTotalPaise: Math.round(totals.total * 100),
-      paidPaise: razorpayOrder.amount_paid,
-    });
-    return NextResponse.json(
-      { success: false, error: "Payment could not be confirmed" },
-      { status: 400 }
-    );
-  }
-
-  const orderId = generateOrderId();
-  const customerKey = couponCustomerKey(email, phone);
-  const promotion = totals.promotion;
-
-  // ---------------------------------------------------------------
-  // 3. Create the order. The coupon snapshot + pricing are embedded
-  //    directly so historical records never depend on the live coupon
-  //    configuration.
-  // ---------------------------------------------------------------
-  const order = await Order.create({
-    orderId,
-    customerName,
-    email,
-    phone,
-    address: {
-      line1: (address as Address).line1,
-      line2: (address as Address).line2,
-      city: (address as Address).city,
-      state: (address as Address).state,
-      pincode: (address as Address).pincode,
     },
-    items: resolvedItems,
-    subtotal: totals.finalSubtotal,
-    subtotalBeforeDiscount: totals.originalSubtotal,
-    discount: totals.offerDiscount,
-    promotion: promotion
-      ? {
-          name: promotion.name,
-          discountType: promotion.discountType,
-          discountValue: promotion.discountValue,
-        }
-      : undefined,
-    couponDiscount: totals.couponDiscount,
-    eligibleSubtotal: totals.eligibleSubtotal,
-    coupon: totals.coupon
-      ? {
-          code: totals.coupon.code,
-          id: totals.coupon.id,
-          discountType: totals.coupon.discountType,
-          discountValue: totals.coupon.discountValue,
-          description: totals.coupon.description,
-        }
-      : undefined,
-    deliveryCharge: totals.deliveryCharge,
-    deliveryProvider: totals.deliveryProvider,
-    shippingWeightGrams: totals.shippingWeightGrams,
-    total: totals.total,
-    razorpayOrderId: razorpay_order_id,
-    razorpayPaymentId: razorpay_payment_id,
-    razorpaySignature: razorpay_signature,
-    paymentStatus: "paid",
-    orderStatus: "confirmed",
-  });
-
-  // ---------------------------------------------------------------
-  // 3b. Prepaid shipment: hand the paid order to Delhivery immediately.
-  //     Attempts are safe (never blocks this response) and idempotent;
-  //     failures are stored on the order and retryable from the admin UI.
-  // ---------------------------------------------------------------
-  await attemptAutoShipment(order);
-
-  // ---------------------------------------------------------------
-  // 4. Claim coupon usage atomically and record usage history.
-  //    claimCouponUsage guards the final-remaining-use race (spec 24).
-  // ---------------------------------------------------------------
-  if (totals.coupon) {
-    const claimed = await claimCouponUsage(totals.coupon.id);
-    if (!claimed) {
-      // Extremely rare: coupon was exhausted between the recalc above and
-      // this claim. The payment was already taken at the quoted price so
-      // we proceed — the order stores the coupon snapshot. Log for ops.
-      console.warn(
-        "[verify-payment] coupon usage claim lost — concurrent exhaustion",
-        { couponCode: totals.coupon.code, orderId }
-      );
-    }
-    await recordCouponUsage({
-      couponId: totals.coupon.id,
-      couponCode: totals.coupon.code,
-      orderObjectId: String(order._id),
-      orderId,
-      customerName,
-      email,
-      phone,
-      customerKey,
-      discountAmount: totals.couponDiscount,
-      orderSubtotal: totals.finalSubtotal,
-      orderTotal: totals.total,
-    });
-  }
-
-  // ---------------------------------------------------------------
-  // 5. Upsert customer, notify admin, decrement stock (existing logic).
-  // ---------------------------------------------------------------
-  await Customer.findOneAndUpdate(
-    { email },
-    { name: customerName, email, phone },
-    { upsert: true, new: true }
+    { status }
   );
-
-  await Notification.create({
-    message: `New order #${orderId} from ${customerName} - ₹${totals.total}${totals.couponDiscount > 0 ? ` (coupon ${totals.coupon?.code})` : ""}`,
-    type: "order",
-    orderId: order._id.toString(),
-  });
-
-  for (const item of resolvedItems) {
-    try {
-      const product = await Product.findById(item.productId);
-      if (product) {
-        const variant = product.variants.find(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (v: any) => v.weight === item.variant
-        );
-        if (variant) {
-          variant.stock = Math.max(0, variant.stock - item.qty);
-          await product.save();
-
-          if (variant.stock < 10) {
-            await Notification.create({
-              message: `Low Stock: ${product.name} (${variant.weight}) - ${variant.stock} left`,
-              type: "stock",
-              orderId: order._id.toString(),
-            });
-          }
-        }
-      }
-    } catch (stockErr) {
-      console.error("Stock decrement error:", stockErr);
-    }
-  }
-
-  return NextResponse.json({ success: true, orderId });
 }

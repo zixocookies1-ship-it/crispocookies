@@ -3,7 +3,7 @@ import Coupon, { ICoupon } from "@/models/Coupon";
 import CouponUsage from "@/models/CouponUsage";
 import Order from "@/models/Order";
 import { computeCouponDiscount } from "./pricing-math";
-import { formatPrice } from "./helpers";
+import { formatPrice, escapeRegExp as escapeRegExpShared } from "./helpers";
 
 /**
  * Server-side coupon service. This is the ONLY authority on coupon validity,
@@ -36,7 +36,7 @@ export function isValidCouponCodeFormat(code: string): boolean {
 }
 
 function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return escapeRegExpShared(value);
 }
 
 /** Stable identity for guest customers. Never trusts a frontend ID. */

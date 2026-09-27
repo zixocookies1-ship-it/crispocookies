@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import Product from "@/models/Product";
 import "@/models/Category";
+import { normalizeProductInput, type StoredVariant } from "@/lib/product-input";
 
 export async function GET(
   request: NextRequest,
@@ -48,9 +49,29 @@ export async function PUT(
 
     await connectDB();
 
-    const body = await request.json();
+    const body = (await request.json()) as Record<string, unknown>;
 
-    const product = await Product.findByIdAndUpdate(params.id, body, {
+    // The stored variants are needed to preserve fields the client did not
+    // send (notably an existing MRP) when the variant array is replaced.
+    const existing = await Product.findById(params.id)
+      .select("variants")
+      .lean();
+    if (!existing) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    const update = normalizeProductInput(body, {
+      mode: "update",
+      existingVariants: (existing.variants ?? []) as StoredVariant[],
+    });
+    if (!update) {
+      return NextResponse.json(
+        { error: "No valid product fields supplied" },
+        { status: 400 }
+      );
+    }
+
+    const product = await Product.findByIdAndUpdate(params.id, update, {
       new: true,
       runValidators: true,
     }).populate("category", "name slug");

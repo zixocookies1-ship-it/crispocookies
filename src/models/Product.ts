@@ -37,7 +37,19 @@ const ProductSchema = new Schema<IProduct>({
   variants: [
     {
       weight: { type: String },
+      /**
+       * Selling price (per unit) — the amount charged before a launch offer
+       * or coupon is applied.
+       */
       price: { type: Number },
+      /**
+       * MRP / reference price. Optional for backwards compatibility: when it is
+       * missing the pricing helpers fall back to `price`, so no document has to
+       * be migrated. It MUST be declared here or Mongoose silently strips it on
+       * every read/write, which breaks the MRP strikethrough and the discount
+       * base.
+       */
+      mrp: { type: Number },
       stock: { type: Number, default: 0 },
       shippingWeightGrams: { type: Number, default: 0 },
     },

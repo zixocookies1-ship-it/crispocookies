@@ -104,35 +104,71 @@ export default function OrdersPage() {
     }
   };
 
-  const fetchOrders = useCallback(async () => {
-    setLoading(true);
-    setError(false);
-    try {
-      const params = new URLSearchParams({
-        page: String(page),
-        limit: String(perPage),
-      });
-      if (search) params.set("search", search);
-      if (paymentFilter) params.set("paymentStatus", paymentFilter);
-      if (statusFilter) params.set("status", statusFilter);
-      if (dateFrom) params.set("from", dateFrom);
-      if (dateTo) params.set("to", dateTo);
+  const fetchOrders = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      // A background refresh must not blank out the table the admin is reading.
+      if (!opts?.silent) {
+        setLoading(true);
+        setError(false);
+      }
+      try {
+        const params = new URLSearchParams({
+          page: String(page),
+          limit: String(perPage),
+        });
+        if (search) params.set("search", search);
+        if (paymentFilter) params.set("paymentStatus", paymentFilter);
+        if (statusFilter) params.set("status", statusFilter);
+        if (dateFrom) params.set("from", dateFrom);
+        if (dateTo) params.set("to", dateTo);
 
-      const res = await fetch(`/api/admin/orders?${params}`);
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setOrders(data.orders || []);
-      setTotalPages(data.totalPages || 1);
-      setTotalOrders(data.total || 0);
-    } catch {
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search, statusFilter, paymentFilter, dateFrom, dateTo]);
+        const res = await fetch(`/api/admin/orders?${params}`);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        setOrders(data.orders || []);
+        setTotalPages(data.totalPages || 1);
+        setTotalOrders(data.total || 0);
+      } catch {
+        if (!opts?.silent) setError(true);
+      } finally {
+        if (!opts?.silent) setLoading(false);
+      }
+    },
+    [page, search, statusFilter, paymentFilter, dateFrom, dateTo]
+  );
 
   useEffect(() => {
     fetchOrders();
+  }, [fetchOrders]);
+
+  // Keep the list honest about payment status without hammering the API.
+  // `paymentStatus` is now written to "paid" by the server the moment the
+  // gateway confirms, so a modest interval is enough to reflect it; the tab is
+  // only refreshed while it is actually visible, and it pauses while a request
+  // is already in flight.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (document.visibilityState === "hidden") return;
+
+    let cancelled = false;
+    const interval = setInterval(() => {
+      if (document.visibilityState === "hidden") return;
+      if (cancelled) return;
+      void fetchOrders({ silent: true });
+    }, 30_000);
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void fetchOrders({ silent: true });
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [fetchOrders]);
 
   const exportCSV = () => {
@@ -362,7 +398,7 @@ export default function OrdersPage() {
                 <tr>
                   <td colSpan={9} className="text-center py-12">
                     <p className="text-[#DC2626] mb-3">Failed to load orders</p>
-                    <button onClick={fetchOrders} className="btn-gold text-sm">Retry</button>
+                    <button onClick={() => void fetchOrders()} className="btn-gold text-sm">Retry</button>
                   </td>
                 </tr>
               ) : orders.length === 0 ? (

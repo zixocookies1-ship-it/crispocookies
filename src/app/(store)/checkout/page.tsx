@@ -37,8 +37,13 @@ const initialForm: FormData = {
 };
 
 interface ServerTotals {
+  /** Product total actually charged, after the launch offer. */
   subtotal: number;
+  /** Σ (selling price × qty) — kept for backwards compatibility. */
   subtotalBeforeDiscount: number;
+  /** Σ (MRP ?? price × qty) — the "Subtotal (MRP)" the customer sees. */
+  catalogSubtotal: number;
+  /** Launch-offer discount deducted from the catalog subtotal. */
   discount: number;
   couponDiscount: number;
   deliveryCharge: number;
@@ -100,8 +105,29 @@ export default function CheckoutPage() {
     mode: "flat" | "delhivery";
   }>({ checking: false, serviceable: null, amount: null, mode: "flat" });
   const processingRef = useRef(false);
+  // True from rzp.open() until the modal closes or a handler takes over.
+  const modalOpenRef = useRef(false);
   const formRef = useRef(form);
   formRef.current = form;
+  // One id per checkout attempt. The server uses it to make create-order
+  // idempotent, so a double click or a retried request cannot open a second
+  // Razorpay order for the same basket.
+  const attemptIdRef = useRef<string>("");
+  if (!attemptIdRef.current) {
+    attemptIdRef.current =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `att_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  }
+  const [paymentPhase, setPaymentPhase] = useState<
+    "idle" | "processing" | "verifying" | "verification_pending" | "failed"
+  >("idle");
+  const [failureReason, setFailureReason] = useState("");
+  const pendingVerifyRef = useRef<{
+    razorpayOrderId: string;
+    razorpayPaymentId: string;
+    razorpaySignature: string;
+  } | null>(null);
 
   useEffect(() => setMounted(true), []);
 
@@ -130,14 +156,20 @@ export default function CheckoutPage() {
       lineTotal: pricing.final * item.qty,
       originalLineTotal: pricing.original * item.qty,
       lineDiscount: pricing.discount * item.qty,
+      catalogLineTotal: pricing.base * item.qty,
     };
   });
 
   // Client-side preview only — create-order/verify-payment recompute these
-  // authoritative totals on the server before any money moves.
-  const previewSubtotal = linePricing.reduce((s, l) => s + l.original * l.item.qty, 0);
+  // authoritative totals on the server before any money moves. The arithmetic
+  // mirrors computeOrderTotals() so the number the customer sees here is the
+  // number they are charged.
+  const previewSubtotal = linePricing.reduce(
+    (s, l) => s + l.catalogLineTotal,
+    0
+  );
   const previewOffer = linePricing.reduce((s, l) => s + l.lineDiscount, 0);
-  const previewBeforeCoupon = Math.max(0, previewSubtotal - previewOffer);
+  const previewBeforeCoupon = linePricing.reduce((s, l) => s + l.lineTotal, 0);
   const previewCouponAmount = Math.min(
     coupon?.discountAmount ?? 0,
     previewBeforeCoupon
@@ -300,6 +332,38 @@ export default function CheckoutPage() {
     }
   };
 
+  /**
+   * Ask the server to confirm the payment. This is safe to call repeatedly:
+   * the first successful call flips the order to paid, and every later call
+   * reports it as already finalised instead of creating a second order.
+   */
+  const confirmWithServer = async (
+    razorpayOrderId: string,
+    razorpayPaymentId: string,
+    razorpaySignature: string
+  ): Promise<string | null> => {
+    const verifyRes = await fetch("/api/razorpay/verify-payment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        razorpay_order_id: razorpayOrderId,
+        razorpay_payment_id: razorpayPaymentId,
+        razorpay_signature: razorpaySignature,
+      }),
+    });
+
+    const verifyData = await verifyRes.json().catch(() => ({}));
+    if (verifyRes.ok && verifyData.success && verifyData.orderId) {
+      return String(verifyData.orderId);
+    }
+
+    console.error("[checkout] payment verification failed", {
+      status: verifyRes.status,
+      code: verifyData.code,
+    });
+    return null;
+  };
+
   const handlePayment = async () => {
     if (processingRef.current) return;
     if (!validate()) return;
@@ -313,10 +377,14 @@ export default function CheckoutPage() {
     }
     processingRef.current = true;
     setLoading(true);
+    setPaymentPhase("processing");
+    setFailureReason("");
 
     try {
       const sdkLoaded = await loadRazorpayScript();
       if (!sdkLoaded) {
+        setPaymentPhase("failed");
+        setFailureReason("Payment gateway failed to load. Please try again.");
         toast.error("Payment gateway failed to load. Please try again.");
         return;
       }
@@ -335,6 +403,7 @@ export default function CheckoutPage() {
           email: form.email.trim(),
           phone: form.phone.trim(),
           deliveryPincode: form.pincode.trim(),
+          checkoutAttemptId: attemptIdRef.current,
           address: {
             line1: form.addressLine1.trim(),
             line2: form.addressLine2.trim() || undefined,
@@ -351,6 +420,8 @@ export default function CheckoutPage() {
         if (errData.error && coupon) {
           removeCoupon();
         }
+        setPaymentPhase("failed");
+        setFailureReason(message);
         throw new Error(message);
       }
       const orderData = await orderRes.json();
@@ -359,6 +430,7 @@ export default function CheckoutPage() {
       setServer({
         subtotal: orderData.subtotal,
         subtotalBeforeDiscount: orderData.subtotalBeforeDiscount,
+        catalogSubtotal: orderData.catalogSubtotal ?? orderData.subtotalBeforeDiscount,
         discount: orderData.discount,
         couponDiscount: orderData.couponDiscount || 0,
         deliveryCharge: orderData.deliveryCharge,
@@ -382,38 +454,41 @@ export default function CheckoutPage() {
         order_id: orderData.orderId,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         handler: async (response: any) => {
+          modalOpenRef.current = false;
+          setPaymentPhase("verifying");
           try {
-            const verifyRes = await fetch("/api/razorpay/verify-payment", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                customerName: form.fullName,
-                email: form.email,
-                phone: form.phone,
-                address: {
-                  line1: form.addressLine1,
-                  line2: form.addressLine2,
-                  city: form.city,
-                  state: form.state,
-                  pincode: form.pincode,
-                },
-                items: orderData.items,
-                subtotal: orderData.subtotal,
-                deliveryCharge: orderData.deliveryCharge,
-                total: orderData.total,
-                couponCode: coupon?.code || undefined,
-              }),
-            });
+            const confirmedOrderId = await confirmWithServer(
+              String(response.razorpay_order_id),
+              String(response.razorpay_payment_id),
+              String(response.razorpay_signature)
+            );
 
-            if (!verifyRes.ok) throw new Error("Payment verification failed");
-            const verifyData = await verifyRes.json();
-            clearCart();
-            router.push(`/order-success?orderId=${verifyData.orderId}`);
+            if (confirmedOrderId) {
+              pendingVerifyRef.current = null;
+              setPaymentPhase("idle");
+              clearCart();
+              router.push(`/order-success?orderId=${confirmedOrderId}`);
+              return;
+            }
+
+            // The gateway says the payment succeeded but our server could not
+            // confirm it yet (a slow Razorpay API call, for example). Keep the
+            // identifiers so this can be retried without paying again — the
+            // webhook may already have finalised it.
+            pendingVerifyRef.current = {
+              razorpayOrderId: String(response.razorpay_order_id),
+              razorpayPaymentId: String(response.razorpay_payment_id),
+              razorpaySignature: String(response.razorpay_signature),
+            };
+            setPaymentPhase("verification_pending");
+            setFailureReason(
+              "Your payment went through but we could not confirm it yet. Please retry the confirmation — you will not be charged again."
+            );
           } catch {
-            toast.error("Payment verification failed. Contact support.");
+            setPaymentPhase("verification_pending");
+            setFailureReason(
+              "We could not reach our server to confirm the payment. Please retry the confirmation."
+            );
           }
         },
         prefill: {
@@ -422,19 +497,69 @@ export default function CheckoutPage() {
           contact: form.phone,
         },
         theme: { color: "#C99528" },
+        modal: {
+          ondismiss: () => {
+            modalOpenRef.current = false;
+            processingRef.current = false;
+            setLoading(false);
+            if (pendingVerifyRef.current) return;
+            setPaymentPhase((p) => (p === "processing" ? "idle" : p));
+          },
+        },
       };
 
       const rzp = new window.Razorpay(options);
-      rzp.on("payment.failed", () => {
+      rzp.on("payment.failed", (response: { error?: { description?: string } }) => {
+        // Razorpay stopped the payment itself. The order stays pending and the
+        // customer is never told it succeeded.
+        modalOpenRef.current = false;
+        pendingVerifyRef.current = null;
+        setPaymentPhase("failed");
+        setFailureReason(
+          response?.error?.description || "Payment failed. Please try again."
+        );
         toast.error("Payment failed. Please try again.");
       });
       rzp.open();
+      // The modal owns the interaction from here: the Pay button must stay
+      // disabled while it is open, otherwise a second click opens a second
+      // modal. The handlers above (and `ondismiss`) release the lock.
+      modalOpenRef.current = true;
     } catch (err) {
       const message =
         err instanceof Error && err.message
           ? err.message
           : "Payment could not be initialized. Please try again.";
       toast.error(message);
+    } finally {
+      if (!modalOpenRef.current) {
+        processingRef.current = false;
+        setLoading(false);
+      }
+    }
+  };
+
+  /** Retry confirmation for a payment the gateway already completed. */
+  const retryVerification = async () => {
+    const pending = pendingVerifyRef.current;
+    if (!pending || processingRef.current) return;
+    processingRef.current = true;
+    setLoading(true);
+    setPaymentPhase("verifying");
+    try {
+      const confirmedOrderId = await confirmWithServer(
+        pending.razorpayOrderId,
+        pending.razorpayPaymentId,
+        pending.razorpaySignature
+      );
+      if (confirmedOrderId) {
+        pendingVerifyRef.current = null;
+        setPaymentPhase("idle");
+        clearCart();
+        router.push(`/order-success?orderId=${confirmedOrderId}`);
+        return;
+      }
+      setPaymentPhase("verification_pending");
     } finally {
       processingRef.current = false;
       setLoading(false);
@@ -444,9 +569,15 @@ export default function CheckoutPage() {
   const displayCoupon = server ? server.couponDiscount : previewCouponAmount;
   const displayDelivery = server ? server.deliveryCharge : previewDelivery;
   const displayDeliveryMode = server?.deliveryProvider ?? shipping.mode;
-  const displaySubtotal = server
+  // Once the server has priced the order its snapshot wins; before that the
+  // client preview (identical arithmetic) keeps the summary responsive.
+  const displayCatalogSubtotal = server
+    ? server.catalogSubtotal
+    : previewSubtotal;
+  const displayOffer = server ? server.discount : previewOffer;
+  const displayAfterOffer = server
     ? server.subtotal
-    : previewBeforeCoupon - previewCouponAmount;
+    : previewBeforeCoupon;
   const displayTotal = server ? server.total : previewTotal;
 
   if (items.length === 0) {
@@ -655,7 +786,7 @@ export default function CheckoutPage() {
                     <p className="text-muted text-xs">{line.item.variant.weight} × {line.item.qty}</p>
                     {line.discount > 0 && (
                       <p className="text-muted text-[11px] line-through">
-                        {formatPrice(line.original)} each
+                        MRP {formatPrice(line.base)} each
                       </p>
                     )}
                   </div>
@@ -667,17 +798,27 @@ export default function CheckoutPage() {
             </div>
 
             <div className="border-t border-gold/20 pt-3 space-y-2 mb-4">
-              {previewOffer > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted">Subtotal (MRP)</span>
+                <span className="text-cream font-medium">
+                  {formatPrice(displayCatalogSubtotal)}
+                </span>
+              </div>
+              {displayOffer > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted">Launch Offer ({promotion?.discountValue}% off)</span>
+                  <span className="text-muted">
+                    {promotion?.name} ({promotion?.discountValue}% off)
+                  </span>
                   <span className="text-[#16A34A] font-semibold">
-                    −{formatPrice(previewOffer)}
+                    −{formatPrice(displayOffer)}
                   </span>
                 </div>
               )}
               <div className="flex justify-between text-sm">
-                <span className="text-muted">Subtotal</span>
-                <span className="text-cream font-medium">{formatPrice(displaySubtotal)}</span>
+                <span className="text-muted">After offer</span>
+                <span className="text-cream font-medium">
+                  {formatPrice(displayAfterOffer)}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted">
@@ -789,18 +930,48 @@ export default function CheckoutPage() {
 
             <button
               onClick={handlePayment}
-              disabled={loading || shipping.checking || shipping.serviceable === false}
+              disabled={
+                loading ||
+                paymentPhase === "verifying" ||
+                paymentPhase === "verification_pending" ||
+                shipping.checking ||
+                shipping.serviceable === false
+              }
               className="crispo-btn-gold w-full py-4 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {loading ? (
+              {loading || paymentPhase === "verifying" ? (
                 <>
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Processing...
+                  {paymentPhase === "verifying"
+                    ? "Confirming payment..."
+                    : "Processing..."}
                 </>
               ) : (
                 "Pay with Razorpay"
               )}
             </button>
+
+            {paymentPhase === "verification_pending" && (
+              <div className="mt-3 rounded-xl border border-gold/30 bg-gold/5 p-4 text-center">
+                <p className="text-cream text-sm font-semibold">
+                  Confirming your payment
+                </p>
+                <p className="text-muted text-xs mt-1">{failureReason}</p>
+                <button
+                  onClick={retryVerification}
+                  disabled={loading}
+                  className="mt-3 text-xs font-bold uppercase tracking-wider text-gold-soft underline underline-offset-4 disabled:opacity-50"
+                >
+                  {loading ? "Checking..." : "Retry confirmation"}
+                </button>
+              </div>
+            )}
+
+            {paymentPhase === "failed" && (
+              <p className="mt-3 text-center text-xs text-red font-semibold">
+                {failureReason}
+              </p>
+            )}
 
             <p className="text-muted text-xs text-center mt-3">🔒 100% Secure Payment</p>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -8,32 +8,29 @@ import { Plus } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { StoreProduct, cheapestVariant, discountOf, formatINR } from "@/lib/storefront";
-import { getActivePromotion, unitPriceWithDiscount } from "@/lib/promotion";
-import { ActivePromotion } from "@/lib/pricing-math";
+import { StoreProduct, cheapestVariant, formatINR } from "@/lib/storefront";
+import { displayPricing, ActivePromotion } from "@/lib/pricing-math";
 
 interface ProductCardProps {
   product: StoreProduct;
   priority?: boolean;
+  /**
+   * The active promotion is passed down from the page instead of being fetched
+   * per card. Previously every card mounted its own effect and issued its own
+   * /api/promotions/active request, so a grid of 12 products produced 12
+   * identical network calls.
+   */
+  promotion?: ActivePromotion | null;
 }
 
-export default function ProductCard({ product, priority = false }: ProductCardProps) {
+export default function ProductCard({
+  product,
+  priority = false,
+  promotion = null,
+}: ProductCardProps) {
   const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
   const [imgFailed, setImgFailed] = useState(false);
-  const [promotion, setPromotion] = useState<ActivePromotion | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    getActivePromotion()
-      .then((promo) => {
-        if (!cancelled) setPromotion(promo);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const hasImages = product.images.length > 0;
   const showImage = hasImages && !imgFailed;
@@ -42,14 +39,12 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
   const variant =
     product.variants.find((v) => v.stock > 0) || cheapestVariant(product);
   const price = variant?.price ?? 0;
-  const mrp = variant?.mrp ?? 0;
-  const discount = variant ? discountOf(variant) : 0;
+  const mrp = variant?.mrp;
   const outOfStock = !variant || variant.stock <= 0;
   const multiVariant = product.variants.length > 1;
 
-  const promoPricing = unitPriceWithDiscount(price, promotion, mrp);
-  const promoActive = !!promotion && promoPricing.discount > 0;
-  const showPromoChip = promoActive && !outOfStock;
+  const pricing = displayPricing(price, mrp, promotion);
+  const showOffer = pricing.hasDiscount && !outOfStock;
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -104,13 +99,8 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
               {product.badge}
             </span>
           )}
-          {showPromoChip && (
-            <span className="bg-[#E11D48] text-white text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full">
-              {promotion.discountValue}% OFF
-            </span>
-          )}
-          {!showPromoChip && discount > 0 && multiVariant && (
-            <span className="discount-chip">{discount}% OFF</span>
+          {showOffer && (
+            <span className="discount-chip">{pricing.discountPct}% OFF</span>
           )}
         </div>
       </Link>
@@ -125,29 +115,22 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
         {variant && (
           <p className="text-[11px] sm:text-xs text-muted truncate">
             {variant.weight}
-            {outOfStock && <span className="text-red font-semibold"> · Out of stock</span>}
+            {outOfStock && (
+              <span className="text-red font-semibold"> · Out of stock</span>
+            )}
           </p>
         )}
 
         <div className="mt-auto pt-1.5 flex items-baseline gap-1.5 flex-wrap">
           <span className="text-base sm:text-lg font-extrabold text-gold-soft">
-            {promoActive ? formatINR(promoPricing.final) : formatINR(price)}
+            {formatINR(pricing.offerPrice)}
           </span>
-          {promoActive ? (
-            <span className="text-xs text-faded line-through">{formatINR(promoPricing.base)}</span>
-          ) : (
-            mrp > price && (
-              <span className="text-xs text-faded line-through">{formatINR(mrp)}</span>
-            )
-          )}
-          {promoActive ? (
-            <span className="bg-[#E11D48] text-white text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full">
-              {promotion.discountValue}% OFF
+          {showOffer && (
+            <span className="text-xs text-faded line-through">
+              {formatINR(pricing.mrp)}
             </span>
-          ) : (
-            discount > 0 &&
-            !multiVariant && <span className="discount-chip">{discount}% OFF</span>
           )}
+          {showOffer && <span className="discount-chip">{pricing.discountPct}% OFF</span>}
         </div>
 
         <button
@@ -161,7 +144,11 @@ export default function ProductCard({ product, priority = false }: ProductCardPr
           )}
         >
           <Plus size={14} strokeWidth={2.5} />
-          {outOfStock ? "Out of Stock" : multiVariant ? "Select Options" : "Add to Cart"}
+          {outOfStock
+            ? "Out of Stock"
+            : multiVariant
+              ? "Select Options"
+              : "Add to Cart"}
         </button>
       </div>
     </div>

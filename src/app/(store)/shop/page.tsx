@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { fetchProducts, StoreProduct } from "@/lib/storefront";
 import { ProductCardSkeleton } from "@/components/skeleton";
 import ProductCard from "@/components/product-card";
+import { useActivePromotion } from "@/lib/use-active-promotion";
 
 const sortOptions = ["Featured", "Price: Low to High", "Price: High to Low"] as const;
 
@@ -14,6 +15,7 @@ export default function ShopPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const promotion = useActivePromotion();
 
   const [activeCategory, setActiveCategory] = useState("All");
   const [sortBy, setSortBy] = useState<(typeof sortOptions)[number]>("Featured");
@@ -222,7 +224,11 @@ export default function ShopPage() {
             </p>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
               {filtered.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  promotion={promotion}
+                />
               ))}
             </div>
           </>
