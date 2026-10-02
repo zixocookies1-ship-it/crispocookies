@@ -38,7 +38,7 @@ import {
   claimCouponUsage,
   recordCouponUsage,
 } from "@/lib/coupons";
-import { attemptAutoShipment } from "@/lib/delhivery";
+import { attemptAutoShipment, type AutoShipmentResult } from "@/lib/delhivery";
 
 export interface PendingOrderData {
   /** Optional client-generated idempotency key for a single checkout attempt. */
@@ -297,6 +297,14 @@ export async function finalizeOrderPayment(input: {
       source: input.source,
       paymentStatus: existing.paymentStatus,
     });
+    // Self-healing: the FIRST attempt may have died after the paid flip but
+    // before Delhivery answered (serverless kills post-response work), which
+    // is exactly how paid orders end up with no AWB. Every later duplicate
+    // callback — browser retry, Razorpay webhook retry — gets another chance
+    // to finish the shipment instead of returning a false "all done".
+    if (existing.paymentStatus === "paid" && !existing.waybill) {
+      await dispatchShipment(String(existing._id));
+    }
     return {
       ok: true,
       orderId: existing.orderId,
@@ -405,6 +413,9 @@ export async function finalizeOrderPayment(input: {
         orderId: current.orderId,
         source: input.source,
       });
+      if (!current.waybill) {
+        await dispatchShipment(String(current._id));
+      }
       return { ok: true, orderId: current.orderId, alreadyFinalized: true };
     }
     console.error("[razorpay-payment] could not finalize order", {
@@ -434,7 +445,12 @@ export async function finalizeOrderPayment(input: {
       message: error instanceof Error ? error.message : String(error),
     });
   }
-  dispatchShipment(String(paid._id));
+  // Delhivery hand-off is awaited ON PURPOSE. It used to be fire-and-forget
+  // after the HTTP response was sent, and on a serverless platform the
+  // function is frozen as soon as the response goes out — so the shipment
+  // request never happened and the order sat paid with no AWB until (at best)
+  // the next daily cron. Awaiting it keeps the work inside a live invocation.
+  await dispatchShipment(String(paid._id));
 
   return { ok: true, orderId: paid.orderId };
 }
@@ -718,41 +734,48 @@ export async function decrementStockForOrder(
 }
 
 /**
- * Hand the paid order to Delhivery without blocking the payment response.
+ * Hand the paid order to Delhivery.
  *
- * The daily sync cron retries any paid order that still has no waybill, so a
- * dropped or killed background run is recovered rather than lost.
+ * This is AWAITED by every caller. It must never throw: the payment is
+ * already recorded as paid, so a Delhivery failure is logged, written onto
+ * the order (syncState / shipmentError / syncRetryCount) and left for the
+ * recovery cron or the admin retry button — it can never turn a completed
+ * payment into an error response.
  */
-export function dispatchShipment(orderId: string): void {
-  void (async () => {
-    try {
-      const order = await Order.findById(orderId);
-      if (!order) return;
-      const result = await attemptAutoShipment(order);
-      if (result.ok) {
-        await markStep(orderId, "shipment", "done");
+export async function dispatchShipment(
+  orderObjectId: string
+): Promise<AutoShipmentResult | null> {
+  try {
+    const order = await Order.findById(orderObjectId);
+    if (!order) return null;
+    const result = await attemptAutoShipment(order);
+    if (result.ok) {
+      await markStep(orderObjectId, "shipment", "done");
+      if (result.code === "SHIPMENT_CREATED") {
         console.log("[razorpay-payment] shipment handed off to Delhivery", {
           orderId: order.orderId,
           waybill: result.waybill,
         });
-      } else if (result.code === "SHIPMENT_ALREADY_EXISTS") {
-        await markStep(orderId, "shipment", "done");
-      } else {
-        await markStep(orderId, "shipment", "pending");
-        console.error("[razorpay-payment] shipment handoff failed", {
-          orderId: order.orderId,
-          code: result.code,
-          message: result.error,
-        });
       }
-    } catch (error) {
-      await markStep(orderId, "shipment", "pending");
-      console.error("[razorpay-payment] shipment handoff threw", {
-        orderId,
-        message: error instanceof Error ? error.message : String(error),
+    } else {
+      await markStep(orderObjectId, "shipment", "pending");
+      console.error("[razorpay-payment] shipment handoff failed", {
+        orderId: order.orderId,
+        code: result.code,
+        message: result.error,
+        retryable: result.retryable,
+        retryCount: order.syncRetryCount,
       });
     }
-  })();
+    return result;
+  } catch (error) {
+    await markStep(orderObjectId, "shipment", "pending");
+    console.error("[razorpay-payment] shipment handoff threw", {
+      orderObjectId,
+      message: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
 }
 
 /**

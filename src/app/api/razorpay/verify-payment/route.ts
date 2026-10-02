@@ -1,4 +1,9 @@
 export const dynamic = "force-dynamic";
+// Finalization now awaits the Delhivery hand-off inside this invocation
+// (fire-and-forget work is frozen the moment the response is sent), so the
+// function needs headroom past the 10s default: two outbound Delhivery calls
+// with a 15s timeout each bound the worst case well under 60s.
+export const maxDuration = 60;
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { finalizeOrderPayment } from "@/lib/razorpay-payment";

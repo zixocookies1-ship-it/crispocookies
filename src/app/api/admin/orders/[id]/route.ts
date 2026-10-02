@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import Order from "@/models/Order";
 import {
+  attemptAutoShipment,
   getDelhiveryConfigStatus,
   getDelhiveryBaseUrl,
   getPickupLocation,
@@ -174,6 +175,7 @@ export async function PATCH(
     // on a browser callback. Setting "failed" or "pending" is a plain
     // status change.
     // -----------------------------------------------------------------
+    let paymentStatusChanged = false;
     if (body.paymentStatus !== undefined) {
       const next = String(body.paymentStatus);
       if (!(PAYMENT_STATUSES as readonly string[]).includes(next)) {
@@ -186,6 +188,7 @@ export async function PATCH(
       if (next === "paid" && previous !== "paid") {
         order.paymentStatus = "paid";
         order.orderStatus = "confirmed";
+        paymentStatusChanged = true;
         order.paymentVerifiedAt = new Date();
         // Best-effort bookkeeping; failures are retried by the cron.
         try {
@@ -201,6 +204,7 @@ export async function PATCH(
         }
       } else {
         order.paymentStatus = next as (typeof PAYMENT_STATUSES)[number];
+        if (next !== previous) paymentStatusChanged = true;
       }
     }
 
@@ -353,8 +357,43 @@ export async function PATCH(
       order.set(key, value);
     }
 
-    if (Object.keys(proposed).length > 0 || typeof body.status === "string") {
+    // The payment-status dropdown sends ONLY { paymentStatus } — without this
+    // flag the change would stay dirty in memory and never reach the database
+    // while the response still looked successful.
+    if (
+      paymentStatusChanged ||
+      Object.keys(proposed).length > 0 ||
+      typeof body.status === "string"
+    ) {
       await order.save();
+    }
+
+    // A manually-marked-paid order still needs its Delhivery shipment:
+    // fulfillment must not depend on a browser callback. Deliberately runs
+    // AFTER the save so any address/weight correction sent in the same
+    // request is what Delhivery actually receives.
+    if (paymentStatusChanged && order.paymentStatus === "paid" && !order.waybill) {
+      try {
+        const shipmentResult = await attemptAutoShipment(order);
+        if (!shipmentResult.ok) {
+          console.error(
+            "[admin] shipment creation failed after manual payment update",
+            {
+              orderId: order.orderId,
+              code: shipmentResult.code,
+              message: shipmentResult.error,
+            }
+          );
+        }
+      } catch (error) {
+        console.error(
+          "[admin] shipment creation threw after manual payment update",
+          {
+            orderId: order.orderId,
+            message: error instanceof Error ? error.message : String(error),
+          }
+        );
+      }
     }
 
     return NextResponse.json({

@@ -779,6 +779,15 @@ export interface PickupLocationCheck {
  * lists what Delhivery knows so the admin can paste the exact registered
  * name. Throws a DelhiveryError only if the API call itself fails.
  */
+/**
+ * The registered-location list changes only when someone edits the Delhivery
+ * account, and the shipment path now runs INSIDE the payment request — so
+ * remember the answer briefly instead of spending one of the two outbound
+ * calls (and 15s of the response budget) on every single order.
+ */
+const PICKUP_CHECK_TTL_MS = 5 * 60 * 1000;
+let pickupCheckCache: { at: number; value: PickupLocationCheck } | null = null;
+
 export async function checkPickupLocationRegistration(): Promise<PickupLocationCheck> {
   const configured = getPickupLocation();
   if (!configured) {
@@ -789,6 +798,9 @@ export async function checkPickupLocationRegistration(): Promise<PickupLocationC
       match: false,
       error: "DELHIVERY_PICKUP_LOCATION is not set on this server.",
     };
+  }
+  if (pickupCheckCache && Date.now() - pickupCheckCache.at < PICKUP_CHECK_TTL_MS) {
+    return pickupCheckCache.value;
   }
   try {
     // GET /api/v1/pickup-location/ lists the pickup locations registered to
@@ -808,7 +820,7 @@ export async function checkPickupLocationRegistration(): Promise<PickupLocationC
     const match = registered.some(
       (name) => name.trim().toLowerCase() === configured.trim().toLowerCase()
     );
-    return {
+    const result: PickupLocationCheck = {
       configured,
       verified: true,
       registered,
@@ -817,6 +829,8 @@ export async function checkPickupLocationRegistration(): Promise<PickupLocationC
         ? undefined
         : "Pickup location is not recognized/valid by Delhivery.",
     };
+    pickupCheckCache = { at: Date.now(), value: result };
+    return result;
   } catch (error) {
     const safe = error instanceof DelhiveryError ? error.safeMessage : error instanceof Error ? error.message : "Unknown error";
     return {

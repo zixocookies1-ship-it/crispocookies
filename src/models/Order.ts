@@ -142,10 +142,25 @@ export interface IOrder extends Document {
   pickedUpAt?: Date;
   shipmentCreatedAt?: Date;
   shipmentError?: string;
-  /** Delhivery sync lifecycle: pending → synced | failed | unconfigured. */
-  syncState?: "pending" | "synced" | "failed" | "unconfigured";
+  /**
+   * Delhivery sync lifecycle:
+   *   pending → syncing → synced | failed | unconfigured
+   * "syncing" is a short-lived claim taken atomically before the outbound
+   * Delhivery call so two concurrent runs cannot create two shipments for the
+   * same order. A claim older than a couple of minutes is treated as stale
+   * (the process was killed) and may be re-claimed.
+   */
+  syncState?: "pending" | "synced" | "failed" | "unconfigured" | "syncing";
   /** Last time a Delhivery sync attempt touched this order (retry throttle). */
   syncAttemptedAt?: Date;
+  /** How many times shipment creation has been attempted and failed. */
+  syncRetryCount?: number;
+  /**
+   * false = the last failure was a validation error (4xx) that will never fix
+   * itself, so the retry cron must NOT keep hammering Delhivery for it. The
+   * admin can still retry manually after correcting the order.
+   */
+  syncRetryable?: boolean;
   createdAt: Date;
   updatedAt?: Date;
 }
@@ -279,9 +294,11 @@ const OrderSchema = new Schema<IOrder>({
   shipmentError: { type: String },
   syncState: {
     type: String,
-    enum: ["pending", "synced", "failed", "unconfigured"],
+    enum: ["pending", "synced", "failed", "unconfigured", "syncing"],
   },
   syncAttemptedAt: { type: Date },
+  syncRetryCount: { type: Number, default: 0 },
+  syncRetryable: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

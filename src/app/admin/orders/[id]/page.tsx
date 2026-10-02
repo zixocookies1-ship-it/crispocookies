@@ -64,6 +64,8 @@ interface OrderData {
   labelUrl?: string;
   shipmentError?: string;
   syncState?: string;
+  syncRetryCount?: number;
+  syncRetryable?: boolean;
   pickedUp?: boolean;
   pickedUpAt?: string;
   shippingWeightGrams?: number;
@@ -370,14 +372,27 @@ export default function OrderDetailPage() {
                       : data.code === "PICKUP_AUTO_ENABLED"
                         ? backendError ||
                           "Automatic pickup is enabled for this Delhivery account, so a pickup request is not needed."
-                        : data.code === "PICKUP_LOCATION_INACTIVE"
-                          ? backendError ||
-                            "The Delhivery pickup location is inactive. Ask Delhivery to activate the warehouse."
+                      : data.code === "PICKUP_LOCATION_INACTIVE"
+                        ? backendError ||
+                          "The Delhivery pickup location is inactive. Ask Delhivery to activate the warehouse."
+                        : data.code === "SHIPMENT_SYNC_IN_PROGRESS"
+                          ? "Another shipment sync is already running for this order. Wait a few seconds, then retry."
                           : backendError ||
                             (typeof data.safeMessage === "string" &&
                               data.safeMessage.trim()) ||
                             "Request failed";
         showToast(friendly, "error");
+        // Pull the order back so the updated sync state, retry counter and
+        // error message are visible without a manual page refresh.
+        try {
+          const refreshed = await fetch(`/api/admin/orders/${order._id}`);
+          if (refreshed.ok) {
+            const fresh = await refreshed.json();
+            setOrder(fresh);
+          }
+        } catch {
+          // Non-fatal: the banner stays stale until the admin reloads.
+        }
         return;
       }
       if (action === "create") {
@@ -820,9 +835,8 @@ export default function OrderDetailPage() {
         {order.syncState === "unconfigured" && (
           <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-xl p-3.5 mb-4">
             Delhivery is not configured on the server (DELHIVERY_API_TOKEN missing).
-            Paid orders will NOT be handed to Delhivery until it is set — until then
-            syncing fails silently. Set the env vars, then use “Create Shipment” once
-            to push this order.{" "}
+            Paid orders will NOT be handed to Delhivery until it is set. Set the
+            env vars, then use “Create Shipment” once to push this order.{" "}
             <Link
               href="/admin/settings"
               className="underline underline-offset-2 hover:text-amber-900 font-medium"
@@ -834,8 +848,21 @@ export default function OrderDetailPage() {
 
         {order.syncState === "failed" && !order.waybill && (
           <div className="bg-[#DC2626]/5 border border-[#DC2626]/20 text-[#DC2626] text-sm rounded-xl p-3.5 mb-4">
-            Delhivery sync failed — see the reason below, fix it, then press “Create
-            Shipment” to retry.
+            Delhivery sync failed
+            {order.syncRetryCount
+              ? ` (${order.syncRetryCount} attempt${order.syncRetryCount === 1 ? "" : "s"})`
+              : ""}
+            {order.syncRetryable === false
+              ? " with an error Delhivery will keep rejecting, so the daily cron will NOT retry it."
+              : " — the daily cron retries it automatically; you can retry now."}{" "}
+            See the reason below, fix it, then press “Retry Delhivery Sync”.
+          </div>
+        )}
+
+        {order.syncState === "syncing" && !order.waybill && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-800 text-sm rounded-xl p-3.5 mb-4">
+            A Delhivery sync is in progress for this order. Refresh in a few
+            seconds to see the AWB.
           </div>
         )}
 
@@ -986,8 +1013,12 @@ export default function OrderDetailPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-[#666666]">Sync state</span>
-              <span className="font-medium text-black capitalize">
+              <span className="font-medium text-black capitalize text-right">
                 {order.syncState || "—"}
+                {order.syncRetryCount
+                  ? ` · ${order.syncRetryCount} failed attempt${order.syncRetryCount === 1 ? "" : "s"}`
+                  : ""}
+                {order.syncRetryable === false ? " · blocked" : ""}
               </span>
             </div>
           </div>
@@ -1012,7 +1043,9 @@ export default function OrderDetailPage() {
             >
               {busyAction === "create"
                 ? "Creating Shipment…"
-                : "Create Shipment"}
+                : order.syncState === "failed" || order.syncRetryCount
+                  ? "Retry Delhivery Sync"
+                  : "Create Shipment"}
             </button>
           )}
 

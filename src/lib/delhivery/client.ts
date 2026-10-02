@@ -98,6 +98,36 @@ export function getShippingMode(): "S" | "E" {
   return mode === "E" ? "E" : "S";
 }
 
+/**
+ * The most recent Delhivery HTTP exchange, kept in memory so the admin
+ * diagnostics panel can show "what did we actually send and what did
+ * Delhivery actually answer". Never contains the API token or the
+ * Authorization header — only the path, status, timing and a response
+ * snippet. Module-scoped because serverless instances are short-lived: this
+ * is "last call seen by THIS instance", which is what a diagnostics run
+ * right after a failing sync needs.
+ */
+export interface DelhiveryApiCallRecord {
+  at: string;
+  method: string;
+  path: string;
+  status: number;
+  ok: boolean;
+  durationMs: number;
+  response: string;
+  error?: string;
+}
+
+let lastApiCall: DelhiveryApiCallRecord | null = null;
+
+export function getLastDelhiveryApiCall(): DelhiveryApiCallRecord | null {
+  return lastApiCall;
+}
+
+function recordApiCall(record: DelhiveryApiCallRecord): void {
+  lastApiCall = record;
+}
+
 export async function delhiveryFetch<T>(
   path: string,
   options: { method?: string; body?: unknown; timeoutMs?: number } = {}
@@ -141,9 +171,12 @@ export async function delhiveryFetch<T>(
     contentType = "application/json";
   }
 
+  const startedAt = Date.now();
+  const method = options.method ?? "GET";
+
   try {
     const res = await fetch(`${getDelhiveryBaseUrl()}${path}`, {
-      method: options.method ?? "GET",
+      method,
       headers: {
         Authorization: `Token ${token}`,
         "Content-Type": contentType,
@@ -161,6 +194,21 @@ export async function delhiveryFetch<T>(
     } catch {
       json = null;
     }
+
+    // Persist the real exchange before deciding success/failure, so an error
+    // thrown below still leaves an auditable record for the admin panel.
+    recordApiCall({
+      at: new Date().toISOString(),
+      method,
+      path,
+      status: res.status,
+      ok: res.ok,
+      durationMs: Date.now() - startedAt,
+      response: (res.ok
+        ? text || JSON.stringify(json)
+        : summarizeResponseBody(json, text)
+      ).slice(0, 500),
+    });
 
     if (!res.ok) {
       // Include whatever Delhivery returned so the admin panel shows the real
@@ -191,20 +239,38 @@ export async function delhiveryFetch<T>(
   } catch (error) {
     if (error instanceof DelhiveryError) throw error;
     if (error instanceof Error && error.name === "AbortError") {
+      recordApiCall({
+        at: new Date().toISOString(),
+        method,
+        path,
+        status: 0,
+        ok: false,
+        durationMs: Date.now() - startedAt,
+        response: "",
+        error: `timed out after ${timeoutMs}ms`,
+      });
       throw new DelhiveryError("Delhivery API request timed out", {
         status: 0,
         code: "DELHIVERY_TIMEOUT",
         safeMessage: "Delivery service timed out. Please try again.",
       });
     }
-    throw new DelhiveryError(
-      error instanceof Error ? error.message : "Delhivery API request failed",
-      {
-        status: 0,
-        code: "DELHIVERY_UNREACHABLE",
-        safeMessage: "Delivery service is unreachable. Please try again.",
-      }
-    );
+    const message = error instanceof Error ? error.message : "Delhivery API request failed";
+    recordApiCall({
+      at: new Date().toISOString(),
+      method,
+      path,
+      status: 0,
+      ok: false,
+      durationMs: Date.now() - startedAt,
+      response: "",
+      error: message.slice(0, 300),
+    });
+    throw new DelhiveryError(message, {
+      status: 0,
+      code: "DELHIVERY_UNREACHABLE",
+      safeMessage: "Delivery service is unreachable. Please try again.",
+    });
   } finally {
     clearTimeout(timer);
   }

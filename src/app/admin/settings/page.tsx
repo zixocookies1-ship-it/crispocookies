@@ -42,6 +42,60 @@ interface DelhiveryHealth {
 interface DiagnosticsResult {
   status?: string;
   checks?: Record<string, unknown>;
+  sync?: {
+    awaitingSync?: number;
+    needsAttention?: number;
+    inProgress?: number;
+    synced?: number;
+    lastErrors?: Array<{
+      orderId: string;
+      syncState?: string;
+      retryCount?: number;
+      retryable?: boolean;
+      error?: string;
+      at?: string | null;
+    }>;
+  };
+  cron?: {
+    path?: string;
+    schedule?: string;
+    enabled?: boolean;
+    note?: string;
+  };
+  lastApiCall?: {
+    at?: string;
+    method?: string;
+    path?: string;
+    status?: number;
+    ok?: boolean;
+    durationMs?: number;
+    response?: string;
+    error?: string;
+  } | null;
+}
+
+interface SyncSummary {
+  awaiting?: number;
+  blocked?: number;
+  syncing?: number;
+  synced?: number;
+  oldest?: Array<{
+    orderId: string;
+    createdAt?: string;
+    syncState?: string;
+    syncRetryCount?: number;
+    syncRetryable?: boolean;
+    error?: string | null;
+  }>;
+}
+
+interface BatchSyncResult {
+  attempted?: number;
+  synced?: number;
+  failed?: number;
+  remaining?: number;
+  stoppedEarly?: boolean;
+  error?: string;
 }
 
 export default function SettingsPage() {
@@ -69,6 +123,8 @@ export default function SettingsPage() {
   );
   const [diagnostics, setDiagnostics] = useState<DiagnosticsResult | null>(null);
   const [runningDiagnostics, setRunningDiagnostics] = useState(false);
+  const [syncSummary, setSyncSummary] = useState<SyncSummary | null>(null);
+  const [runningSync, setRunningSync] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/settings")
@@ -90,8 +146,61 @@ export default function SettingsPage() {
           if (data && typeof data === "object") setDelhiveryHealth(data);
         })
         .catch(() => {});
+      fetch("/api/admin/shipping/sync-pending")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data && typeof data === "object") setSyncSummary(data);
+        })
+        .catch(() => {});
     }
   }, [activeTab]);
+
+  /**
+   * "Sync Pending Delhivery Orders" — recovers paid orders that never got an
+   * AWB. Runs server-side, one order at a time, and reports exactly what came
+   * back. Confirmation is mandatory: this talks to a live courier API.
+   */
+  const runBatchSync = async () => {
+    const awaiting = syncSummary?.awaiting ?? 0;
+    if (awaiting === 0) {
+      setToast("No pending Delhivery orders to sync.");
+      return;
+    }
+    const includeBlocked = (syncSummary?.blocked ?? 0) > 0;
+    const message = includeBlocked
+      ? `Sync ${awaiting} pending order(s) with Delhivery now?\n\n` +
+        `${syncSummary?.blocked} of them previously failed with an error that will not fix itself; ` +
+        `they will be retried as-is.`
+      : `Sync ${awaiting} pending order(s) with Delhivery now?`;
+    if (!window.confirm(message)) return;
+
+    setRunningSync(true);
+    setToast("");
+    try {
+      const res = await fetch("/api/admin/shipping/sync-pending", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ limit: 100, includeBlocked }),
+      });
+      const data: BatchSyncResult = await res.json();
+      if (!res.ok) {
+        setToast(data.error || "Batch sync failed");
+        return;
+      }
+      setToast(
+        `Sync finished: ${data.synced ?? 0} AWB created, ` +
+          `${data.failed ?? 0} failed, ${data.remaining ?? 0} still pending.` +
+          (data.stoppedEarly ? " Ran out of time — press again for the rest." : "")
+      );
+      const refreshed = await fetch("/api/admin/shipping/sync-pending");
+      if (refreshed.ok) setSyncSummary(await refreshed.json());
+      setDiagnostics(null);
+    } catch {
+      setToast("Batch sync failed");
+    } finally {
+      setRunningSync(false);
+    }
+  };
 
   const runDiagnostics = async () => {
     setRunningDiagnostics(true);
@@ -439,6 +548,107 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="rounded-xl border border-gray-300 p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-heading font-bold text-black text-lg">
+                      Pending shipments
+                    </h4>
+                    <button
+                      onClick={runBatchSync}
+                      disabled={runningSync || (syncSummary?.awaiting ?? 0) === 0}
+                      className="btn-navy-outline text-sm disabled:opacity-50"
+                    >
+                      {runningSync
+                        ? "Syncing…"
+                        : "Sync pending Delhivery orders"}
+                    </button>
+                  </div>
+
+                  {!syncSummary ? (
+                    <p className="text-black/60 text-sm">Loading…</p>
+                  ) : (
+                    <div className="space-y-3 text-sm">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {[
+                          {
+                            label: "Awaiting AWB",
+                            value: syncSummary.awaiting ?? 0,
+                          },
+                          {
+                            label: "Needs a fix",
+                            value: syncSummary.blocked ?? 0,
+                          },
+                          {
+                            label: "Syncing now",
+                            value: syncSummary.syncing ?? 0,
+                          },
+                          {
+                            label: "Shipped",
+                            value: syncSummary.synced ?? 0,
+                          },
+                        ].map((stat) => (
+                          <div
+                            key={stat.label}
+                            className="border border-gray-200 rounded-lg p-3"
+                          >
+                            <p className="text-2xl font-heading font-bold text-black">
+                              {stat.value}
+                            </p>
+                            <p className="text-black/60 text-xs">{stat.label}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {(syncSummary.blocked ?? 0) > 0 && (
+                        <p className="text-black/70 leading-relaxed">
+                          “Needs a fix” orders failed with an error Delhivery
+                          will keep rejecting (bad address, unregistered pickup
+                          location, rejected token…). The daily cron leaves them
+                          alone on purpose — correct the order, then run the
+                          sync.
+                        </p>
+                      )}
+
+                      {Array.isArray(syncSummary.oldest) &&
+                        syncSummary.oldest.length > 0 && (
+                          <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
+                            {syncSummary.oldest.map((order) => (
+                              <div
+                                key={order.orderId}
+                                className="px-3 py-2 text-xs flex flex-wrap gap-x-3 gap-y-1"
+                              >
+                                <span className="font-medium text-black">
+                                  #{order.orderId}
+                                </span>
+                                <span className="text-black/50">
+                                  {order.createdAt
+                                    ? new Date(order.createdAt).toLocaleDateString(
+                                        "en-IN"
+                                      )
+                                    : ""}
+                                </span>
+                                <span className="text-black/60">
+                                  {order.syncState}
+                                  {order.syncRetryCount
+                                    ? ` · ${order.syncRetryCount} failed attempt(s)`
+                                    : ""}
+                                  {order.syncRetryable === false
+                                    ? " · blocked"
+                                    : ""}
+                                </span>
+                                {order.error && (
+                                  <span className="text-black/60 break-all w-full">
+                                    {order.error}
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-xl border border-gray-300 p-5">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="font-heading font-bold text-black">
                       Connection diagnostics
@@ -452,10 +662,82 @@ export default function SettingsPage() {
                     </button>
                   </div>
                   {diagnostics ? (
-                    <div className="text-sm space-y-2">
+                    <div className="text-sm space-y-3">
                       <p className="font-medium text-black">
                         {diagnostics.status}
                       </p>
+
+                      {diagnostics.cron && (
+                        <div className="border border-gray-200 rounded-lg p-3">
+                          <p className="font-medium text-black">
+                            Recovery cron:{" "}
+                            {diagnostics.cron.enabled
+                              ? `${diagnostics.cron.path} · ${diagnostics.cron.schedule}`
+                              : "disabled"}
+                          </p>
+                          {diagnostics.cron.note && (
+                            <p className="text-black/70 text-xs mt-1">
+                              {diagnostics.cron.note}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {diagnostics.lastApiCall && (
+                        <div className="border border-gray-200 rounded-lg p-3">
+                          <p className="font-medium text-black mb-1">
+                            Last Delhivery API request
+                          </p>
+                          <p className="text-xs text-black/70">
+                            {diagnostics.lastApiCall.at
+                              ? new Date(
+                                  diagnostics.lastApiCall.at
+                                ).toLocaleString("en-IN")
+                              : "—"}{" "}
+                            · {diagnostics.lastApiCall.method}{" "}
+                            {diagnostics.lastApiCall.path} ·{" "}
+                            {diagnostics.lastApiCall.status || "no response"} ·{" "}
+                            {diagnostics.lastApiCall.durationMs}ms
+                          </p>
+                          <pre className="text-xs border border-gray-100 rounded p-2 mt-2 overflow-x-auto text-black whitespace-pre-wrap">
+                            {diagnostics.lastApiCall.error ||
+                              diagnostics.lastApiCall.response ||
+                              "(empty response)"}
+                          </pre>
+                        </div>
+                      )}
+
+                      {diagnostics.sync && (
+                        <div className="border border-gray-200 rounded-lg p-3">
+                          <p className="font-medium text-black mb-1">
+                            Order sync health
+                          </p>
+                          <p className="text-xs text-black/70">
+                            {diagnostics.sync.awaitingSync ?? 0} awaiting AWB ·{" "}
+                            {diagnostics.sync.needsAttention ?? 0} need a human
+                            fix · {diagnostics.sync.inProgress ?? 0} in progress
+                            · {diagnostics.sync.synced ?? 0} shipped
+                          </p>
+                          {Array.isArray(diagnostics.sync.lastErrors) &&
+                            diagnostics.sync.lastErrors.length > 0 && (
+                              <ul className="mt-2 space-y-1 text-xs text-black/70">
+                                {diagnostics.sync.lastErrors.map((err) => (
+                                  <li key={err.orderId} className="break-all">
+                                    #{err.orderId} — {err.syncState}
+                                    {err.retryable === false
+                                      ? " (blocked)"
+                                      : ""}
+                                    {err.retryCount
+                                      ? `, ${err.retryCount} attempt(s)`
+                                      : ""}
+                                    : {err.error}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                        </div>
+                      )}
+
                       {diagnostics.checks && (
                         <pre className="text-xs bg-transparent border border-gray-200 rounded-lg p-3 overflow-x-auto text-black whitespace-pre-wrap">
                           {JSON.stringify(diagnostics.checks, null, 2)}

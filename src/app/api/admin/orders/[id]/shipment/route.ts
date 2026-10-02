@@ -21,6 +21,8 @@ const STATUS_BY_CODE: Record<string, number> = {
   DELHIVERY_UNREACHABLE: 502,
   DELHIVERY_API_ERROR: 502,
   SHIPMENT_CREATION_FAILED: 502,
+  // Another invocation (webhook, cron, second admin tab) holds the claim.
+  SHIPMENT_SYNC_IN_PROGRESS: 409,
 };
 
 export async function POST(

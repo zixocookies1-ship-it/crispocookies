@@ -54,6 +54,9 @@ export default function OrdersPage() {
   const [missing, setMissing] = useState<MissingPayment[]>([]);
   const [reconciling, setReconciling] = useState(false);
   const [reconcileError, setReconcileError] = useState("");
+  const [delhiveryPending, setDelhiveryPending] = useState<number | null>(null);
+  const [syncingDelhivery, setSyncingDelhivery] = useState(false);
+  const [syncMessage, setSyncMessage] = useState("");
 
   const fetchReconcile = useCallback(async () => {
     try {
@@ -66,9 +69,68 @@ export default function OrdersPage() {
     }
   }, []);
 
+  /** How many paid orders still have no Delhivery AWB. */
+  const fetchDelhiveryPending = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/shipping/sync-pending");
+      if (!res.ok) return;
+      const data = await res.json();
+      setDelhiveryPending(
+        typeof data.awaiting === "number" ? data.awaiting : 0
+      );
+    } catch {
+      // Leave it unknown rather than showing a wrong 0.
+      setDelhiveryPending(null);
+    }
+  }, []);
+
   useEffect(() => {
     fetchReconcile();
-  }, [fetchReconcile]);
+    fetchDelhiveryPending();
+  }, [fetchReconcile, fetchDelhiveryPending]);
+
+  /**
+   * Batch "Sync Pending Delhivery Orders" — recovers paid orders that never
+   * received an AWB without waiting for the daily cron. Runs server-side and
+   * asks for confirmation first: this talks to a live courier API.
+   */
+  const syncPendingShipments = async () => {
+    if (!delhiveryPending) return;
+    if (
+      !window.confirm(
+        `Sync ${delhiveryPending} paid order(s) that have no Delhivery AWB yet?\n\n` +
+          "Each one is sent to Delhivery individually; failures are reported per order."
+      )
+    ) {
+      return;
+    }
+    setSyncingDelhivery(true);
+    setSyncMessage("");
+    try {
+      const res = await fetch("/api/admin/shipping/sync-pending", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ limit: 100, includeBlocked: true }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSyncMessage(data.error || "Batch sync failed.");
+        return;
+      }
+      setSyncMessage(
+        `Sync finished: ${data.synced ?? 0} AWB created, ` +
+          `${data.failed ?? 0} failed, ${data.remaining ?? 0} still pending.` +
+          (data.stoppedEarly ? " Ran out of time — press again for the rest." : "")
+      );
+      setDelhiveryPending(
+        typeof data.remaining === "number" ? data.remaining : 0
+      );
+    } catch {
+      setSyncMessage("Batch sync failed.");
+    } finally {
+      setSyncingDelhivery(false);
+    }
+  };
 
   const finalizePayment = async (entry: MissingPayment) => {
     setReconciling(true);
@@ -372,6 +434,32 @@ export default function OrdersPage() {
           </div>
         )}
       </div>
+
+      {/* Delhivery sync backlog */}
+      {delhiveryPending !== null && delhiveryPending > 0 && (
+        <div className="card rounded-2xl p-5 border-2 border-amber-300">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-bold text-black text-sm">Delhivery sync</h2>
+              <p className="text-xs text-[#666666] mt-1">
+                {delhiveryPending} paid order
+                {delhiveryPending === 1 ? "" : "s"} still{" "}
+                {delhiveryPending === 1 ? "has" : "have"} no AWB.
+              </p>
+              {syncMessage && (
+                <p className="text-xs text-black mt-1">{syncMessage}</p>
+              )}
+            </div>
+            <button
+              onClick={syncPendingShipments}
+              disabled={syncingDelhivery}
+              className="btn-gold text-xs px-3 py-1.5 disabled:opacity-60"
+            >
+              {syncingDelhivery ? "Syncing..." : "Sync pending Delhivery orders"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div className="card rounded-2xl overflow-hidden">

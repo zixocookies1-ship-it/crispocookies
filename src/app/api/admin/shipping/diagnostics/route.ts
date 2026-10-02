@@ -9,10 +9,12 @@ import {
   getOriginPincode,
   getShippingMode,
   isDelhiveryConfigured,
+  getLastDelhiveryApiCall,
   checkPincodeServiceability,
   estimateShippingRate,
   checkPickupLocationRegistration,
 } from "@/lib/delhivery";
+import Order from "@/models/Order";
 
 /**
  * Admin diagnostics for the Delhivery sync. Answers: is the integration
@@ -42,6 +44,22 @@ export async function GET() {
       DELHIVERY_HSN_CODE: process.env.DELHIVERY_HSN_CODE ? "set" : "not set",
       DELHIVERY_WEBHOOK_TOKEN: process.env.DELHIVERY_WEBHOOK_TOKEN ? "set" : "not set",
     },
+    // ----------------------------------------------------------------
+    // Order-level sync health — answers "why is this order still without
+    // an AWB?" without having to open it.
+    // ----------------------------------------------------------------
+    sync: await buildSyncSummary(),
+    cron: {
+      path: "/api/cron/sync-delhivery",
+      schedule: "0 8 * * *",
+      enabled: Boolean(process.env.CRON_SECRET),
+      note: process.env.CRON_SECRET
+        ? "Runs once a day (Vercel Hobby allows one schedule only)."
+        : "CRON_SECRET is not set — the recovery cron is DISABLED and only the manual buttons below can retry stuck orders.",
+    },
+    // What the last outbound Delhivery call actually looked like. Never
+    // contains the token — just method, path, status, timing and a snippet.
+    lastApiCall: getLastDelhiveryApiCall(),
   };
 
   if (!configured) {
@@ -107,4 +125,48 @@ export async function GET() {
   }
 
   return NextResponse.json(report);
+}
+
+/**
+ * How many paid orders are still waiting for an AWB, how many are stuck on a
+ * human fix, and the most recent errors — the numbers an admin needs before
+ * deciding whether to hit "Sync pending" or open a specific order.
+ */
+async function buildSyncSummary(): Promise<Record<string, unknown>> {
+  const pending = {
+    paymentStatus: "paid",
+    orderStatus: { $ne: "cancelled" },
+    waybill: null,
+  };
+
+  const [awaitingSync, needsAttention, inProgress, synced, recentErrors] =
+    await Promise.all([
+      Order.countDocuments(pending),
+      // Last failure was a 4xx rejection — the cron leaves these alone.
+      Order.countDocuments({ ...pending, syncRetryable: false }),
+      Order.countDocuments({ ...pending, syncState: "syncing" }),
+      Order.countDocuments({ paymentStatus: "paid", waybill: { $ne: null } }),
+      Order.find({ ...pending, shipmentError: { $ne: null } })
+        .select(
+          "orderId syncState syncRetryCount syncRetryable shipmentError syncAttemptedAt"
+        )
+        .sort({ syncAttemptedAt: -1 })
+        .limit(5)
+        .lean(),
+    ]);
+
+  return {
+    awaitingSync,
+    needsAttention,
+    inProgress,
+    synced,
+    lastErrors: recentErrors.map((order) => ({
+      orderId: order.orderId,
+      syncState: order.syncState ?? "pending",
+      retryCount: order.syncRetryCount ?? 0,
+      retryable: order.syncRetryable !== false,
+      error: order.shipmentError,
+      at: order.syncAttemptedAt ?? null,
+    })),
+  };
 }

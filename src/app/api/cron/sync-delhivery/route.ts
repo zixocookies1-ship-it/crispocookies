@@ -1,4 +1,8 @@
 export const dynamic = "force-dynamic";
+// Resuming bookkeeping and retrying shipments both make outbound calls, so
+// give the job headroom past the platform default instead of being killed
+// mid-pass (which is how a paid order could stay without an AWB).
+export const maxDuration = 60;
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Order from "@/models/Order";
@@ -72,6 +76,13 @@ async function handle(request: NextRequest) {
 
   // ------------------------------------------------------------------
   // 2. Retry shipment creation for paid orders without a waybill.
+  //
+  //    Deliberately excludes orders whose last failure was a validation
+  //    error (syncRetryable === false): bad address, unregistered pickup
+  //    location, rejected token… Those never fix themselves, so retrying
+  //    them daily would only spam Delhivery and the admin notifications.
+  //    They wait for an admin to correct the order and press Retry, or to
+  //    run the batch sync.
   // ------------------------------------------------------------------
   const retryBefore = new Date(Date.now() - 30 * 60 * 1000);
   const candidates = await Order.find({
@@ -83,6 +94,7 @@ async function handle(request: NextRequest) {
       {
         $or: [{ syncState: { $ne: "synced" } }, { syncState: { $exists: false } }],
       },
+      { $or: [{ syncRetryable: { $ne: false } }, { syncRetryable: { $exists: false } }] },
       {
         $or: [
           { syncAttemptedAt: { $exists: false } },
@@ -94,19 +106,51 @@ async function handle(request: NextRequest) {
     .sort({ createdAt: 1 })
     .limit(30);
 
+  // Orders waiting on a human: paid, no AWB, and the last error was a
+  // 4xx rejection. Reported so the admin sees WHY they are not moving.
+  const blocked = await Order.countDocuments({
+    paymentStatus: "paid",
+    orderStatus: { $ne: "cancelled" },
+    waybill: null,
+    syncRetryable: false,
+  });
+
   let synced = 0;
   let failed = 0;
+  let processed = 0;
+  let stoppedEarly = false;
+  const startedAt = Date.now();
   const sampleErrors: string[] = [];
   const errored: string[] = [];
 
   for (const order of candidates) {
-    const result = await attemptAutoShipment(order);
-    if (result.ok) {
-      synced += 1;
-    } else {
+    if (Date.now() - startedAt > 45_000) {
+      // Report what is left rather than being killed by the function timeout
+      // with no response at all. The next scheduled run picks up the rest.
+      stoppedEarly = true;
+      break;
+    }
+    processed += 1;
+    try {
+      const result = await attemptAutoShipment(order);
+      if (result.ok) {
+        synced += 1;
+      } else {
+        failed += 1;
+        errored.push(order.orderId);
+        if (result.error) sampleErrors.push(result.error.slice(0, 200));
+      }
+    } catch (error) {
+      // One bad order (or one bad DB write) must never abort the whole pass
+      // — the remaining candidates still need their chance.
       failed += 1;
       errored.push(order.orderId);
-      if (result.error) sampleErrors.push(result.error.slice(0, 200));
+      const message = error instanceof Error ? error.message : String(error);
+      sampleErrors.push(message.slice(0, 200));
+      console.error("[sync-delhivery] attemptAutoShipment threw", {
+        orderId: order.orderId,
+        message,
+      });
     }
   }
 
@@ -117,9 +161,12 @@ async function handle(request: NextRequest) {
       failed: effectsFailed.slice(0, 30),
     },
     shipment: {
-      attempted: candidates.length,
+      attempted: processed,
+      queued: candidates.length,
+      stoppedEarly,
       synced,
       failed,
+      blocked,
       errored: errored.slice(0, 30),
       sampleErrors,
     },

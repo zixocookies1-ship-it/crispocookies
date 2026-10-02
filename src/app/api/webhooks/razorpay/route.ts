@@ -1,4 +1,7 @@
 export const dynamic = "force-dynamic";
+// Same reasoning as the verify-payment route: the Delhivery hand-off runs
+// inside this invocation, so allow up to 60s instead of the 10s default.
+export const maxDuration = 60;
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { connectDB } from "@/lib/mongodb";
